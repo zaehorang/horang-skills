@@ -1,9 +1,9 @@
 ---
-name: presentation-harness
+name: presentation
 description: Plan, narrate, build, review, verify, export, or polish an HTML presentation deck with a reusable 16:9 template and deterministic quality checks. Use for presentation flow design, speaker script writing, slide creation, deck review, and PDF export; do not use for editing an unrelated existing PPTX template.
 ---
 
-# Presentation Harness
+# Presentation
 
 Create presentation artifacts in the user's chosen project directory while keeping the reusable template, checks, and guidance inside this skill.
 

@@ -1,6 +1,6 @@
 # horang-skills
 
-**Agent Skills** 모음. 주제별로 묶여 있다. 📖 이해하기(`study`)와 🔍 진단·🛠 개발의 일부(`dev`)는 Claude Code 플러그인으로 설치할 수 있고, 모든 스킬은 폴더만 복사해 써도 된다.
+**Agent Skills** 모음. 주제별로 묶여 있다. 📖 이해하기(`study`), 🔍 진단·🛠 개발의 일부(`dev`), 📄 전달하기(`deliver`)는 Claude Code 플러그인으로 설치할 수 있고, 모든 스킬은 폴더만 복사해 써도 된다.
 
 [Agent Skills](https://agentskills.io)는 에이전트에게 절차적 지식을 넘기는 오픈 포맷이다.
 폴더 하나 = 스킬 하나이고, 안의 `SKILL.md`가 전부다. Claude Code · Codex · Cursor · Gemini CLI 등이 같은 포맷을 읽는다.
@@ -41,15 +41,20 @@
 
 ---
 
-## 🎤 발표하기
+## 📄 전달하기
 
-> 슬라이드보다 대본이 먼저.
+> 결과를 읽히는 문서로, 들리는 말로.
 
-플러그인 묶음에는 아직 없다. [폴더 복사](#폴더-복사로-모든-에이전트)로 설치한다.
+```
+/plugin install deliver@horang-skills
+```
 
 | 스킬 | 하는 일 | 산출물 |
 |---|---|---|
-| [`presentation-harness`](./presentation-harness) | 장 배열(FLOW)과 전개(SCRIPT)를 먼저 승인받고, 화면에는 말의 근거만 옮긴 16:9 HTML deck을 만든다 | `FLOW.md` + `SCRIPT.md` + `presentation.html` (+ PDF) |
+| [`report`](./report) | 분석 결과를 "한 쪽 = 한 메시지"인 A4 쪽 고정형 보고서로 만든다. 쪽 넘침 · 짧은 꼬리 줄 · 줄바꿈 지점을 자동 검사하고, 보고서 쪽에 맞춘 발표 대본을 따로 뽑는다 | `report.html` + PDF (+ 쪽별 대본 `.md`) |
+| [`presentation`](./presentation) | 장 배열(FLOW)과 전개(SCRIPT)를 먼저 승인받고, 화면에는 말의 근거만 옮긴 16:9 HTML deck을 만든다 | `FLOW.md` + `SCRIPT.md` + `presentation.html` (+ PDF) |
+
+읽히는 문서가 필요하면 `report`, 따로 슬라이드를 띄워 말해야 하면 `presentation`을 쓴다.
 
 ---
 
@@ -79,12 +84,14 @@ marketplace를 한 번 등록하면 묶음을 설치할 수 있다.
 /plugin marketplace add zaehorang/horang-skills
 /plugin install study@horang-skills
 /plugin install dev@horang-skills
+/plugin install deliver@horang-skills
 ```
 
 | 묶음 | 주제 | 스킬 |
 |---|---|---|
 | `study` | 📖 이해하기 | `mechanism-explainer` · `explorable-world` |
 | `dev` | 🔍 진단 · 🛠 개발 | `ai-readiness-cartography` · `herdr-dispatch` |
+| `deliver` | 📄 전달하기 | `report` · `presentation` |
 
 설치한 스킬은 `/study:mechanism-explainer`처럼 묶음 이름이 앞에 붙는다. auto-trigger는 그대로 동작한다.
 third-party marketplace는 자동 업데이트가 꺼져 있으니 갱신은 `claude plugin update study@horang-skills`로 한다.
