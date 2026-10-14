@@ -1,6 +1,6 @@
 # codex 플래그
 
-> **확인일: 2026-10-09** · codex-cli 0.162.0 · 출처: 맨 아래 URL + `codex --help` + `~/.codex/models_cache.json` + codex 에이전트 교차 확인
+> **확인일: 2026-10-14** (doctor·로컬 실측만. 공식 문서·pane 교차 확인은 2026-10-09) · codex-cli 0.162.1 · 출처: 맨 아래 URL + `codex --help` + `~/.codex/models_cache.json` + codex 에이전트 교차 확인
 > 재검증 절차는 `verify.md`. 이 파일은 codex pane이 검증한다. 모델 목록은 `scripts/codex-models.py`로 언제든 덤프할 수 있다.
 
 `herdr agent start ... --kind codex -- <여기>`에 넣는 인자.
@@ -63,7 +63,7 @@ error: the argument '--approve-for-me' cannot be used with '--sandbox <SANDBOX_M
 | `gpt-6-sol` | 이전 세대 워크호스. 5.4/5.5의 공식 대체 | `low`~`ultra` (`medium`) | — |
 | `gpt-6-luna` | 고volume·단순 작업용 효율 모델. 문서는 `high`에서 시작하라고 권함 | `low`~`max`, **`ultra` 없음** (`medium`) | — |
 | `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna` | 구세대. "롤아웃 동안 유지" | 위와 동일 | **미정** — 날짜 발표 안 됨 |
-| `gpt-5.5` | 레거시. 모델 선택기에서 숨김 | `low`~`xhigh` | **2026-10-14** |
+| `gpt-5.5` | 레거시. 은퇴일 당일(2026-10-14)에도 캐시에 숨김 상태로 남아 있었다 — 공식 문서로 은퇴 확인 전 | `low`~`xhigh` | **2026-10-14** (공지) |
 | `gpt-5.4`, `gpt-5.4-mini`, `gpt-5.3-codex-spark` | 은퇴 | — | 지남 |
 
 오늘 날짜가 은퇴일에 가깝거나 지났으면 사용자에게 알린다. gpt-5.6 계열은 날짜 없이 사라질 수 있으니 `agent start`가 모델명으로 실패하면 `scripts/codex-models.py`로 현재 목록을 보고 gpt-6 열로 옮긴다.

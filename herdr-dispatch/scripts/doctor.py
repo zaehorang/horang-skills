@@ -126,10 +126,10 @@ def check_claude():
     _, h = run(["claude", "--help"])
     h = re.sub(r"\s+", " ", h)
     for name, pat in {
-        "--permission-mode plan": r"--permission-mode .*?plan",
         "--permission-mode auto": r"--permission-mode .*?\"auto\"",
         "--effort xhigh": r"--effort .*?xhigh",
         "--model 별칭": r"--model <model>.*?alias",
+        "--disallowedTools": r"--disallowedTools",
     }.items():
         if not re.search(pat, h):
             fail(area, f"도움말에 없음: {name}")
@@ -231,6 +231,11 @@ def check_docs():
             continue
         age = (TODAY - date.fromisoformat(m.group(1))).days
         (warn if age > 60 else ok)(area, f"{f}: 확인일 {m.group(1)} ({age}일 전)")
+
+    # claude 읽기 전용이 plan 모드로 되돌아갔나 (2026-10-14 사고). 백틱으로 인용한 설명은 제외
+    for f in (SKILL / "SKILL.md", *REFS.glob("*.md")):
+        if re.search(r"(?<!`)--permission-mode[ =][\"']?plan\b", read(f)):
+            fail(area, f"{f.name}: claude를 --permission-mode plan 으로 띄우는 예시 — 읽기 전용은 auto + --disallowedTools")
 
 
 def main():

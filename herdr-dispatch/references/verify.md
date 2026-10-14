@@ -74,14 +74,14 @@ codex 모델별 추론 단계와 기본값은 로컬 캐시가 공식 문서보�
 
 ## 2. 벤더별 pane을 띄운다
 
-둘 다 읽기 전용. 웹 검색은 서버 측이라 읽기 전용 권한과 무관하다.
+둘 다 읽기 전용 역할 설정이다 (claude는 편집 도구 차단 — bash 쓰기는 열려 있다. codex는 샌드박스). 웹 검색은 서버 측이라 읽기 전용 권한과 무관하다.
 
 ```bash
 herdr pane split --current --direction right --cwd "$PWD" --no-focus            # → <claude-pane>
 herdr pane split --pane <claude-pane> --direction down --cwd "$PWD" --no-focus   # → <codex-pane>
 
 herdr agent start claude-verify --kind claude --pane <claude-pane> \
-  -- --model sonnet --effort medium --permission-mode plan
+  -- --model sonnet --effort medium --permission-mode auto --disallowedTools "Edit,Write,NotebookEdit,ExitPlanMode"
 herdr agent start codex-verify --kind codex --pane <codex-pane> \
   -- -m gpt-6.1-sol -c model_reasoning_effort=medium -s read-only -a never --search -c features.fast_mode=false
 
@@ -118,6 +118,17 @@ pane의 답은 교차 확인이지 정본이 아니다. 각 벤더 파일 맨 �
 ```bash
 herdr agent start t --kind codex --pane <pane-id> -- -m gpt-6.1-sol -c features.fast_mode=false
 herdr pane read <pane-id> --source visible --lines 40 | grep -iE 'GPT-|fast'
+```
+
+claude 읽기 전용 플래그는 같은 방식으로 띄운 뒤, 닫기 전에 세 가지를 시킨다. 신뢰 확인 화면을 피하려면 이 레포 안에서 띄운다.
+
+1. Edit → 거부여야 한다
+2. `herdr pane send-keys <pane-id> shift+tab`을 상태 표시줄이 `accept edits`가 될 때까지 보낸 뒤 Edit → 여전히 거부여야 한다
+3. WebFetch → 승인 없이 실행돼야 한다
+
+bash `sed -i`는 실행된다 — 알려진 한계이고 `claude-cli.md` 표에 적혀 있다. 이게 막히기 시작했으면 표를 고친다.
+
+```bash
 herdr agent prompt t "/exit"; herdr pane close <pane-id>
 ```
 
@@ -135,6 +146,7 @@ herdr agent prompt t "/exit"; herdr pane close <pane-id>
 
 | 날짜 | 바뀐 것 |
 |---|---|
+| 2026-10-14 | doctor + 로컬 확인 (모델·플래그 표의 pane 교차 확인·공식 문서 대조는 안 함). claude 2.1.299·codex 0.162.1에서 플래그·모델 캐시 변화 없음. `gpt-5.5`는 은퇴 공지일이지만 캐시에 숨김으로 남아 은퇴 미확인. herdr 0.9.4 릴리스 노트에 이 스킬이 쓰는 명령·감지 변경 없음. claude 읽기 전용을 `plan` → `auto` + `--disallowedTools`로 (plan 리뷰어가 계획 승인 후 문서 6개를 편집한 사고, pane을 띄워 실측, 근거는 claude-cli.md). 처음 보는 폴더의 신뢰 확인 함정 추가 |
 | 2026-10-09 | codex gpt-5.6 → gpt-6 세대 (`gpt-6.1-sol`, `gpt-6-luna` 신규). claude 5.5 세대 effort 기본값 `high`→`medium`. auto 모드에 Haiku 5.5 추가. `--permission-mode` 플래그명 `default`→`manual`. codex `-a on-failure` 폐기, `untrusted` 은퇴. fast 모드 끄기 규칙 추가. 파일을 벤더별로 분리. herdr 점검 절(0번) 추가 — herdr 0.9.3 기준 이 스킬이 쓰는 문법 전부 유효 |
 | 2026-09-28 | codex 읽기 전용에 `-a never` 필수 (auto_review가 샌드박스 이탈을 승인한 사고) |
 | 2026-09-20 | 최초 작성 |
