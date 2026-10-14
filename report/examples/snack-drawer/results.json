@@ -1,0 +1,36 @@
+{
+  "n_days": 120,
+  "train_days": 90,
+  "test_days": 30,
+  "empty_rate_all": 0.492,
+  "empty_rate_restock": 0.292,
+  "empty_rate_no_restock": 0.625,
+  "empty_rate_deadline": 0.633,
+  "empty_rate_normal_week": 0.444,
+  "auc": {
+    "요일 평균": 0.687,
+    "보충일 규칙": 0.7,
+    "로지스틱 회귀": 0.804
+  },
+  "accuracy_at_0.5": 0.667,
+  "confusion": {
+    "tp": 10,
+    "fp": 5,
+    "fn": 5,
+    "tn": 10
+  },
+  "coef": {
+    "보충일": -0.594,
+    "오후 회의 수": 0.395,
+    "마감 주간": 0.421,
+    "기온": -0.076,
+    "금요일": 0.328
+  },
+  "by_weekday": {
+    "월": 0.25,
+    "화": 0.625,
+    "수": 0.542,
+    "목": 0.333,
+    "금": 0.708
+  }
+}

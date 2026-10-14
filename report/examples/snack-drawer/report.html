@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>간식 서랍은 오후 3시 전에 비는가 — 예시 보고서</title>
+<style>
+  :root {
+    --paper: #FAF9F5;
+    --ink: #141413;
+    --body: #2B2A27;
+    --muted: #6B6A64;
+    --rule: #DEDCD3;
+    --card: #F0EEE6;
+    --clay: #D97757;
+    --clay-soft: #F5E3DA;
+    --olive: #788C5D;
+    --serif: "Nanum Myeongjo", "AppleMyungjo", serif;
+    --sans: "Apple SD Gothic Neo", "AppleGothic", "Nanum Gothic", sans-serif;
+    --mono: "SF Mono", Menlo, Monaco, monospace;
+  }
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { margin: 0; padding: 0; background: var(--paper); }
+  body { font-family: var(--sans); color: var(--body); font-size: 9.6pt; line-height: 1.62; word-break: keep-all; }
+  /* 짧은 꼬리 줄을 막는다: 본문은 마지막 줄 균형, 제목은 줄 길이 균형 */
+  p, figcaption, .msg div, .stat .sub { text-wrap: pretty; }
+  h1, h2, .lede, td, li, .bal { text-wrap: balance; }
+  .nw { white-space: nowrap; }
+
+  /* 한 페이지 = 한 블록. 제목과 본문이 페이지 사이에서 갈라지지 않게 한다 */
+  .page { position: relative; width: 210mm; height: 297mm; padding: 19mm 18mm 20mm; overflow: hidden; break-after: page; background: var(--paper); }
+  .page:last-child { break-after: auto; }
+  .foot { position: absolute; left: 18mm; right: 18mm; bottom: 10mm; display: flex; justify-content: space-between; border-top: 0.5pt solid var(--rule); padding-top: 2.2mm; font: 7pt var(--mono); color: var(--muted); letter-spacing: 0.04em; }
+
+  .kicker { font: 7.5pt var(--sans); letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin: 0 0 3mm; }
+  .kicker b { color: var(--clay); font-weight: 600; }
+  h2 { font-family: var(--serif); font-weight: 800; font-size: 20pt; line-height: 1.25; color: var(--ink); margin: 0 0 2.5mm; letter-spacing: -0.01em; }
+  .lede { font-size: 10.4pt; color: var(--body); margin: 0 0 6mm; max-width: 158mm; }
+  h3 { font-family: var(--sans); font-size: 10.2pt; font-weight: 700; color: var(--ink); margin: 6mm 0 2mm; }
+  h3 .n { font-family: var(--mono); font-weight: 400; font-size: 8pt; color: var(--clay); margin-right: 2mm; }
+  p { margin: 0 0 2.2mm; }
+  b, strong { color: var(--ink); }
+  ul { margin: 0 0 2mm; padding-left: 4.2mm; }
+  li { margin: 0 0 1.2mm; }
+  li::marker { color: var(--clay); }
+
+  table { width: 100%; border-collapse: collapse; margin: 1mm 0 3mm; font-size: 8.8pt; }
+  th { text-align: left; font-weight: 600; font-size: 7.6pt; letter-spacing: 0.06em; color: var(--muted); border-bottom: 0.8pt solid var(--ink); padding: 1.6mm 2mm; }
+  td { border-bottom: 0.5pt solid var(--rule); padding: 1.7mm 2mm; vertical-align: top; }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  td.num { font-family: var(--mono); font-size: 8.4pt; }
+  tr.hl td { background: var(--clay-soft); }
+  tr.hl td:first-child { box-shadow: inset 1.2mm 0 0 var(--clay); }
+  .k { font-family: var(--mono); font-size: 8pt; color: var(--ink); white-space: nowrap; }
+
+  figure { margin: 1mm 0 4mm; }
+  figure img { display: block; width: 100%; height: auto; }
+  figcaption { font-size: 7.8pt; color: var(--muted); margin-top: 1.5mm; }
+  figcaption b { font-family: var(--mono); font-weight: 400; color: var(--clay); margin-right: 1.5mm; }
+
+  .note { background: var(--card); border-radius: 2mm; padding: 3.2mm 4mm; margin: 2mm 0 3mm; }
+  .note .t { font-size: 7.4pt; letter-spacing: 0.14em; text-transform: uppercase; color: var(--clay); font-weight: 600; margin-bottom: 1mm; }
+  .note p:last-child, .note ul:last-child { margin-bottom: 0; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; }
+
+  .stat { border-top: 0.8pt solid var(--ink); padding-top: 2.5mm; }
+  .stat .lab { font-size: 7.4pt; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .stat .val { font-family: var(--serif); font-weight: 800; font-size: 30pt; line-height: 1.1; color: var(--ink); margin: 1.5mm 0 1mm; }
+  .stat .sub { font-size: 8pt; color: var(--muted); }
+  .stat .sub b { color: var(--clay); font-family: var(--mono); font-weight: 400; }
+
+  .msg { counter-reset: m; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; margin-top: 2mm; }
+  .msg div { border-top: 0.5pt solid var(--rule); padding-top: 2.5mm; font-size: 8.8pt; }
+  .msg div::before { counter-increment: m; content: "(" counter(m) ")"; display: block; font: 7.5pt var(--mono); color: var(--clay); margin-bottom: 1mm; }
+  .msg b { display: block; font-size: 9.6pt; margin-bottom: 1mm; }
+
+  code { font-family: var(--mono); font-size: 8pt; color: var(--ink); background: var(--card); padding: 0.2mm 1.2mm; border-radius: 1mm; }
+  pre { font-family: var(--mono); font-size: 8pt; line-height: 1.6; background: var(--ink); color: #F0EEE6; padding: 4mm 5mm; border-radius: 2mm; margin: 1mm 0 4mm; white-space: pre-wrap; }
+  pre .c { color: #9C9A92; }
+
+  /* 표지 */
+  .cover { display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: 52mm; }
+  .cover .date { font: 8pt var(--sans); letter-spacing: 0.22em; color: var(--ink); margin-bottom: 10mm; }
+  .cover h1 { white-space: nowrap; font-family: var(--serif); font-weight: 800; font-size: 34pt; line-height: 1.22; color: var(--ink); margin: 0; letter-spacing: -0.015em; }
+  .cover .arc { width: 186mm; margin: 4mm 0 9mm; }
+  .cover .sub { font-size: 10.5pt; color: var(--muted); margin: -2mm 0 12mm; }
+  .toc { width: 96mm; text-align: left; font-family: var(--serif); font-size: 10pt; }
+  .toc div { display: flex; align-items: center; gap: 2.5mm; margin: 0 0 2.2mm; }
+  .toc .no { font: 7.5pt var(--mono); color: var(--muted); }
+  .toc .line { flex: 1; border-top: 0.5pt solid #BDBBB2; }
+  .toc .pg { font: 7.5pt var(--mono); color: var(--muted); width: 5mm; text-align: right; }
+  .meta { width: 96mm; margin-top: 5mm; border-top: 0.5pt solid var(--rule); padding-top: 3mm; font-size: 7.6pt; }
+  .meta div { display: flex; justify-content: space-between; margin-bottom: 1.6mm; }
+  .meta .l { letter-spacing: 0.14em; color: var(--muted); }
+  .meta .r { font-family: var(--mono); color: var(--ink); }
+</style>
+</head>
+<body>
+
+<section class="page cover">
+  <div class="date">2026. 10. 14 · 예시 분석 보고서</div>
+  <h1>간식 서랍은<br>오후 3시 전에 비는가</h1>
+  <svg class="arc" viewBox="0 0 1000 90" preserveAspectRatio="none" aria-hidden="true"><path d="M0,86 Q500,-36 1000,86" fill="none" stroke="#141413" stroke-width="1.1"/></svg>
+  <div class="sub">가상의 사무실 120영업일 · report 스킬 예시</div>
+  <div class="toc">
+    <div><span class="no">(1)</span><span class="line"></span><span>한눈에 보는 결과</span><span class="pg">2</span></div>
+    <div><span class="no">(2)</span><span class="line"></span><span>데이터</span><span class="pg">3</span></div>
+    <div><span class="no">(3)</span><span class="line"></span><span>무엇이 서랍을 비우나</span><span class="pg">4</span></div>
+    <div><span class="no">(4)</span><span class="line"></span><span>검증과 결과</span><span class="pg">5</span></div>
+    <div><span class="no">(5)</span><span class="line"></span><span>한계와 재현</span><span class="pg">6</span></div>
+  </div>
+  <div class="meta">
+    <div><span class="l">데이터</span><span class="r">data.csv (시드 고정 가상 데이터)</span></div>
+    <div><span class="l">재현 코드</span><span class="r">analysis.py</span></div>
+    <div><span class="l">모델</span><span class="r">Logistic Regression (L2)</span></div>
+  </div>
+</section>
+
+<section class="page">
+  <div class="kicker"><b>01</b> &nbsp;한눈에 보는 결과</div>
+  <h2>보충일 규칙은 AUC 0.700,<br>회의와 마감까지 보면 0.804</h2>
+  <p class="lede">매일 오후 3시 전에 사무실 간식 서랍이 비는지를 확률로 예측했습니다. 앞 90일로 배우고 마지막 30일로 채점했습니다.</p>
+  <div class="grid3">
+    <div class="stat"><div class="lab">검증 AUC</div><div class="val">0.804</div><div class="sub">보충일 규칙 0.700 대비 <b>+0.104</b></div></div>
+    <div class="stat"><div class="lab">보충일에 빈 비율</div><div class="val">0.29</div><div class="sub">보충 없는 날 <b>0.63</b></div></div>
+    <div class="stat"><div class="lab">마감 주간에 빈 비율</div><div class="val">0.63</div><div class="sub">평소 주간 <b>0.44</b></div></div>
+  </div>
+  <p class="bal" style="font-size:7.8pt;color:var(--muted);margin-top:2mm">AUC는 "빈 날"과 "남은 날"을 하나씩 뽑았을 때 빈 날에 더 높은 확률을 준 비율로, 0.5가 무작위, 1.0이 완벽입니다.</p>
+
+  <h3><span class="n">A</span>검증 30일 결과</h3>
+  <table>
+    <tr><th>방법</th><th>내용</th><th class="num">AUC</th></tr>
+    <tr><td>요일 평균</td><td>학습 기간의 요일별 빈 비율을 그대로 확률로 사용</td><td class="num">0.687</td></tr>
+    <tr><td>보충일 규칙</td><td>보충일(월·목)이면 남고, 아니면 빈다고 예측</td><td class="num">0.700</td></tr>
+    <tr class="hl"><td><b>로지스틱 회귀</b></td><td>보충일 · 회의 수 · 마감 주간 · 기온 · 금요일 5개 변수</td><td class="num"><b>0.804</b></td></tr>
+  </table>
+
+  <h3><span class="n">B</span>핵심 메시지</h3>
+  <div class="msg">
+    <div><b>보충이 가장 큰 변수</b>아침에 채운 날은 빈 비율이 0.29로, <span class="nw">채우지 않은 날</span> 0.63의 절반 이하입니다.</div>
+    <div><b>사람이 몰리면 빈다</b>마감 주간과 회의가 많은 날이 빌 확률을 올립니다. <span class="nw">회의 5개 이상</span>인 날은 0.89입니다.</div>
+    <div><b>날씨는 거의 무관</b>기온 계수는 −0.076으로 다섯 변수 중 가장 작습니다.</div>
+  </div>
+  <div class="foot"><span>간식 서랍 고갈 예측 · 예시 보고서</span><span>02</span></div>
+</section>
+
+<section class="page">
+  <div class="kicker"><b>02</b> &nbsp;데이터</div>
+  <h2>120영업일, 변수 다섯 개</h2>
+  <p class="lede">이 보고서는 report 스킬의 예시입니다. 데이터는 <span class="nw">시드를 고정해</span> 만든 가상 데이터이며 실제 사무실 기록이 아닙니다.</p>
+  <table>
+    <tr><th style="width:24%">변수</th><th style="width:44%">정의</th><th>값</th></tr>
+    <tr><td><b>empty_by_3pm</b> (타깃)</td><td>오후 3시 전에 서랍이 비면 1</td><td>전체 비율 0.49</td></tr>
+    <tr><td><b>restock</b></td><td>그날 아침에 서랍을 채웠는가</td><td>월 · 목에 1</td></tr>
+    <tr><td><b>meetings</b></td><td>오후 회의 수</td><td>0~7개, 평균 약 2개</td></tr>
+    <tr><td><b>deadline_week</b></td><td>4주에 한 번 오는 마감 주간</td><td><span class="nw">120일 중 30일</span></td></tr>
+    <tr><td><b>temp_c</b></td><td>그날 기온</td><td>6.8~30.6°C</td></tr>
+    <tr><td><b>weekday</b></td><td>요일 (월~금)</td><td>모델에는 금요일 여부만 사용</td></tr>
+  </table>
+  <figure>
+    <img src="figures/f1_weekday.png" alt="요일별 빈 비율">
+    <figcaption><b>그림 1</b>요일별로 서랍이 빈 비율. 보충일인 월(0.25)·목(0.33)이 낮고, 금요일(0.71)이 가장 높다.</figcaption>
+  </figure>
+  <div class="note">
+    <div class="t">왜 가상 데이터인가</div>
+    <p>예시는 누구나 그대로 다시 만들 수 있어야 합니다. <code>analysis.py</code>는 고정 시드로 같은 데이터를 만들고, 같은 숫자와 그림을 다시 냅니다. 데이터를 만드는 규칙도 코드에 그대로 있으므로, 모델이 그 규칙을 얼마나 되찾는지도 볼 수 있습니다.</p>
+  </div>
+  <div class="foot"><span>간식 서랍 고갈 예측 · 예시 보고서</span><span>03</span></div>
+</section>
+
+<section class="page">
+  <div class="kicker"><b>03</b> &nbsp;무엇이 서랍을 비우나</div>
+  <h2>보충은 막고, 사람은 비운다</h2>
+  <p class="lede">계수의 부호가 직관과 맞습니다. 보충일은 빌 확률을 내리고, 회의 · 마감 주간 · 금요일은 올립니다.</p>
+  <figure>
+    <img src="figures/f3_coef.png" alt="표준화 계수">
+    <figcaption><b>그림 2</b>표준화 계수. 클레이 막대는 빌 확률을 낮추는 쪽이다.</figcaption>
+  </figure>
+  <figure>
+    <img src="figures/f2_meetings.png" alt="회의 수별 빈 비율">
+    <figcaption><b>그림 3</b>오후 회의 수별 빈 비율과 일수. 0~4개 사이는 들쭉날쭉하고, 5개 이상에서 뚜렷하게 오른다.</figcaption>
+  </figure>
+  <table>
+    <tr><th style="width:24%">변수</th><th class="num">계수</th><th>해석</th></tr>
+    <tr><td><b>보충일</b></td><td class="num">−0.594</td><td>가장 큰 영향. 채운 날은 오후까지 남는다</td></tr>
+    <tr><td><b>마감 주간</b></td><td class="num">0.421</td><td>야근과 간식 소비가 함께 늘어난다</td></tr>
+    <tr><td><b>오후 회의 수</b></td><td class="num">0.395</td><td>회의 간식으로 한꺼번에 빠진다</td></tr>
+    <tr><td><b>금요일</b></td><td class="num">0.328</td><td>주 마지막 날, 보충 뒤 가장 오래 지난 날</td></tr>
+    <tr><td><b>기온</b></td><td class="num">−0.076</td><td>거의 영향 없음</td></tr>
+  </table>
+  <div class="foot"><span>간식 서랍 고갈 예측 · 예시 보고서</span><span>04</span></div>
+</section>
+
+<section class="page">
+  <div class="kicker"><b>04</b> &nbsp;검증과 결과</div>
+  <h2>단순 규칙보다 AUC가 0.1 높다</h2>
+  <p class="lede">시간 순서를 지켜 앞 90일로 학습하고 마지막 30일로만 채점했습니다. 표준화 기준도 학습 90일로만 계산했습니다.</p>
+  <figure>
+    <img src="figures/f4_auc.png" alt="AUC 비교">
+    <figcaption><b>그림 4</b>검증 30일 AUC. 점선은 무작위(0.5).</figcaption>
+  </figure>
+  <div class="grid2">
+    <div>
+      <h3 style="margin-top:0"><span class="n">A</span>확률 0.5 기준 판정</h3>
+      <table>
+        <tr><th></th><th class="num">실제로 빔</th><th class="num">실제로 남음</th></tr>
+        <tr><td><b>빈다고 예측</b></td><td class="num">10</td><td class="num">5</td></tr>
+        <tr><td><b>남는다고 예측</b></td><td class="num">5</td><td class="num">10</td></tr>
+      </table>
+      <p style="font-size:8.4pt">30일 중 20일을 맞혀 정확도는 0.667입니다.</p>
+    </div>
+    <div>
+      <h3 style="margin-top:0"><span class="n">B</span>운영에 쓴다면</h3>
+      <ul>
+        <li>빌 확률이 높은 날 점심 무렵 한 번 더 채우면, 빈 15일 중 10일을 미리 막을 수 있습니다.</li>
+        <li>그 대신 5일은 필요 없이 채웁니다. <span class="nw">간식 재고 비용</span>과 비교해 기준선을 정합니다.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="note">
+    <div class="t">검증 설계</div>
+    <p>섞어서 나누면 같은 주의 비슷한 날이 학습과 검증에 함께 들어가 점수가 부풀려집니다. 그래서 <span class="nw">앞 90일 학습</span>, <span class="nw">뒤 30일 검증</span>으로 시간 순서를 지켰습니다.</p>
+  </div>
+  <div class="foot"><span>간식 서랍 고갈 예측 · 예시 보고서</span><span>05</span></div>
+</section>
+
+<section class="page">
+  <div class="kicker"><b>05</b> &nbsp;한계와 재현</div>
+  <h2>30일 검증은 작고, 데이터는 가상이다</h2>
+  <h3 style="margin-top:3mm"><span class="n">A</span>한계</h3>
+  <table>
+    <tr><th style="width:26%">한계</th><th>내용</th></tr>
+    <tr><td><b>작은 검증 표본</b></td><td>검증은 30일뿐이라 AUC가 몇 날의 결과로 크게 흔들립니다. 0.804는 대략적인 수준으로만 읽습니다.</td></tr>
+    <tr><td><b>가상 데이터</b></td><td>변수 효과는 데이터를 만든 규칙에서 나왔습니다. 실제 사무실에는 그대로 적용되지 않습니다.</td></tr>
+    <tr><td><b>빠진 변수</b></td><td>방문객, 휴가자 수, 간식 종류처럼 실제로 중요할 수 있는 변수는 없습니다.</td></tr>
+  </table>
+
+  <h3><span class="n">B</span>재현 방법</h3>
+<pre>cd report/examples/snack-drawer
+python3 analysis.py      <span class="c"># data.csv, results.json, figures/*.png 생성 (numpy, matplotlib)</span>
+python3 ../../scripts/report_tool.py check report.html --breaks
+python3 ../../scripts/report_tool.py render report.html</pre>
+
+  <h3><span class="n">C</span>이 예시가 보여주는 것</h3>
+  <table>
+    <tr><th style="width:30%">report 스킬 요소</th><th>이 예시에서</th></tr>
+    <tr><td><b>결론형 제목</b></td><td>쪽마다 제목만 읽어도 결론이 이어진다</td></tr>
+    <tr><td><b>숫자 카드 · 강조 행</b></td><td>2쪽의 세 숫자와 최종 모델 행</td></tr>
+    <tr><td><b>그림 스타일</b></td><td>analysis.py에 복사한 종이색 · 먹색 · 클레이 팔레트</td></tr>
+    <tr><td><b>자동 검사</b></td><td>넘침 0건, 짧은 꼬리 줄 0건으로 통과한 상태로 둔다</td></tr>
+  </table>
+  <div class="foot"><span>간식 서랍 고갈 예측 · 예시 보고서</span><span>06</span></div>
+</section>
+
+</body>
+</html>

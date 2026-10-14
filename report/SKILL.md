@@ -16,6 +16,7 @@ description: 분석·과제·프로젝트 결과를 A4 쪽 고정형 HTML 보고
 | `assets/report_template.html` | 시작 템플릿. 표지 · 요약 · 본문 · 재현 쪽 예시와 전체 CSS |
 | `assets/mpl_style.py` | 보고서와 같은 톤의 그림 색 · 스타일 |
 | `scripts/report_tool.py` | `check`: 쪽 넘침 · 짧은 꼬리 줄 · 줄바꿈 지점 검사. `render`: PDF와 쪽별 PNG 미리보기 |
+| `examples/snack-drawer/` | 완성 예시. 시드 고정 가상 데이터로 만든 6쪽 보고서와 그 분석 코드 · 그림 · PDF |
 
 `report_tool.py`는 표준 라이브러리만 쓰고, 헤드리스로 실행할 수 있는 Chromium 계열 브라우저가 필요하다. PNG 미리보기에는 PDF를 이미지로 바꾸는 명령줄 도구가 필요하다. 없으면 PDF를 직접 열어 본다.
 
