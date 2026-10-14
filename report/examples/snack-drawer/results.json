@@ -32,5 +32,10 @@
     "수": 0.542,
     "목": 0.333,
     "금": 0.708
-  }
+  },
+  "empty_rate_meetings_5plus": 0.889,
+  "days_meetings_5plus": 9,
+  "test_empty_days": 15,
+  "test_not_empty_days": 15,
+  "auc_gain_vs_restock_rule": 0.104
 }

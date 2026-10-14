@@ -27,6 +27,10 @@ polish    SCRIPT.md          진행 메모 + 화면에 맞춘 문구 조정
 FLOW 와 SCRIPT 는 축이 다르다. **FLOW 는 장의 배열(가로), SCRIPT 는 장 안의 전개(세로)** 다.
 FLOW 가 *무엇을 주장하는가* 라면 SCRIPT 는 *어떻게 믿게 만드는가* 다.
 
+## 보고서가 먼저 있으면
+
+`report → presentation`: 원본 HTML·텍스트와 수치 근거를 먼저 읽고, FLOW에 보고서 쪽 번호를 연결한다. 상세 표는 보고서에 남기고 발표 주장을 고른다 ([plan](references/plan.md)). 그림은 덱용 제목 없는 판본을 우선 복사하고 표시 글자 크기를 확인한다 ([assets](references/assets.md)). 검증 때 `deck_numbers.py`로 화면의 텍스트 숫자를 근거 JSON·CSV와 대조한다. 이미지 속 숫자와 주장·단위의 정합성은 별도로 확인한다.
+
 ## Route the request
 
 Load only the reference needed for the current operation:
@@ -48,7 +52,7 @@ If a request spans several operations, follow the stage gates below and load eac
 3. Narrate pass 2 produces 완성 발화체 + 화면/말 구분, then stops.
 4. Build requires an approved `SCRIPT.md` and produces `presentation.html` plus project-local assets.
 5. Verify reports review findings before applying judgment-based revisions. Deterministic errors may be fixed within an authorized build request.
-6. Export runs only when the user requests a PDF, and never overwrites the previous PDF.
+6. Export runs when the user requests a PDF or verify needs a review PDF; follow the export numbering rules and never overwrite the previous PDF.
 7. Polish runs after the deck is settled.
 
 Do not treat approval of one stage as permission for later stages.
@@ -57,10 +61,13 @@ Do not treat approval of one stage as permission for later stages.
 
 ## Bundled resources
 
+- See [examples/snack-drawer/](examples/snack-drawer/) for a complete seven-slide report-to-presentation example with FLOW, SCRIPT, reused figures, HTML, and PDF.
+
 - Copy [assets/starter/presentation.html](assets/starter/presentation.html) into the project when starting a harness deck. Copy the bundled files from `assets/starter/assets/` that the chosen slides actually use into the project's `assets/` directory.
 - Use [references/layout-budget.md](references/layout-budget.md) when choosing slide patterns or reducing crowded content.
 - Consult [references/failure-catalog.md](references/failure-catalog.md) when a verification failure needs its original rationale.
 - Run `python3 <skill-dir>/scripts/deck_verify.py <deck.html>` for deck validation.
+- Run `python3 <skill-dir>/scripts/deck_numbers.py <deck.html> <results.json> [data.csv ...] --ignore-pages --ignore-years --ignore-times` when numeric evidence accompanies the deck. See [verify](references/verify.md) for limits.
 - Run `python3 <skill-dir>/scripts/deck_export.py <deck.html> [-o out.pdf]` for PDF export.
 - Run `python3 <skill-dir>/scripts/deck_selftest.py [--fast]` only when changing the template or verifier itself.
 

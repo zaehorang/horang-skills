@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
 import shutil
 import subprocess
@@ -26,6 +25,11 @@ from pathlib import Path
 
 CANVAS_W, CANVAS_H = 1280, 720
 FONT_FLOOR_RATIO = 0.02          # 슬라이드 높이의 2.0%
+# 기본 하단 패딩(약 5%)보다 넉넉한 10%: 중간 행으로 밀린 푸터를 탐지한다.
+FOOT_GAP_RATIO = 0.10
+# 본문 높이의 35%: 가운데 정렬로 위·아래에 나뉜 여유도 합산한다.
+# 예시의 절반가량 빈 본문을 잡되 통상적인 간격·패딩은 허용하며, 의도적 여백은 정보로 남긴다.
+EMPTY_CONTENT_RATIO = 0.35
 FONT_FLOOR_PX = CANVAS_H * FONT_FLOOR_RATIO   # 14.4px
 
 CHROME_CANDIDATES = [
@@ -102,29 +106,41 @@ def check_fixed_font_sizes(src: str, f: Findings) -> None:
                   f"line {line}")
 
 
-def check_dead_css(src: str, f: Findings) -> None:
-    """죽은 셀렉터는 색 별칭이 이중으로 싸우는 사고의 전조다."""
-    style = re.search(r"<style>(.*?)</style>", src, re.S)
-    if not style:
-        return
-    css = style.group(1)
-    # <style> 바깥 전체를 본다. class="service ${s.state}" 처럼 JS 템플릿 리터럴로
-    # 만들어지는 클래스는 class 속성만 훑어서는 못 잡는다. 이름이 어디에라도
-    # 등장하면 사용된 것으로 본다 — 오탐보다 미탐이 낫다.
-    outside = src[: src.index("<style>")] + src[src.index("</style>") :]
-    used_classes = set(re.findall(r"[A-Za-z][A-Za-z0-9_-]*", outside))
-    used_classes.update({"active", "past"})
+def strip_comments(src: str) -> str:
+    """실제 참조가 아닌 HTML·CSS 주석을 검사에서 제외한다."""
+    src = re.sub(r"<!--.*?-->", "", src, flags=re.S)
+    return re.sub(r"<(style|script)\b[^>]*>.*?</\1>",
+                  lambda m: re.sub(r"/\*.*?\*/", "", m.group(), flags=re.S),
+                  src, flags=re.S | re.I)
 
-    declared = set(re.findall(r"\.([a-z][a-z0-9-]+)", css))
-    noise = {"png", "jpg", "jpeg", "svg", "webp", "html", "min", "max"}
-    dead = sorted(declared - used_classes - noise)
-    if dead:
+
+def css_classes(src: str) -> set[str]:
+    css = "\n".join(re.findall(r"<style\b[^>]*>(.*?)</style>", strip_comments(src), re.S | re.I))
+    # 선언 값(파일 확장자·소수 등)이 아닌 규칙의 셀렉터에서만 수집한다.
+    return {name for selector in re.findall(r"([^{}]+)\{", css)
+            for name in re.findall(r"\.([A-Za-z_][\w-]*)", selector)}
+
+
+def check_dead_css(src: str, f: Findings) -> None:
+    """스타터의 재사용 패턴과 사용자가 추가한 미사용 클래스를 구분한다."""
+    src = strip_comments(src)
+    outside = re.sub(r"<style\b[^>]*>.*?</style>", "", src, flags=re.S | re.I)
+    used = set(re.findall(r"[A-Za-z_][\w-]*", outside)) | {"active", "past"}
+    dead = css_classes(src) - used
+    starter = Path(__file__).resolve().parent.parent / "assets/starter/presentation.html"
+    template = css_classes(starter.read_text(encoding="utf-8")) if starter.exists() else set()
+    patterns = dead & template
+    custom = sorted(dead - template)
+    if patterns:
+        f.add("info", "template-css", f"템플릿 패턴 미사용 {len(patterns)}개")
+    if custom:
         f.add("warn", "dead-css",
-              f"쓰이지 않는 셀렉터 {len(dead)}개: {', '.join(dead[:12])}{' …' if len(dead) > 12 else ''}")
+              f"쓰이지 않는 셀렉터 {len(custom)}개: {', '.join(custom[:12])}{' …' if len(custom) > 12 else ''}")
 
 
 def check_asset_paths(src: str, path: Path, f: Findings) -> None:
     """덱 폴더 밖을 가리키면 폴더만 압축해 넘길 때 이미지가 깨진다."""
+    src = strip_comments(src)
     base = path.parent
     for m in re.finditer(r'(?:src="|url\(")([^"]+\.(?:png|jpg|jpeg|webp|svg))"?', src):
         ref = m.group(1)
@@ -158,7 +174,7 @@ def check_legend_consistency(src: str, f: Findings) -> None:
     """범례 색과 카드 색이 반대면 발표 중에 반드시 질문이 나온다."""
     if 'class="legend"' not in src:
         return
-    outside = src[: src.index("<style>")] + src[src.index("</style>") :]
+    outside = re.sub(r"<style\b[^>]*>.*?</style>", "", strip_comments(src), flags=re.S | re.I)
     pairs = [("badge plan", "proposed"), ("badge next", "backlog")]
     for badge, state in pairs:
         if badge in src and state not in outside:
@@ -200,7 +216,7 @@ f.src = '__DECK__';
 document.body.appendChild(f);
 setTimeout(() => send({error: 'timeout: 덱이 로드되지 않았다'}), 20000);
 f.onload = () => setTimeout(() => {
-  const out = {overflow: [], small: [], canvas: null, slides: 0};
+  const out = {overflow: [], small: [], foot: [], empty: [], canvas: null, slides: 0};
   try {
     const d = f.contentDocument;
     const deck = d.querySelector('.deck');
@@ -210,9 +226,48 @@ f.onload = () => setTimeout(() => {
     slides.forEach((s, i) => {
       const prev = s.className;
       s.classList.add('active');
+      const bounds = s.getBoundingClientRect();
+      const foot = s.querySelector('.foot');
+      if (foot && foot.getClientRects().length) {
+        const gap = (bounds.bottom - foot.getBoundingClientRect().bottom) / bounds.height;
+        if (gap >= __FOOT_GAP__) out.foot.push({slide: i + 1, ratio: gap});
+      }
       const c = s.querySelector('.content');
       if (c) {
         const ov = Math.round(c.scrollHeight - c.clientHeight);
+        // 레이아웃 래퍼 전체 높이 대신 글자·미디어·실제로 칠해진 카드 박스를 잰다.
+        const area = c.getBoundingClientRect();
+        const visible = el => el.getClientRects().length &&
+          getComputedStyle(el).visibility !== 'hidden' &&
+          getComputedStyle(el).opacity !== '0' &&
+          !el.closest('script,style,template');
+        const rects = [];
+        for (const el of c.querySelectorAll('*')) {
+          if (!visible(el)) continue;
+          const style = getComputedStyle(el);
+          const painted = (style.backgroundColor !== 'rgba(0, 0, 0, 0)' &&
+                           style.backgroundColor !== 'transparent') ||
+            style.backgroundImage !== 'none' ||
+            ['Top','Right','Bottom','Left'].some(side =>
+              parseFloat(style['border' + side + 'Width']) > 0 &&
+              !['none','hidden'].includes(style['border' + side + 'Style']));
+          if (painted || el.matches('img,svg,canvas,video')) rects.push(el.getBoundingClientRect());
+        }
+        const walker = d.createTreeWalker(c, NodeFilter.SHOW_TEXT);
+        while (walker.nextNode()) {
+          const node = walker.currentNode;
+          if (!node.textContent.trim() || !visible(node.parentElement)) continue;
+          const range = d.createRange();
+          range.selectNodeContents(node);
+          rects.push(...range.getClientRects());
+        }
+        const top = rects.length ? Math.max(area.top, Math.min(...rects.map(r => r.top))) : area.top;
+        const bottom = rects.length ? Math.min(area.bottom, Math.max(...rects.map(r => r.bottom))) : area.top;
+        const above = Math.max(0, top - area.top) / area.height;
+        const below = Math.max(0, area.bottom - bottom) / area.height;
+        const gap = above + below;
+        if (area.height > 0 && gap >= __EMPTY_CONTENT__)
+          out.empty.push({slide: i + 1, ratio: gap, above, below});
         if (ov > 2) out.overflow.push({slide: i + 1, title: s.dataset.title || '', px: ov});
       }
       s.querySelectorAll('*').forEach(el => {
@@ -236,7 +291,7 @@ def find_chrome() -> str | None:
     return None
 
 
-def _serve(directory: Path):
+def _serve(directory: Path, probe_html: str):
     """덱 폴더를 임시 HTTP 서버로 띄우고 /__result POST 를 받는다.
 
     file:// 대신 http:// 를 쓰는 이유는 iframe contentDocument 접근이
@@ -250,6 +305,17 @@ def _serve(directory: Path):
     class Handler(SimpleHTTPRequestHandler):
         def __init__(self, *a, **kw):
             super().__init__(*a, directory=str(directory), **kw)
+
+        def do_GET(self):
+            if self.path == "/__deck_probe.html":
+                payload = probe_html.encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(payload)))
+                self.end_headers()
+                self.wfile.write(payload)
+            else:
+                super().do_GET()
 
         def do_POST(self):
             n = int(self.headers.get("Content-Length", 0))
@@ -278,18 +344,17 @@ def run_dynamic(path: Path, f: Findings) -> dict | None:
         f.add("warn", "render", "크롬을 찾지 못해 렌더 검사를 건너뛴다. 정적 검사만 수행했다.")
         return None
 
-    probe = path.parent / f".deck_probe_{os.getpid()}.html"
-    probe.write_text(
+    probe_html = (
         PROBE_PAGE.replace("__FLOOR__", str(FONT_FLOOR_PX))
+                  .replace("__FOOT_GAP__", str(FOOT_GAP_RATIO))
+                  .replace("__EMPTY_CONTENT__", str(EMPTY_CONTENT_RATIO))
                   .replace("__W__", str(CANVAS_W))
                   .replace("__H__", str(CANVAS_H))
-                  .replace("__DECK__", path.name),
-        encoding="utf-8")
+                  .replace("__DECK__", path.name))
 
     try:
-        srv, box = _serve(path.parent)
+        srv, box = _serve(path.parent, probe_html)
     except OSError as exc:
-        probe.unlink(missing_ok=True)
         f.add("warn", "render",
               f"로컬 렌더 서버를 열지 못해 정적 검사만 수행했다: {exc}")
         return None
@@ -301,7 +366,7 @@ def run_dynamic(path: Path, f: Findings) -> dict | None:
             [chrome, "--headless=new", "--disable-gpu", "--no-sandbox",
              f"--user-data-dir={tmpdir}",
              f"--window-size={CANVAS_W},{CANVAS_H}",
-             f"http://127.0.0.1:{port}/{probe.name}"],
+             f"http://127.0.0.1:{port}/__deck_probe.html"],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         deadline = time.time() + 45
         while time.time() < deadline and "raw" not in box:
@@ -314,7 +379,6 @@ def run_dynamic(path: Path, f: Findings) -> dict | None:
             except subprocess.TimeoutExpired:
                 proc.kill()
         srv.shutdown()
-        probe.unlink(missing_ok=True)
         shutil.rmtree(tmpdir, ignore_errors=True)
 
     if "raw" not in box:
@@ -339,6 +403,14 @@ def run_dynamic(path: Path, f: Findings) -> dict | None:
               f"{o['slide']}장{(' ' + o['title']) if o['title'] else ''}: 내용이 {o['px']}px 넘친다. "
               f"overflow:hidden 이라 조용히 잘린다.")
 
+    for item in data.get("foot", []):
+        f.add("warn", "foot-position",
+              f"{item['slide']}장: 푸터 아래가 캔버스 하단에서 {item['ratio']:.0%} 떨어져 있다 (기준 {FOOT_GAP_RATIO:.0%}).")
+    for item in data.get("empty", []):
+        f.add("info", "empty-content",
+              f"{item['slide']}장: 본문 영역의 {item['ratio']:.0%}가 비어 있다 "
+              f"(위 {item['above']:.0%} · 아래 {item['below']:.0%}, 기준 {EMPTY_CONTENT_RATIO:.0%}). 의도한 여백인지 확인할 것.")
+
     seen = set()
     for sm in data.get("small", []):
         key = (sm["slide"], sm["sel"])
@@ -349,8 +421,8 @@ def run_dynamic(path: Path, f: Findings) -> dict | None:
               f"{sm['slide']}장 '{sm['sel']}' 이 {sm['px']:.0f}px. "
               f"하한 {FONT_FLOOR_PX:g}px 미만이라 뒷줄에서 안 읽힌다.")
 
-    if not data.get("overflow") and not data.get("small"):
-        f.add("info", "render", f"렌더 검사 통과 — {data.get('slides')}장, 캔버스 {data.get('canvas')}")
+    status = "렌더 검사 완료 — 오류·경고 확인 필요" if f.errors or f.warnings else "렌더 검사 통과"
+    f.add("info", "render", f"{status} — {data.get('slides')}장, 캔버스 {data.get('canvas')}")
     return data
 
 

@@ -18,6 +18,8 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import json
+from decimal import Decimal
 import shutil
 import sys
 import tempfile
@@ -40,6 +42,7 @@ class Case:
     why: str
     expect: set[str] = field(default_factory=set)   # 걸려야 하는 검사 코드
     edits: list[tuple[str, str]] = field(default_factory=list)
+    absent: set[str] = field(default_factory=set)
     render: bool = False                            # 크롬 렌더가 필요한가
 
     def build(self, src: str) -> str:
@@ -54,6 +57,38 @@ RESPONSIVE_BLOCK = """    @media (max-width:900px){ .split{grid-template-columns
     @media print{"""
 
 CASES = [
+    Case("asset-path/comments", "주석 속 경로는 참조가 아니다",
+         absent={"asset-path"},
+         edits=[("</style>", '/* url("assets/MISSING.png") */</style>'),
+                ("</head>", '<!-- <img src="assets/MISSING_TOO.png"> --></head>')]),
+    Case("dead-css/template", "스타터 미사용 클래스는 정보로만 묶는다",
+         expect={"template-css"}, absent={"dead-css"},
+         edits=[('class="cover-visual-wrap"', 'class="removed-wrap"')]),
+    Case("foot-position", "푸터가 캔버스 중간에 뜨면 경고한다",
+         expect={"foot-position"},
+         edits=[("</style>", '.slide .foot{grid-area:auto;position:absolute;top:300px;bottom:auto;left:54px;right:54px}</style>')],
+         render=True),
+    Case("empty-content/centered", "가운데 정렬 본문의 위·아래 여유를 합산한다",
+         expect={"empty-content"},
+         edits=[("</style>", '.slide .content{display:flex!important;align-items:center;justify-content:center}.slide .content>*{display:none!important}.slide .content::before{content:none}</style>'),
+                ('</style>', '.slide .content>p.test-visible{display:block!important}</style>'),
+                ('<div class="content">', '<div class="content"><p class="test-visible">짧은 본문</p>')],
+         render=True),
+    Case("empty-content/card", "글자가 짧아도 큰 카드 박스는 내용에 포함한다",
+         edits=[("</style>", '.slide .content{display:flex!important;align-items:center;justify-content:center}.slide .content>*{display:none!important}.slide .content>article.test-card{display:block!important;height:80%;width:100%;background:var(--card)}</style>'),
+                ('<div class="content">', '<div class="content"><article class="test-card">짧은 본문</article>')],
+         render=True),
+    Case("asset-path/body-glob", "본문의 assets/*부터 다음 CSS 주석까지 지우지 않는다",
+         expect={"asset-path"},
+         edits=[('<div class="content">', '<div class="content"><p>assets/*</p><img src="assets/MISSING.png"><style>/* comment */</style>')]),
+    Case("legend/style-attributes", "속성이 있는 style 태그도 안전하게 제외한다",
+         expect={"legend"},
+         edits=[('<style>', '<style type="text/css">'),
+                ('<div class="content">', '<div class="content"><div class="legend"><span class="badge plan">제안</span></div>'),
+                ('class="service proposed"', 'class="service confirmed"'),
+                ('class="service proposed"', 'class="service confirmed"')]),
+    Case("render-baseline", "정상 템플릿 푸터에는 경고하지 않는다",
+         absent={"foot-position"}, render=True),
     Case("ok", "손대지 않은 템플릿은 오류가 없어야 한다"),
 
     Case("print-isolation",
@@ -91,7 +126,7 @@ CASES = [
     Case("asset-path/missing",
          "없는 파일을 참조하면 빈 칸이 나간다",
          expect={"asset-path"},
-         edits=[("assets/COVER.png", "assets/NOPE.png")]),
+         edits=[('<div class="content', '<img src="assets/NOPE.png"><div class="content')]),
 
     Case("asset-path/outside",
          "덱 폴더 밖을 참조하면 폴더만 옮길 때 깨진다",
@@ -145,11 +180,29 @@ def run_case(case: Case, src: str, workdir: Path, use_render: bool) -> tuple[boo
     dv.check_legend_consistency(text, f)
     dv.check_page_numbers(text, f)
     if case.render and use_render:
-        dv.run_dynamic(deck, f)
+        render_data = dv.run_dynamic(deck, f)
+
+    if case.name == "empty-content/centered" and use_render:
+        first = next((item for item in (render_data or {}).get("empty", []) if item["slide"] == 1), None)
+        assert first and first["above"] > 0 and first["below"] > 0, render_data
+    if case.name == "empty-content/card" and use_render:
+        assert render_data and not any(item["slide"] == 1 for item in render_data.get("empty", [])), render_data
+
+    if case.name == "foot-position" and use_render:
+        assert not any("렌더 검사 통과" in i["message"] for i in f.items), f.items
 
     fired = {i["check"] for i in f.items if i["level"] in ("error", "warn", "info")}
     errors = {i["check"] for i in f.items if i["level"] == "error"}
 
+    expected_levels = {"template-css": "info", "empty-content": "info", "foot-position": "warn", "dead-css": "warn"}
+    for item in f.items:
+        if item["check"] in expected_levels and item["level"] != expected_levels[item["check"]]:
+            return False, f"검사 심각도가 다르다: {item}"
+    forbidden = case.absent & fired
+    if forbidden:
+        return False, f"나오면 안 되는 검사: {sorted(forbidden)}"
+    if case.render and use_render and ("render" in {i["check"] for i in f.warnings}):
+        return False, "렌더 검사를 실행하지 못했다"
     missing = case.expect - fired
     if missing:
         return False, f"기대한 검사가 걸리지 않았다: {', '.join(sorted(missing))}"
@@ -165,6 +218,48 @@ def run_case(case: Case, src: str, workdir: Path, use_render: bool) -> tuple[boo
         return False, f"손대지 않은 템플릿에서 오류: {', '.join(sorted(errors))}"
 
     return True, ""
+
+
+def test_numbers(workdir: Path) -> None:
+    spec = importlib.util.spec_from_file_location("deck_numbers", ROOT / "scripts/deck_numbers.py")
+    dn = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(dn)
+    j = workdir / "results.json"
+    c = workdir / "data.csv"
+    j.write_text(json.dumps({"rate": 0.292, "nested": [0.804, -0.594], "flag": True}), encoding="utf-8")
+    c.write_text("value,label\n120,other\n1.25,unused\n", encoding="utf-8")
+    values = dn.load_evidence([j, c])
+    assert Decimal("120") in values and Decimal("1") not in values
+    src = """<style>.x{top:999px}</style><!-- 888 -->
+    <section class="slide"><p>0.29 80.4% −0.59 120 1,200</p>
+    <script>777</script><span hidden>666</span><span style="display:none">555</span>
+    <span class="page">01 / 02</span><p>2026년 오후 3시 05:30 40초 9쪽</p></section>
+    <section class="slide"><p>0.31 1.25</p></section>"""
+    rows = dn.audit(src, values, ignore_pages=True, ignore_years=True, ignore_times=True)
+    assert rows[0]["unsupported"] == ["1,200"], rows
+    assert rows[1]["unsupported"] == ["0.31"], rows
+    raw = dn.audit(src, values)
+    assert "2026" in raw[0]["unsupported"] and "9" in raw[0]["unsupported"], raw
+    assert dn.audit(src, values, ignore_pages=True, ignore_years=True, ignore_times=True,
+                    ignore_regex=r"1,200")[0]["unsupported"] == []
+    assert dn.supported("29%", {Decimal("0.292")})
+    assert dn.audit('<section class="slide">확률0.29·회의999회</section>', values)[0]["unsupported"] == ["999"]
+    assert not dn.supported("0", {Decimal("0.292")})
+    assert dn.supported("0.63", {Decimal("0.625")})
+    assert not dn.supported("0.30", {Decimal("0.292")})
+
+    def numbers(text, **options):
+        return dn.audit('<section class="slide">' + text + '</section>', set(), **options)[0]['numbers']
+
+    assert numbers('<p>AUC는 0.999.</p><p>총 777.</p>') == ['0.999', '777']
+    assert numbers('Sprint-1 COVID-19 GPT-4 -2 −3 +5 A-6.25') == ['1', '19', '4', '-2', '−3', '+5', '6.25']
+    assert numbers('0.29 / 0.63 10 / 15', ignore_pages=True) == ['0.29', '0.63', '10', '15']
+    assert numbers('<footer class="foot"><span>02 / 07</span><span>0.29 / 0.63</span></footer>',
+                   ignore_pages=True) == ['0.29', '0.63']
+    assert numbers('2·3·4쪽 2, 3쪽 2~4쪽 2-4쪽 6장 7페이지', ignore_pages=True) == []
+    assert numbers('3시스템 7분석 8시간표 9초기 오후 3시 7분 40초 1.5시간 05:30',
+                   ignore_times=True) == ['3', '7', '8', '9']
+    assert numbers('2024년도 2025년 2026 2023년대', ignore_years=True) == ['2023']
 
 
 def main() -> int:
@@ -183,6 +278,14 @@ def main() -> int:
         workdir = Path(tmp)
         if ASSETS.exists():
             shutil.copytree(ASSETS, workdir / "assets")
+
+        try:
+            test_numbers(workdir)
+            print("  ✓  numbers                  추출·복수 근거·반올림·백분율·제외 옵션")
+            passed += 1
+        except (AssertionError, ValueError) as exc:
+            print(f"  ✗  numbers                  {exc}")
+            failed += 1
 
         for case in CASES:
             if case.render and args.fast:
