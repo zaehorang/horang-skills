@@ -2,7 +2,7 @@
 
 데이터는 시드를 고정한 가상 데이터다. 실제 사무실 기록이 아니다.
 실행: python3 analysis.py   (numpy, matplotlib 필요)
-출력: data.csv, results.json, figures/*.png
+출력: data.csv, results.json, figures/*.png (보고서용), figures/deck/*.png (덱용, 제목 없음)
 """
 import csv
 import json
@@ -15,7 +15,8 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 FIG = HERE / "figures"
-FIG.mkdir(exist_ok=True)
+DECK = FIG / "deck"          # 발표 덱용: 제목 없는 판본 (덱은 슬라이드 제목이 결론을 말한다)
+DECK.mkdir(parents=True, exist_ok=True)
 
 # ---- 그림 스타일: report 스킬의 assets/mpl_style.py 를 복사한 것 ----
 PAPER, INK, MUTED, RULE = "#FAF9F5", "#141413", "#5E5D59", "#C9C7BE"
@@ -95,21 +96,29 @@ res = {
                   "fn": int(((pred == 0) & (y_te == 1)).sum()), "tn": int(((pred == 0) & (y_te == 0)).sum())},
     "coef": {n: round(float(c), 3) for n, c in zip(names, w)},
     "by_weekday": {DAYS[d]: round(float(empty[weekday == d].mean()), 3) for d in range(5)},
+    "empty_rate_meetings_5plus": round(float(empty[meetings >= 5].mean()), 3),
+    "days_meetings_5plus": int((meetings >= 5).sum()),
+    "test_empty_days": int(y_te.sum()),
+    "test_not_empty_days": int((1 - y_te).sum()),
 }
+res["auc_gain_vs_restock_rule"] = round(res["auc"]["로지스틱 회귀"] - res["auc"]["보충일 규칙"], 3)
 (HERE / "results.json").write_text(json.dumps(res, ensure_ascii=False, indent=2), encoding="utf-8")
 
 # ---- 3. 그림 ----
 def save(fig, name):
-    fig.tight_layout(); fig.savefig(FIG / name); plt.close(fig)
+    fig.tight_layout(); fig.savefig(FIG / name)
+    for ax in fig.axes:          # 덱용 판본: 제목만 지우고 같은 그림을 한 벌 더
+        ax.set_title("")
+    fig.tight_layout(); fig.savefig(DECK / name); plt.close(fig)
 
 # 그림 1: 요일별 동남 비율
 fig, ax = plt.subplots(figsize=(9, 3.2))
 vals = [res["by_weekday"][d] for d in DAYS]
-ax.bar(DAYS, vals, color=[GREY if d in ("월", "목") else INK_BAR for d in DAYS], width=0.6)
+ax.bar(DAYS, vals, color=[CLAY if d in ("월", "목") else INK_BAR for d in DAYS], width=0.6)
 for i, v in enumerate(vals):
     ax.text(i, v + 0.02, f"{v:.2f}", ha="center", fontsize=9)
 ax.set_ylim(0, 1); ax.set_ylabel("오후 3시 전 빈 날의 비율")
-ax.set_title("요일별로 서랍이 빈 비율 (회색 = 아침 보충일)")
+ax.set_title("요일별로 서랍이 빈 비율 (클레이 = 아침 보충일)")
 save(fig, "f1_weekday.png")
 
 # 그림 2: 회의 수별 동남 비율

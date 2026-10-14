@@ -5,6 +5,7 @@
     from mpl_style import apply, INK_BAR, CLAY, OLIVE, GREY
     apply()
 또는 아래 rcParams 블록과 색 상수를 그림 스크립트에 그대로 복사한다(제출 코드가 스킬 폴더에 의존하지 않게 하려면 복사).
+발표 덱에도 쓸 그림이면 저장한 뒤 각 축의 제목을 지우고(ax.set_title("")) figures/deck/에 한 벌 더 저장한다.
 """
 import matplotlib.pyplot as plt
 

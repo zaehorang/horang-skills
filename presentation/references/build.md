@@ -39,12 +39,12 @@ cp <skill-dir>/assets/starter/assets/* <작업폴더>/assets/
 
 ### 2. 패턴 선택
 
-템플릿의 패턴 A~M 중에서 고른다. 새 레이아웃을 즉흥으로 만들지 않는다.
+템플릿의 패턴 A~N 중에서 고른다. 새 레이아웃을 즉흥으로 만들지 않는다.
 각 패턴 주석에 **정보 예산**이 적혀 있다. 예산을 넘기면 글자를 줄이는 게 아니라 **내용을 줄인다.**
 
 | 상황 | 패턴 |
 |---|---|
-| 표지 | A |
+| 표지 | A (이미지가 없으면 `.cover-content.text-only` 1열 변형) |
 | 두 개념 대비 | B |
 | 장면 + 서술 | C |
 | 문제 ↔ 대응 매핑 | D |
@@ -57,6 +57,17 @@ cp <skill-dir>/assets/starter/assets/* <작업폴더>/assets/
 | 행동 흐름 + 표 | K |
 | 사용자 여정 | L |
 | **제품 화면 + API·데이터 콜아웃** | **M** |
+| **전폭 분석 그림 + 결론 한 줄** | **N** |
+
+패턴 A는 이미지 유무에 맞춰 2열 또는 1열 변형을 고른다. 이미지가 없을 때는
+`.cover-visual-wrap`을 빼고 `.cover-content`에 `text-only`를 붙인다.
+빈 헤더나 표지용 자리표시자 없이도 제목·부제·한 문장으로 완성한다.
+
+패턴 N은 보고서의 가로로 긴 차트(예: 1350×450)를 온전히 보여줄 때 쓴다.
+`.analysis-figure`에 그림 하나를 넣고, 아래에 `.final-line` 결론 한 줄과
+`.figure-source` 출처 한 줄을 둔다. `object-fit:contain`과 원래 색을 유지한다.
+제목은 한 줄로 압축하고 이미지 안 글자도 축소 후 2% 하한을 확인한다.
+예시 데이터 그림은 실제 분석 그림으로 교체한다.
 
 ### 3. 이미지가 필요하면
 
@@ -69,7 +80,7 @@ cp <skill-dir>/assets/starter/assets/* <작업폴더>/assets/
 
 ```
 badge          회색 = 현재 확인됨   ↔  .service.confirmed
-badge plan     레드 = 제안          ↔  .service.proposed
+badge plan     클레이 = 제안          ↔  .service.proposed
 badge next     빈원 = 예정          ↔  .service.backlog
 ```
 
@@ -106,4 +117,4 @@ python3 <skill-dir>/scripts/deck_verify.py <작업폴더>/presentation.html
 - 장 배열을 바꾸지 않는다. 순서 변경은 `deck-plan` 으로 FLOW.md 부터 고친다.
 - 대본을 고치지 않는다. 대본이 화면과 어긋나면 말로 알리고 `deck-polish` 로 넘긴다.
 - 사용자가 "피드백만" 또는 "확인만" 이라고 하면 파일을 고치지 않고 말로 답한다.
-- 이미지가 없으면 만들어내지 않는다. 자리표시자를 두고 무엇이 필요한지 말한다.
+- 이미지가 없으면 만들어내지 않는다. 표지는 패턴 A의 1열 변형을 쓰고, 본문에서 필요한 이미지는 자리표시자를 두고 무엇이 필요한지 말한다.
