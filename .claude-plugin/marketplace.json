@@ -4,7 +4,7 @@
     "name": "zaehorang",
     "url": "https://github.com/zaehorang"
   },
-  "description": "이해하기 어려운 것을, 사람이 검수할 수 있는 산출물로 바꾸는 스킬 모음. study(이해하기)와 dev(개발하기) 묶음을 플러그인으로 설치한다",
+  "description": "이해하기 어려운 것을, 사람이 검수할 수 있는 산출물로 바꾸는 스킬 모음. study(이해하기) · dev(진단·개발하기) · deliver(전달하기) 묶음을 플러그인으로 설치한다",
   "plugins": [
     {
       "name": "study",
@@ -25,6 +25,16 @@
         "./herdr-dispatch"
       ],
       "category": "development"
+    },
+    {
+      "name": "deliver",
+      "description": "전달하기 — 분석 결과를 A4 쪽 고정형 보고서로(report), 말할 내용을 대본과 16:9 HTML deck으로(presentation)",
+      "source": "./",
+      "skills": [
+        "./report",
+        "./presentation"
+      ],
+      "category": "productivity"
     }
   ]
 }

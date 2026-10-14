@@ -118,7 +118,7 @@ def main() -> int:
             print(
                 f"\n✗ 용지가 {EXPECT_PT[0]:.0f}x{EXPECT_PT[1]:.0f}pt 가 아니다.\n"
                 "  @media print 안에 @page{size:1280px 720px;margin:0} 이 있는지 확인할 것.\n"
-                "  (presentation-harness의 deck_verify.py로 진단 가능)",
+                "  (presentation 스킬의 deck_verify.py로 진단 가능)",
                 file=sys.stderr)
             return 1
 
