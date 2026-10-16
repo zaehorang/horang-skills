@@ -31,6 +31,10 @@ FOOT_GAP_RATIO = 0.10
 # 본문 높이의 35%: 가운데 정렬로 위·아래에 나뉜 여유도 합산한다.
 # 예시의 절반가량 빈 본문을 잡되 통상적인 간격·패딩은 허용하며, 의도적 여백은 정보로 남긴다.
 EMPTY_CONTENT_RATIO = 0.35
+# 본문 아래가 이만큼 비면 경고 — 위에 몰려 보인다. .content.roomy 로 키우거나, 합치거나, 그림을 더한다.
+EMPTY_BELOW_WARN = 0.33
+# 여러 줄 글의 마지막 줄이 글자 크기의 이 배수보다 짧으면 한두 글자만 남은 것이다.
+ORPHAN_EM = 2.3
 FONT_FLOOR_PX = CANVAS_H * FONT_FLOOR_RATIO   # 14.4px
 # 구조도 하나에 노드 9개까지. 그 이상이면 장을 나누거나 단계별로 쌓는다 (layout-budget.md).
 DG_NODE_BUDGET = 9
@@ -301,7 +305,7 @@ f.src = '__DECK__';
 document.body.appendChild(f);
 setTimeout(() => send({error: 'timeout: 덱이 로드되지 않았다'}), 20000);
 f.onload = () => setTimeout(() => {
-  const out = {overflow: [], small: [], foot: [], empty: [], dg: [], contrast: [], canvas: null, slides: 0};
+  const out = {overflow: [], small: [], foot: [], empty: [], dg: [], contrast: [], orphan: [], canvas: null, slides: 0};
   // 계산된 색 → {rgb, a}. color-mix 결과는 'color(srgb r g b / a)' 꼴이다
   const parseColor = c => { const n = (c.match(/-?[\\d.]+/g) || []).map(Number);
     return c.startsWith('color(') ? {rgb: n.slice(0, 3).map(v => v * 255), a: n.length > 3 ? n[3] : 1}
@@ -390,6 +394,23 @@ f.onload = () => setTimeout(() => {
         const floor = (px >= 24 || (px >= 19 && w >= 700)) ? __CONTRAST_LARGE__ : __CONTRAST__;
         if (ratio < floor && !seenC.has(key)) { seenC.add(key);
           out.contrast.push({slide: i + 1, sel: key, ratio: Math.round(ratio * 100) / 100, floor, text: el.textContent.trim().slice(0, 20)}); }
+      });
+      // 줄바꿈: 여러 줄 글의 마지막 줄에 한두 글자만 남으면 어색하다
+      s.querySelectorAll('h1,h2,h3,p,li,td,th,small,figcaption,strong,blockquote').forEach(el => {
+        if (el.closest('svg,pre,code,.foot') || !el.getClientRects().length || el.querySelector('br')) return;   // <br> 은 작성자가 정한 끊김
+        if ([...el.children].some(ch => !/^inline/.test(getComputedStyle(ch).display) && ch.tagName !== 'BR')) return;
+        const r = d.createRange(); r.selectNodeContents(el);
+        const lines = [];
+        [...r.getClientRects()].filter(x => x.width > 0).forEach(x => {
+          const l = lines.find(L => Math.abs(L.top - x.top) < x.height * .5);
+          if (l) { l.left = Math.min(l.left, x.left); l.right = Math.max(l.right, x.right); }
+          else lines.push({top: x.top, left: x.left, right: x.right});
+        });
+        if (lines.length < 2) return;
+        lines.sort((a, b) => a.top - b.top);
+        const last = lines[lines.length - 1], fs = parseFloat(getComputedStyle(el).fontSize);
+        if (last.right - last.left < fs * __ORPHAN_EM__)
+          out.orphan.push({slide: i + 1, sel: (el.className || el.tagName) + '', text: el.textContent.trim().replace(/\s+/g, ' ').slice(-16)});
       });
       // 구조도: 노드 겹침 · 선 라벨이 노드를 가림 · 노드 예산 · 번호와 범례 짝
       const hit = (a, b) => Math.min(a.right, b.right) - Math.max(a.left, b.left) > 2 &&
@@ -495,6 +516,7 @@ def run_dynamic(path: Path, f: Findings) -> dict | None:
         PROBE_PAGE.replace("__FLOOR__", str(FONT_FLOOR_PX))
                   .replace("__FOOT_GAP__", str(FOOT_GAP_RATIO))
                   .replace("__EMPTY_CONTENT__", str(EMPTY_CONTENT_RATIO))
+                  .replace("__ORPHAN_EM__", str(ORPHAN_EM))
                   .replace("__DG_BUDGET__", str(DG_NODE_BUDGET))
                   .replace("__CODE_BUDGET__", str(CODE_LINE_BUDGET))
                   .replace("__CONTRAST_LARGE__", str(CONTRAST_FLOOR_LARGE))
@@ -558,6 +580,11 @@ def run_dynamic(path: Path, f: Findings) -> dict | None:
         f.add("warn", "foot-position",
               f"{item['slide']}장: 푸터 아래가 캔버스 하단에서 {item['ratio']:.0%} 떨어져 있다 (기준 {FOOT_GAP_RATIO:.0%}).")
     for item in data.get("empty", []):
+        if item["below"] >= EMPTY_BELOW_WARN and item["above"] < 0.1:   # 가운데 정렬은 몰린 게 아니다
+            f.add("warn", "empty-below",
+                  f"{item['slide']}장: 본문 아래 {item['below']:.0%}가 비어 위에 몰려 보인다 (기준 {EMPTY_BELOW_WARN:.0%}).",
+                  "<div class=\"content roomy\"> 로 글자·행을 키우거나, 다른 장과 합치거나, 그림을 더한다 (build.md '빈 공간')")
+            continue
         f.add("info", "empty-content",
               f"{item['slide']}장: 본문 영역의 {item['ratio']:.0%}가 비어 있다 "
               f"(위 {item['above']:.0%} · 아래 {item['below']:.0%}, 기준 {EMPTY_CONTENT_RATIO:.0%}). 의도한 여백인지 확인할 것.")
@@ -573,6 +600,11 @@ def run_dynamic(path: Path, f: Findings) -> dict | None:
     for item in data.get("dg", []):
         level, check, msg = dg_msg[item["kind"]]
         f.add(level, check, f"{item['slide']}장: " + msg.format(d=item["detail"]))
+
+    for o in data.get("orphan", []):
+        f.add("warn", "orphan",
+              f"{o['slide']}장 '{o['sel']}': 마지막 줄에 한두 글자만 남는다 — \"…{o['text']}\".",
+              "의미 단위에서 <br> 로 끊거나, 문장을 줄이거나, 묶음을 <span class=\"nobr\"> 로 (build.md '줄바꿈')")
 
     for c in data.get("contrast", []):
         f.add("error", "text-contrast",

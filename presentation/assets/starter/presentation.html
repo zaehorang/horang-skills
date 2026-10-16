@@ -146,7 +146,31 @@
     h1{font-size:var(--fs-h1);line-height:1.06;letter-spacing:-.06em;margin-bottom:.28em}
     h2{font-size:var(--fs-h2);line-height:1.15;letter-spacing:-.055em;margin-bottom:0;max-width:20em}
     h3{font-size:var(--fs-h3);line-height:1.22;letter-spacing:-.035em;margin-bottom:.32em}
-    p,li{font-size:var(--fs-body);line-height:1.5}
+    p,li{font-size:var(--fs-body);line-height:1.6}
+    /* 줄바꿈: 한글은 어절 단위로만 끊고(keep-all), 마지막 줄에 한두 글자만 남지 않게(pretty).
+       캔버스가 고정이라 줄이 어디서 나뉘는지는 어느 화면에서나 같다 — 끊을 자리를 정했으면 <br> 로 박아도 된다.
+       끊기면 안 되는 묶음(zero-shot, pi0.5 base, 6/10 → 9/10)은 <span class="nobr"> */
+    .slide{word-break:keep-all;overflow-wrap:break-word}
+    p,li,td,small,figcaption{text-wrap:pretty}
+    .nobr{white-space:nowrap}
+    /* 목록 항목 사이를 줄간격보다 넓게 — 두 줄짜리 항목과 다음 항목이 한 덩어리로 붙어 보이지 않게 */
+    .slide ul:not([class]) > li + li{margin-top:.45em}
+    /* 내용이 적은 장: 아래를 비우지 말고 글자·행을 한 단계 키워 채운다 (본문 시작 위치는 그대로) */
+    .content.roomy{--fs-body:26px;--fs-label:20px;--fs-h3:32px;--fs-lead:30px}
+    .content.roomy .data-table td{padding-block:20px}
+    .content.roomy :is(.flow-card,.sprint-card,.service,.thesis-card,.callout){padding:1.5em 1.5em}
+    .content.roomy .flow-card p,.content.roomy .sprint-card li{font-size:var(--fs-lead)}
+    .content.roomy .dg-grid{row-gap:64px}
+    .content.roomy .dg-legend{gap:32px}
+    .content.roomy .wire{padding:22px}
+    .content.roomy .wire .line{height:12px;margin-bottom:14px}
+    .content.roomy .wire .block{margin:16px 0}
+    .content.roomy .wire .button{height:34px}
+    .content.roomy .wire .block{height:150px}
+    .content.roomy .screen figcaption{font-size:var(--fs-body)}
+    .content.roomy .dg-node{font-size:24px}
+    .content.roomy .flow-steps{margin-block:1em}
+    .content.roomy .architecture{gap:44px}
     .kicker{margin:0 0 .7em;color:var(--accent-dark);font-size:var(--fs-label);font-weight:900;letter-spacing:.15em;text-transform:uppercase}
     .dark .kicker{color:var(--accent-on-dark)}
     .lead{font-size:var(--fs-lead);line-height:1.45;color:var(--body);max-width:26em;word-break:keep-all}
@@ -695,7 +719,7 @@
     <!-- ═══ 패턴 G · 3단계 로드맵 ═══════════════════════════════ -->
     <section class="slide" data-title="로드맵">
       <header class="slide-head"><div><p class="kicker">ROADMAP</p><h2>3단계 도입 순서</h2></div></header>
-      <div class="content">
+      <div class="content roomy">
         <div class="roadmap">
           <article class="sprint"><div class="station">1</div>
             <div class="sprint-card done"><span class="phase">1단계 · 완료</span><h3>제목</h3><ul><li>항목</li><li>항목</li></ul></div></article>
@@ -714,15 +738,15 @@
          범례와 카드 색은 반드시 같은 의미여야 한다. -->
     <section class="slide" data-title="구성">
       <header class="slide-head"><div><p class="kicker">KICKER</p><h2>구성요소별 구현 상태</h2></div></header>
-      <div class="content">
+      <div class="content roomy">
         <div class="architecture">
           <div class="journey"><span>단계</span><span>단계</span><span>단계</span><span>단계</span><span>단계</span></div>
           <div class="service-grid">
-            <article class="service confirmed"><small>코드명</small><strong>이름</strong><p>역할</p><span class="chip">현재 확인됨</span></article>
-            <article class="service proposed"><small>코드명</small><strong>이름</strong><p>역할</p><span class="chip">제안</span></article>
-            <article class="service proposed"><small>코드명</small><strong>이름</strong><p>역할</p><span class="chip">제안</span></article>
-            <article class="service backlog"><small>코드명</small><strong>이름</strong><p>역할</p><span class="chip">예정</span></article>
-            <article class="service backlog"><small>코드명</small><strong>이름</strong><p>역할</p><span class="chip">예정</span></article>
+            <article class="service confirmed"><small>코드명</small><strong>이름</strong><p>역할을 한두 줄로</p><span class="chip">현재 확인됨</span></article>
+            <article class="service proposed"><small>코드명</small><strong>이름</strong><p>역할을 한두 줄로</p><span class="chip">제안</span></article>
+            <article class="service proposed"><small>코드명</small><strong>이름</strong><p>역할을 한두 줄로</p><span class="chip">제안</span></article>
+            <article class="service backlog"><small>코드명</small><strong>이름</strong><p>역할을 한두 줄로</p><span class="chip">예정</span></article>
+            <article class="service backlog"><small>코드명</small><strong>이름</strong><p>역할을 한두 줄로</p><span class="chip">예정</span></article>
           </div>
         </div>
       </div>
@@ -737,19 +761,19 @@
          칩이 줄바꿈돼도 화살표가 줄 끝에 매달리지 않는다(::before 로 붙임). -->
     <section class="slide" data-title="흐름">
       <header class="slide-head"><div><p class="kicker">KICKER</p><h2>두 가지 동작 시점</h2></div></header>
-      <div class="content">
+      <div class="content roomy">
         <div class="ai-flow-grid">
           <article class="flow-card">
             <span class="mode">MODE A · 시점</span>
             <h3>언제 무엇을 하는지</h3>
             <div class="flow-steps"><span>단계</span><span>단계</span><span>단계</span><span>단계</span></div>
-            <p class="lead">무엇을 얻는지 한 줄.</p>
+            <p class="lead">무엇을 얻는지, 결과가 언제 보이는지 두 줄까지.</p>
           </article>
           <article class="flow-card">
             <span class="mode">MODE B · 시점</span>
             <h3>언제 무엇을 하는지</h3>
             <div class="flow-steps"><span>단계</span><span>단계</span><span>단계</span><span>단계</span></div>
-            <p class="lead">무엇을 얻는지 한 줄.</p>
+            <p class="lead">무엇을 얻는지, 결과가 언제 보이는지 두 줄까지.</p>
           </article>
         </div>
       </div>
@@ -785,7 +809,7 @@
          "구현했다"가 아니라 "이렇게 만들고 있다"로 말해야 한다. -->
     <section class="slide" data-title="스토리보드">
       <header class="slide-head"><div><p class="kicker">KICKER</p><h2>사용자가 겪는 흐름</h2></div><span class="badge">현재 확인됨</span></header>
-      <div class="content">
+      <div class="content roomy">
         <div class="screens">
           <figure class="screen"><div class="frame"><div class="browserbar"><i></i><i></i><i></i></div><div class="wire"><div class="line title"></div><div class="line accent"></div><div class="block"></div><div class="line"></div><div class="button"></div></div></div><figcaption><strong><span class="dg-num">1</span>단계</strong><span>바뀌는 것 한 줄</span></figcaption></figure>
           <figure class="screen"><div class="frame"><div class="browserbar"><i></i><i></i><i></i></div><div class="wire"><div class="line title"></div><div class="line"></div><div class="block accent"></div><div class="line"></div><div class="button"></div></div></div><figcaption><strong><span class="dg-num">2</span>단계</strong><span>바뀌는 것 한 줄</span></figcaption></figure>
@@ -989,7 +1013,7 @@
          번호는 노드 안 <span class="dg-num"> 과 범례 <span class="dg-num"> 이 같은 숫자여야 한다 (검사기가 본다). -->
     <section class="slide" data-title="번호 구조도">
       <header class="slide-head"><div><p class="kicker">HOW IT WORKS</p><h2>순서대로 짚는 구조</h2></div></header>
-      <div class="content">
+      <div class="content roomy">
         <div class="dg-legend-split">
           <div class="dg">
             <div class="dg-grid" style="--cols:3;row-gap:64px">
@@ -1004,9 +1028,9 @@
             <i class="dg-edge" data-from="q-think" data-to="q-out"></i>
           </div>
           <ol class="dg-legend">
-            <li><span class="dg-num">1</span><div><strong>판단</strong><p>무엇을 할지 고른다. 한두 줄로.</p></div></li>
-            <li><span class="dg-num">2</span><div><strong>실행</strong><p>고른 행동을 하고 결과를 돌려준다.</p></div></li>
-            <li><span class="dg-num">3</span><div><strong>결과</strong><p>충분하면 멈추고 답을 낸다.</p></div></li>
+            <li><span class="dg-num">1</span><div><strong>판단</strong><p>무엇을 할지 고른다. 범례 한 칸은 제목 한 줄과 설명 두 줄까지.</p></div></li>
+            <li><span class="dg-num">2</span><div><strong>실행</strong><p>고른 행동을 하고, 그 결과를 판단 단계로 돌려준다.</p></div></li>
+            <li><span class="dg-num">3</span><div><strong>결과</strong><p>판단이 충분하다고 보면 멈추고 답을 낸다.</p></div></li>
           </ol>
         </div>
       </div>
@@ -1054,7 +1078,10 @@
           <div class="walk-main">
 <pre class="code"><code><span class="c"># 설명할 줄만 남긴다</span>
 <span class="k">def</span> handle(state):
-    result = run(state[<span class="s">"input"</span>])
+    items = state[<span class="s">"input"</span>]
+    <span class="k">if not</span> items:
+        <span class="k">return</span> {}
+    result = run(items)
 <span class="hl">    <span class="k">return</span> {<span class="s">"output"</span>: result,<span class="dg-num">1</span></span><span class="hl">            <span class="s">"count"</span>: state[<span class="s">"count"</span>] + 1}<span class="dg-num">2</span></span></code></pre>
             <div class="code-out">
               <div><span class="dg-num">1</span><div><strong>바뀌는 것을 말로</strong><p><code>output</code> 전 → 후</p></div></div>
@@ -1069,7 +1096,7 @@
     <!-- ═══ 패턴 I · 4열 지표 + 결정 요청 (마무리) ═══════════════ -->
     <section class="slide" data-title="검증">
       <header class="slide-head"><div><p class="kicker">DECISION</p><h2>성공 판단 지표</h2></div></header>
-      <div class="content" style="flex-direction:column;align-items:stretch">
+      <div class="content roomy" style="flex-direction:column;align-items:stretch">
         <div class="decision"><small>요청하는 결정</small><ol><li>결정 하나</li><li>결정 둘</li><li>결정 셋</li></ol></div>
         <div class="metric-list">
           <article class="metric"><small>영역</small><h3>지표</h3><p>무엇을 재는지.</p></article>
