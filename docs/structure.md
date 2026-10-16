@@ -16,11 +16,11 @@
 
 `SKILL.md`는 처음에 `description`만 읽히고, 요청이 그 설명과 맞을 때 본문이 통째로 로드된다. 그래서 **`description`에 trigger 문구를 넉넉히** 적고, 긴 설명은 `references/`로 뺀다.
 
-## 묶음
+## bundle
 
-repo root의 `.claude-plugin/marketplace.json`이 플러그인 묶음을 정의한다. 묶음은 스킬 폴더를 옮기지 않고 폴더 목록만 가리키므로, 플러그인으로 깔든 폴더를 복사하든 같은 파일이 쓰인다.
+repo root의 `.claude-plugin/marketplace.json`이 plugin bundle을 정의한다. bundle은 스킬 폴더를 옮기지 않고 폴더 목록만 가리키므로, 플러그인으로 깔든 폴더를 복사하든 같은 파일이 쓰인다.
 
-묶음에 넣지 않는 스킬도 있다. 사람마다 값이 달라 프로젝트 설정이 먼저인 것(`blog-review`), 프로젝트에 훅과 파일을 놓는 설치형(`harness-backlog`)이 그렇다.
+bundle에 넣지 않는 스킬도 있다. 사람마다 값이 달라 프로젝트 설정이 먼저인 것(`blog-review`), 프로젝트에 hook과 파일을 놓는 설치형(`harness-backlog`)이 그렇다.
 
 ## 예시
 

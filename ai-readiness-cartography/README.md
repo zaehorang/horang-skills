@@ -14,11 +14,11 @@ repo가 코딩 에이전트에게 얼마나 친화적인지 **100점 rubric**으
 2. **단일 HTML 대시보드** — 사람이 보고 결정하는 용도. Inter + JetBrains Mono, 밝은 바탕의 기술 계기판
 3. **ROI 순 action list** — 효과 대비 비용으로 정렬한 다음 할 일
 
-번들된 `scripts/score.py`가 자동으로 잡는 것 중 가장 중요한 건 **환각 경로 검증**이다. 문서가 가리키는 모든 경로 후보가 실제 존재하는지 전부 확인한다. 그 외 문서 drift(mtime 비교), god file, AGENTS.md 옆에 import 없는 CLAUDE.md 같은 함정도 잡는다.
+번들된 `scripts/score.py`가 자동으로 잡는 것 중 가장 중요한 건 **hallucinated path 검증**이다. 문서가 가리키는 모든 경로 후보가 실제 존재하는지 전부 확인한다. 그 외 문서 drift(mtime 비교), god file, AGENTS.md 옆에 import 없는 CLAUDE.md 같은 함정도 잡는다.
 
 ## 어떻게 쓰나
 
-`dev` 묶음에 있다 → [설치](../docs/install.md)
+`dev` bundle에 있다 → [설치](../docs/install.md)
 
 > 이 레포 AI-readiness 점수 매겨줘
 > 우리 repo가 얼마나 agent-friendly한지 보여줘

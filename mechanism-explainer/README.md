@@ -19,7 +19,7 @@
 
 ## 어떻게 쓰나
 
-`study` 묶음에 있다 → [설치](../docs/install.md)
+`study` bundle에 있다 → [설치](../docs/install.md)
 
 > 이게 내부적으로 어떻게 돌아가는지 html로 보여줘
 > 렌더링 과정 단계별로 만들어줘

@@ -29,7 +29,7 @@ polish    SCRIPT.md          진행 메모 + 화면에 맞춘 문구 조정
 
 ## 어떻게 쓰나
 
-`deliver` 묶음에 있다 → [설치](../docs/install.md)
+`deliver` bundle에 있다 → [설치](../docs/install.md)
 
 > 이 보고서로 발표 덱 만들어줘
 > 발표 흐름부터 잡아줘

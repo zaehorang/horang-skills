@@ -4,7 +4,7 @@
 
 ## Claude Code 플러그인으로
 
-marketplace를 한 번 등록하면 묶음 단위로 설치한다.
+marketplace를 한 번 등록하면 bundle 단위로 설치한다.
 
 ```
 /plugin marketplace add zaehorang/horang-skills
@@ -13,15 +13,15 @@ marketplace를 한 번 등록하면 묶음 단위로 설치한다.
 /plugin install deliver@horang-skills
 ```
 
-| 묶음 | 스킬 |
+| bundle | 스킬 |
 |---|---|
 | `study` | `mechanism-explainer` · `explorable-world` |
 | `dev` | `ai-readiness-cartography` · `herdr-dispatch` |
 | `deliver` | `report` · `presentation` |
 
-- 설치한 스킬은 `/study:mechanism-explainer`처럼 묶음 이름이 앞에 붙는다. auto-trigger는 그대로 동작한다.
+- 설치한 스킬은 `/study:mechanism-explainer`처럼 bundle 이름이 앞에 붙는다. auto-trigger는 그대로 동작한다.
 - third-party marketplace는 자동 업데이트가 꺼져 있다. 갱신은 `claude plugin update study@horang-skills`로 한다.
-- 묶음에 없는 스킬(`blog-review` · `behavior-spec-extraction` · `harness-backlog`)은 아래 폴더 복사로 설치한다.
+- bundle에 없는 스킬(`blog-review` · `behavior-spec-extraction` · `harness-backlog`)은 아래 폴더 복사로 설치한다.
 
 ## 폴더 복사로 (모든 에이전트)
 
@@ -44,4 +44,4 @@ cp -R horang-skills/mechanism-explainer ~/.claude/skills/
 
 설치 후 에이전트를 재시작해야 목록에 뜬다.
 
-`harness-backlog`는 프로젝트에 훅과 설정 파일을 놓는 설치형이라 복사 대신 번들된 `scripts/setup.py`를 쓴다. 자세한 건 그 스킬의 [README](../harness-backlog/README.md).
+`harness-backlog`는 프로젝트에 hook과 설정 파일을 놓는 설치형이라 복사 대신 번들된 `scripts/setup.py`를 쓴다. 자세한 건 그 스킬의 [README](../harness-backlog/README.md).

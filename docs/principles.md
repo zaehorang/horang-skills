@@ -31,4 +31,4 @@
 
 ## 검사는 스크립트가 먼저, 눈은 나중
 
-산출물을 내는 스킬은 결정적 검사 스크립트를 같이 둔다 (`deck_verify.py`, `report_tool.py check`, `check_explainer.py`, `check_world.mjs`, `lint_spec.py`). 모델이 "괜찮아 보인다"고 하기 전에 스크립트가 넘침·대비·누출을 잡는다. 눈 검토는 스크립트가 통과한 뒤에 한다.
+산출물을 내는 스킬은 deterministic check 스크립트를 같이 둔다 (`deck_verify.py`, `report_tool.py check`, `check_explainer.py`, `check_world.mjs`, `lint_spec.py`). 모델이 "괜찮아 보인다"고 하기 전에 스크립트가 넘침·대비·누출을 잡는다. 눈 검토는 스크립트가 통과한 뒤에 한다.
