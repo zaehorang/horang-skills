@@ -18,11 +18,12 @@
     },
     {
       "name": "dev",
-      "description": "개발하기 — repo의 에이전트 친화도를 채점하고(ai-readiness-cartography), herdr pane에 일을 넘길 때 모델·권한을 고른다(herdr-dispatch)",
+      "description": "개발하기 — repo의 에이전트 친화도를 채점하고(ai-readiness-cartography), herdr pane에 일을 넘길 때 모델·권한을 고르고(herdr-dispatch), 각본(md)대로 iOS 시뮬레이터를 돌려 QA 영상·판정 근거를 남긴다(ios-video-qa)",
       "source": "./",
       "skills": [
         "./ai-readiness-cartography",
-        "./herdr-dispatch"
+        "./herdr-dispatch",
+        "./ios-video-qa"
       ],
       "category": "development"
     },

@@ -1,0 +1,70 @@
+#!/bin/zsh
+# qa <명령> [인자…]  — 엔진의 사람·에이전트 공용 명령. 앱 레포의 qa/ 폴더(또는 --project)에서 동작한다.
+#
+#   qa init [--project <앱 레포>]                                   앱 레포에 qa/ 만들기(설정·준비 상태·첫 각본과 스크립트)
+#   qa doctor                                                     도구·설정·기기·잠금 점검(읽기만)
+#   qa test                                                       엔진 시험(시뮬레이터 없이)
+#   qa run [ID…] [--condition 이름] [--no-build] [--device 이름]   각본 실행(S4 검사 → S5 실행 → S6 검증 → 보고서)
+#   qa check [ID…] [--condition 이름]                              실행 전 검사(S4)만
+#   qa approve <ID…> | --from <승인요청.json>                       사람만: 각본·스크립트 승인(대화형 터미널, 에이전트 환경이면 거부)
+#   qa answer <G번호> <답> | <G번호> --bind | --from <답.json>       사람만: 질문(gap)에 답하고 규칙의 쓰임을 승인
+#   qa judgments --from <review.json>                             사람만: 리뷰 페이지의 눈으로 확인 판단 반영
+#   qa status                                                     승인·질문 상태
+#   qa ids <ID>                                                   단계별 확인 항목 ID(스크립트 작성용)
+#   qa verify [결과 폴더]                                         판정 기록 재현 검증(S6). 기본은 results/latest
+#   qa review [결과 폴더]                                         각본 리뷰 페이지(로컬 HTML) 만들기
+#   qa share [결과 폴더] --adapter <이름> [--out 폴더]             공유용 페이지 묶음 만들기(발행하지 않음)
+#   qa new <ID> "<제목>" <영문-요약> | qa stage <ID> [Sn|--rerun Sn] 새 각본 파이프라인(S0~S7)
+#   qa sim <ID> <탐색 스크립트>                                   새 각본을 만들 때 앱을 조작해 보는 도구(S1)
+#   qa prune                                                      결과 보존 규칙 적용(qa.config의 QA_KEEP_RUNS·QA_KEEP_DAYS)
+# 종료 코드는 references/commands.md
+
+ENGINE=${0:A:h:h}
+LIB=$ENGINE/scripts/lib
+export ENGINE LIB PYTHONDONTWRITEBYTECODE=1
+PY=(python3 -I -B)
+cmd=${1:-help}; (( $# )) && shift
+QA_DIR=${QA_DIR:-}
+args=()
+while (( $# )); do
+  case $1 in
+    --project) QA_DIR=${2:A}; shift ;;
+    *) args+=("$1") ;;
+  esac
+  shift
+done
+case $cmd in
+  help|-h|--help) sed -n '2,21p' $0; exit 0 ;;
+  test) exec $PY $ENGINE/scripts/tests/run_tests.py $args ;;
+  init) exec $PY $LIB/init.py $ENGINE "${QA_DIR:-$PWD}" $args ;;
+esac
+if [[ -z $QA_DIR ]]; then
+  d=$PWD
+  while [[ $d != / ]]; do [[ -f $d/qa/qa.config ]] && { QA_DIR=$d/qa; break; }; [[ -f $d/qa.config ]] && { QA_DIR=$d; break; }; d=${d:h}; done
+elif [[ ! -f $QA_DIR/qa.config && -f $QA_DIR/qa/qa.config ]]; then
+  QA_DIR=$QA_DIR/qa
+fi
+if [[ $cmd == doctor ]]; then exec zsh $LIB/doctor.sh "$QA_DIR"; fi
+[[ -n $QA_DIR ]] || { print "qa/qa.config를 찾지 못했습니다(--project <qa 폴더>, 처음이면 qa init)"; exit 1; }
+case_md() { print -l $QA_DIR/cases/$1-*.md(N) | head -1; }
+latest() { print ${1:-$QA_DIR/results/latest}; }
+# 결과 폴더(선택) + 나머지 옵션: [[ 첫 인자가 옵션이면 결과 폴더는 기본값 ]]
+run_and_rest() { if [[ ${args[1]:-} == --* || -z ${args[1]:-} ]]; then RUNARG=$(latest); REST=($args); else RUNARG=$(latest $args[1]); REST=(${args[2,-1]}); fi; }
+cfg() { zsh -c 'source $1/qa.config 2>/dev/null; print -r -- ${(P)2:-}' _ $QA_DIR $1; }
+
+case $cmd in
+  run)     exec $ENGINE/scripts/run.sh --project $QA_DIR $args ;;
+  check)   exec $ENGINE/scripts/run.sh --project $QA_DIR --check $args ;;
+  approve) exec $PY $LIB/approve.py approve $QA_DIR $args ;;
+  answer)  exec $PY $LIB/approve.py answer $QA_DIR $args ;;
+  judgments) exec $PY $LIB/approve.py judgments $QA_DIR $args ;;
+  status)  exec $PY $LIB/approve.py status $QA_DIR ;;
+  ids)     exec $PY $LIB/casefile.py ids "$(case_md $args[1])" ;;
+  verify)  QA_UNVERIFIABLE_CASE_MAX=$(cfg QA_UNVERIFIABLE_CASE_MAX) QA_UNVERIFIABLE_RUN_MAX=$(cfg QA_UNVERIFIABLE_RUN_MAX) \
+             exec $PY $LIB/verify.py "$(latest $args[1])" ;;
+  review)  run_and_rest; exec $PY $ENGINE/scripts/pages/review.py $QA_DIR $RUNARG $REST ;;
+  share)   run_and_rest; exec $PY $ENGINE/scripts/pages/share.py $QA_DIR $RUNARG $REST ;;
+  new|stage|sim) exec zsh $LIB/pipeline.sh $cmd $QA_DIR $args ;;
+  prune)   QA_KEEP_RUNS=$(cfg QA_KEEP_RUNS) QA_KEEP_DAYS=$(cfg QA_KEEP_DAYS) exec $PY $LIB/prune.py $QA_DIR/results ;;
+  *)       sed -n '2,21p' $0; exit 2 ;;
+esac

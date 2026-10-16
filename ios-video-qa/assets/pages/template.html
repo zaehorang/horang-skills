@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>각본 리뷰</title>
+<style>
+:root { --bg:#f6f7f5; --card:#fff; --ink:#1c1f1d; --muted:#6b726d; --line:#e3e6e3; --pass:#12a150; --fail:#d93a3a; --warn:#c27c0e; --accent:#0f8a5a; --boot:#8a5cc2; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#121413; --card:#1b1e1c; --ink:#e8ebe9; --muted:#9aa29d; --line:#2b302d; --accent:#3cc48c; } }
+:root[data-theme="dark"] { --bg:#121413; --card:#1b1e1c; --ink:#e8ebe9; --muted:#9aa29d; --line:#2b302d; --accent:#3cc48c; }
+* { box-sizing:border-box }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 -apple-system, "Apple SD Gothic Neo", sans-serif; }
+header { position:sticky; top:0; z-index:5; background:var(--bg); border-bottom:1px solid var(--line); padding:12px 16px }
+.wrap { max-width:1180px; margin:auto }
+h1 { margin:0; font-size:20px } .sub { color:var(--muted); font-size:13px }
+.bar { display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; margin-top:8px; font-size:14px }
+.bar input { font:inherit; padding:4px 8px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--ink); width:150px }
+.count b { font-variant-numeric:tabular-nums } .count .bad { color:var(--fail) } .count .todo { color:var(--warn) }
+button.primary { font:inherit; font-weight:600; background:var(--accent); color:#fff; border:0; border-radius:8px; padding:6px 12px; cursor:pointer }
+button.primary:disabled { opacity:.5; cursor:default }
+.status { font-size:13px; color:var(--muted) }
+main { max-width:1180px; margin:auto; padding:12px 16px 60px; display:grid; gap:16px }
+.card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px 18px; min-width:0 }
+.chead { display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:13px; color:var(--muted) }
+.badge { font-weight:700; color:#fff; background:var(--pass); border-radius:6px; padding:1px 7px; font-size:12px }
+.badge.fail { background:var(--fail) } .badge.boot { background:var(--boot) } .badge.none { background:var(--warn) } .badge.ok { background:#3d7f63 }
+h2 { margin:6px 0 2px; font-size:18px } .goal { margin:0 0 8px; color:var(--muted) }
+table { width:100%; border-collapse:collapse; font-size:14px }
+th { text-align:left; color:var(--muted); font-weight:600; border-bottom:1px solid var(--line); padding:4px 6px; font-size:12px }
+td { vertical-align:top; padding:8px 6px; border-bottom:1px solid var(--line) }
+td.n { width:34px; color:var(--muted); font-weight:700 } td.shot { width:92px } td.shot img { width:84px; border-radius:6px; border:1px solid var(--line); display:block }
+ul.items { margin:0; padding:0; list-style:none; font-size:13px } ul.items li { margin-bottom:4px }
+.iid { font:11px ui-monospace, monospace; color:var(--muted) }
+li.ok { color:var(--pass) } li.bad { color:var(--fail); font-weight:600 } li.skip { color:var(--warn) } li.notrun { color:var(--fail) }
+.vis { display:grid; gap:6px }
+.vrow { display:grid; gap:4px; padding:6px 8px; border:1px solid var(--line); border-radius:8px }
+.vrow.normal { border-color:var(--pass) } .vrow.issue { border-color:var(--fail); background:color-mix(in srgb, var(--fail) 6%, transparent) } .vrow.undecidable { border-color:var(--warn) }
+.vtext { font-size:13px }
+.seg { display:flex; flex-wrap:wrap; gap:4px }
+.seg label { font-size:12px; border:1px solid var(--line); border-radius:999px; padding:1px 8px; cursor:pointer; user-select:none }
+.seg input { position:absolute; opacity:0; pointer-events:none }
+.seg input:checked + span { font-weight:700 }
+.seg label:has(input:checked) { background:var(--ink); color:var(--bg); border-color:var(--ink) }
+.vnote { font:inherit; font-size:12px; width:100%; padding:3px 6px; border:1px solid var(--line); border-radius:6px; background:transparent; color:var(--ink) }
+.gap { border:1px dashed var(--warn); border-radius:10px; padding:8px 10px; margin:8px 0; font-size:14px }
+.gap .q { font-weight:600 } .gap .meta { font-size:12px; color:var(--muted) }
+.approve { display:flex; gap:8px; align-items:center; margin-top:10px; font-size:14px }
+details.fixed { margin-top:8px; font-size:13px } details.fixed summary { cursor:pointer; color:var(--muted) }
+a { color:var(--accent) }
+@media (max-width:760px) { td.shot { display:none } .bar input { width:120px } }
+</style></head>
+<body>
+<header><div class="wrap">
+  <h1>각본 리뷰</h1>
+  <div class="sub" id="sub"></div>
+  <div class="bar">
+    <label>확인자 <input id="reviewer" autocomplete="name" placeholder="이름"></label>
+    <span class="count" id="count"></span>
+    <button class="primary" id="export">판단 JSON 내려받기</button>
+    <span class="status" id="status"></span>
+  </div>
+</div></header>
+<main id="main"></main>
+<script id="qa-data" type="application/json">__QA_DATA__</script>
+<!-- 공유 어댑터(qa share --adapter <이름>)가 여기에 window.QA_SHARE_ADAPTER를 넣는다. 로컬 페이지에는 없다.
+     인터페이스: ready() → Promise<{canSave, note}> · load(run) → Promise<state 또는 null>
+                save(run, state) → Promise · download(name, text) → Promise<true면 어댑터가 처리함> -->
+__QA_ADAPTER__
+<script id="qa-logic">
+// 순수 논리(DOM 없음). node 시험이 이 블록만 읽어 돌린다.
+var QA = (function () {
+  var VERDICTS = ["미검토", "정상", "이상", "판단 불가"];
+  function emptyState() { return { reviewer: "", judgments: {}, answers: {}, approve: {}, fixed: {} }; }
+  function visualKey(caseId, step, k) { return caseId + "/" + step + "/v" + k; }
+  function allVisual(data) {
+    var out = [];
+    data.cases.forEach(function (c) {
+      c.steps.forEach(function (s) {
+        (s.visual || []).forEach(function (v, k) { out.push({ key: visualKey(c.id, s.n, k + 1), case: c.id, step: s.n, text: v, t: s.t }); });
+      });
+    });
+    return out;
+  }
+  function counts(data, state) {
+    var c = { "미검토": 0, "정상": 0, "이상": 0, "판단 불가": 0, total: 0 };
+    allVisual(data).forEach(function (v) {
+      var j = state.judgments[v.key];
+      c[(j && j.verdict) || "미검토"] += 1; c.total += 1;
+    });
+    return c;
+  }
+  function setVerdict(state, item, verdict, note, cond) {
+    if (VERDICTS.indexOf(verdict) < 0) throw new Error("모르는 판단: " + verdict);
+    state.judgments[item.key] = { verdict: verdict, note: note || "", case: item.case, step: item.step, text: item.text,
+      at: new Date().toISOString(), device: cond, evidence_t: item.t };
+    return state;
+  }
+  function buildExport(data, state) {
+    // qa approve --from / qa answer --from / qa judgments --from 이 같은 파일을 읽는다
+    var vis = allVisual(data);
+    return {
+      kind: "review", version: 1, run: data.run, condition: data.condition, reviewer: state.reviewer || "",
+      exported_at: new Date().toISOString(),
+      judgments: vis.map(function (v) {
+        var j = state.judgments[v.key] || {};
+        return { key: v.key, case: v.case, step: v.step, text: v.text, verdict: j.verdict || "미검토", note: j.note || "",
+                 device: j.device || data.condition, evidence_t: v.t, at: j.at || null };
+      }),
+      counts: counts(data, state),
+      answers: Object.keys(state.answers).filter(function (g) { return state.answers[g]; })
+        .map(function (g) { return { id: g, answer: state.answers[g] }; }),
+      approve: { kind: "approve-request", reviewer: state.reviewer || "",
+        cases: data.cases.filter(function (c) { return state.approve[c.id]; }).map(function (c) { return { id: c.id, hash: c.hash, script_hash: c.scriptHash }; }) },
+      fixed_questions: state.fixed
+    };
+  }
+  function releaseReady(data, state) {   // 출시 판단: 이상 0(또는 합의) + 미검토 0
+    var c = counts(data, state);
+    return { ready: c["미검토"] === 0 && c["이상"] === 0, unreviewed: c["미검토"], issues: c["이상"], undecidable: c["판단 불가"] };
+  }
+  return { VERDICTS: VERDICTS, emptyState: emptyState, allVisual: allVisual, counts: counts, setVerdict: setVerdict,
+           buildExport: buildExport, releaseReady: releaseReady, visualKey: visualKey };
+})();
+if (typeof module !== "undefined") module.exports = QA;
+</script>
+<script>
+(function () {
+  var data = JSON.parse(document.getElementById("qa-data").textContent);
+  var state = QA.emptyState();
+  var LS = "qa-review:" + data.run;
+  var adapter = window.QA_SHARE_ADAPTER || null, canShare = false, saveTimer = null;
+  try { var saved = JSON.parse(localStorage.getItem(LS) || "null"); if (saved) state = Object.assign(QA.emptyState(), saved); } catch (e) {}
+  var FIXED = ["맞는 요소를 봤나", "화면이 다 바뀐 뒤에 봤나", "모호한 조건을 맞게 해석했나"];
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  function el(tag, attrs, kids) {
+    var e = document.createElement(tag);
+    Object.keys(attrs || {}).forEach(function (k) { if (k === "text") e.textContent = attrs[k]; else if (k === "html") e.innerHTML = attrs[k]; else e.setAttribute(k, attrs[k]); });
+    (kids || []).forEach(function (c) { if (c) e.appendChild(typeof c === "string" ? document.createTextNode(c) : c); });
+    return e;
+  }
+  function src(p) { return p ? ((data.assetMap && data.assetMap[p]) || p) : null; }
+  function persist() {
+    try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {}
+    if (adapter && canShare) {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(function () {
+        adapter.save(data.run, state)
+          .then(function () { $("#status").textContent = "저장됨(공유)"; })
+          .catch(function (e) { $("#status").textContent = "저장 안 됨: " + ((e && e.message) || "오류") + " — 내려받기로 남기세요"; });
+      }, 600);
+    }
+    renderCount();
+  }
+  function renderCount() {
+    var c = QA.counts(data, state);
+    $("#count").innerHTML = "미검토 <b class='todo'>" + c["미검토"] + "</b> · 정상 <b>" + c["정상"] + "</b> · 이상 <b class='bad'>" + c["이상"] +
+      "</b> · 판단 불가 <b>" + c["판단 불가"] + "</b> / " + c.total;
+  }
+  function itemLi(it) {
+    var cls = it.status === "skipped" ? "skip" : it.status === "not-run" ? "notrun" : it.result === "pass" ? "ok" : it.result ? "bad" : "";
+    var mark = { ok: "✓", bad: "✗", skip: "↷", notrun: "·", "": "" }[cls];
+    var li = el("li", { class: cls }, [el("span", { class: "iid", text: it.display + " " }), mark + " " + it.text]);
+    if (it.status === "skipped") li.appendChild(document.createTextNode(" — 건너뜀: " + (it.reason || "")));
+    if (it.status === "not-run") li.appendChild(document.createTextNode(" — 미실행"));
+    if (it.evidence) { li.appendChild(document.createTextNode(" ")); li.appendChild(el("a", { href: src(it.evidence), target: "_blank", text: "근거" })); }
+    return li;
+  }
+  function visualRow(c, s, v, k) {
+    var item = { key: QA.visualKey(c.id, s.n, k + 1), case: c.id, step: s.n, text: v, t: s.t };
+    var cur = state.judgments[item.key] || {};
+    var row = el("div", { class: "vrow " + ({ "정상": "normal", "이상": "issue", "판단 불가": "undecidable" }[cur.verdict] || "") });
+    row.appendChild(el("div", { class: "vtext", text: v }));
+    var seg = el("div", { class: "seg", role: "radiogroup", "aria-label": v });
+    QA.VERDICTS.forEach(function (name) {
+      var id = "r-" + item.key.replace(/[^\w-]/g, "_") + "-" + name;
+      var inp = el("input", { type: "radio", name: "v-" + item.key, id: id, value: name });
+      if ((cur.verdict || "미검토") === name) inp.checked = true;
+      inp.addEventListener("change", function () {
+        QA.setVerdict(state, item, name, (state.judgments[item.key] || {}).note, data.condition);
+        row.className = "vrow " + ({ "정상": "normal", "이상": "issue", "판단 불가": "undecidable" }[name] || ""); persist();
+      });
+      seg.appendChild(el("label", { for: id }, [inp, el("span", { text: name })]));
+    });
+    row.appendChild(seg);
+    var note = el("input", { class: "vnote", placeholder: "메모(이상·판단 불가일 때 무엇이 보였는지)" });
+    note.value = cur.note || "";
+    note.addEventListener("change", function () {
+      var j = state.judgments[item.key];
+      QA.setVerdict(state, item, (j && j.verdict) || "미검토", note.value, data.condition); persist();
+    });
+    row.appendChild(note);
+    return row;
+  }
+  function gapBox(g) {
+    var box = el("div", { class: "gap" });
+    box.appendChild(el("div", { class: "q", text: g.id + " " + g.question }));
+    box.appendChild(el("div", { class: "meta", text: (g.answer ? "지금 답: " + g.answer + (g.via === "bootstrap" ? " (사람 확인 전)" : "") : "답 없음") + (g.blocking ? " · 답이 있어야 진행" : "") }));
+    var seg = el("div", { class: "seg" });
+    (g.options || []).forEach(function (o, i) {
+      var id = "g-" + g.id + "-" + i;
+      var inp = el("input", { type: "radio", name: "g-" + g.id, id: id, value: o });
+      if (state.answers[g.id] === o) inp.checked = true;
+      inp.addEventListener("change", function () { state.answers[g.id] = o; persist(); });
+      seg.appendChild(el("label", { for: id }, [inp, el("span", { text: o })]));
+    });
+    box.appendChild(seg);
+    return box;
+  }
+  function caseCard(c) {
+    var card = el("section", { class: "card", id: c.id });
+    var a = c.approval || {};
+    var ab = c.approvalLevel === "ok" ? el("span", { class: "badge ok", text: "승인 v" + a.version })
+      : c.approvalLevel === "block" ? el("span", { class: "badge fail", text: "승인 기록 문제" })
+      : el("span", { class: "badge boot", text: a.via ? "사람 승인 전" : "승인 없음", title: (c.approvalMsgs || []).join("\n") });
+    var rb = c.result ? el("span", { class: "badge " + (c.result === "pass" ? "" : "fail"), text: { pass: "PASS", fail: "FAIL", incomplete: "불완전" }[c.result] || c.result }) : null;
+    card.appendChild(el("div", { class: "chead" }, [rb, ab, el("code", { text: c.id }), "명세 " + c.spec + " · 준비 " + c.state + " · 조건 " + c.conditions.join(", ")]));
+    card.appendChild(el("h2", { text: c.title }));
+    card.appendChild(el("p", { class: "goal", text: c.summary }));
+    if (c.video) card.appendChild(el("p", {}, [el("a", { href: src(c.video), target: "_blank", text: "영상 보기" })]));
+    (c.gaps || []).forEach(function (g) { card.appendChild(gapBox(g)); });
+    var tb = el("tbody");
+    c.steps.forEach(function (s) {
+      var tr = el("tr");
+      tr.appendChild(el("td", { class: "n", text: String(s.n) }));
+      var shot = el("td", { class: "shot" });
+      if (s.shot) shot.appendChild(el("a", { href: src(s.shot), target: "_blank" }, [el("img", { src: src(s.shot), alt: s.n + "단계 화면", loading: "lazy" })]));
+      tr.appendChild(shot);
+      tr.appendChild(el("td", { text: (s.external ? "[외부] " : "") + s.action }));
+      var ul = el("ul", { class: "items" }); s.items.forEach(function (it) { ul.appendChild(itemLi(it)); });
+      tr.appendChild(el("td", {}, [ul]));
+      var vis = el("div", { class: "vis" }); (s.visual || []).forEach(function (v, k) { vis.appendChild(visualRow(c, s, v, k)); });
+      tr.appendChild(el("td", {}, [vis]));
+      tb.appendChild(tr);
+    });
+    card.appendChild(el("table", {}, [el("thead", { html: "<tr><th>#</th><th>화면</th><th>행동</th><th>자동 확인(실행 결과)</th><th>눈으로 확인(판단)</th></tr>" }), tb]));
+    var fx = el("details", { class: "fixed" }, [el("summary", { text: "보조 질문 세 가지(눈으로 확인 판단을 대신하지 않음)" })]);
+    FIXED.forEach(function (q, i) {
+      var key = c.id + "/f" + i, row = el("div", { class: "seg" }, [el("span", { text: q + " " })]);
+      ["예", "아니오", "모름"].forEach(function (o, j) {
+        var id = "f-" + c.id + "-" + i + "-" + j, inp = el("input", { type: "radio", name: "f-" + key, id: id });
+        if (state.fixed[key] === o) inp.checked = true;
+        inp.addEventListener("change", function () { state.fixed[key] = o; persist(); });
+        row.appendChild(el("label", { for: id }, [inp, el("span", { text: o })]));
+      });
+      fx.appendChild(row);
+    });
+    card.appendChild(fx);
+    var cb = el("input", { type: "checkbox", id: "ap-" + c.id }); cb.checked = !!state.approve[c.id];
+    cb.addEventListener("change", function () { state.approve[c.id] = cb.checked; persist(); });
+    card.appendChild(el("label", { class: "approve", for: "ap-" + c.id }, [cb, "이 각본(" + c.hash.slice(0, 8) + ")과 스크립트(" + String(c.scriptHash || "없음").slice(0, 8) + ")를 합격 기준으로 승인 요청"]));
+    return card;
+  }
+  function render() {
+    $("#sub").textContent = data.run + " · " + data.condition + " · 각본 " + data.cases.length + "개" + (data.mode === "share" ? " · 공유" : " · 로컬");
+    var reviewer = $("#reviewer"); reviewer.value = state.reviewer || "";
+    reviewer.addEventListener("change", function () { state.reviewer = reviewer.value.trim(); persist(); });
+    var main = $("#main"); main.innerHTML = "";
+    if ((data.globalGaps || []).length) {
+      var g = el("section", { class: "card" }, [el("h2", { text: "공통 질문" })]);
+      data.globalGaps.forEach(function (x) { g.appendChild(gapBox(x)); });
+      main.appendChild(g);
+    }
+    data.cases.forEach(function (c) { main.appendChild(caseCard(c)); });
+    renderCount();
+  }
+  function exportJson() {
+    var out = QA.buildExport(data, state), text = JSON.stringify(out, null, 1), name = "review-" + data.run + ".json";
+    var done = function () {
+      var r = QA.releaseReady(data, state);
+      $("#status").textContent = "내려받음 · 미검토 " + r.unreviewed + "건" + (r.unreviewed ? "(출시 판단에는 0건이어야 함)" : "");
+    };
+    (adapter ? adapter.download(name, text) : Promise.resolve(false)).then(function (handled) {
+      if (handled) return done();
+      var a = el("a", { href: URL.createObjectURL(new Blob([text], { type: "application/json" })), download: name });
+      document.body.appendChild(a); a.click(); a.remove(); done();
+    }).catch(function () { $("#status").textContent = "내려받기 취소됨"; });
+  }
+  $("#export").addEventListener("click", exportJson);
+  render();
+  if (data.mode === "share" && !adapter) $("#status").textContent = "보기 전용(공유 저장소 없음 — 판단은 내려받기로 남기세요)";
+  if (data.mode === "share" && adapter) {
+    adapter.ready().then(function (r) {
+      $("#status").textContent = r.note || "";
+      if (!r.canSave) return;
+      return adapter.load(data.run).then(function (saved) {
+        canShare = true;
+        if (saved) { state = Object.assign(QA.emptyState(), saved); render(); }
+        $("#status").textContent = "판단이 공유 기록에 저장됩니다";
+      });
+    }).catch(function () { $("#status").textContent = "공유 저장을 쓸 수 없음 — 내려받기로 남기세요"; });
+  }
+})();
+</script>
+</body></html>

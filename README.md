@@ -34,6 +34,7 @@
 |---|---|
 | [`ai-readiness-cartography`](./ai-readiness-cartography) | repo가 코딩 에이전트에게 얼마나 친화적인지 100점 rubric으로 채점한 대시보드 |
 | [`herdr-dispatch`](./herdr-dispatch) | 옆 pane에 일을 넘길 때 모델 · 추론 강도 · 권한을 role table로 고른다 |
+| [`ios-video-qa`](./ios-video-qa) | 사람이 쓴 각본(md)대로 iOS 시뮬레이터를 조작해 QA 영상 · 판정 근거 · 판단 페이지를 남기고, 판정이 화면을 봤는지 재현 검증한다 |
 
 ## deliver — 전달하기
 
