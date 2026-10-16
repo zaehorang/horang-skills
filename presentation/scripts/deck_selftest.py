@@ -202,6 +202,11 @@ CASES = [
          expect={"guide"},
          edits=[('<footer class="foot"><span>보조 메시지</span>', '<footer class="foot"><span class="guide">패턴 B · 요령</span>')]),
 
+    Case("paper-white",
+         "흰 바탕 옵션을 어느 테마에 겹쳐도 레이아웃·대비 검사가 깨지지 않는다",
+         edits=[('<html lang="ko">', '<html lang="ko" data-theme="ocean" data-paper="white">')],
+         render=True),
+
     Case("canvas",
          "고정 캔버스가 1280x720 에서 벗어나면 PDF 규격이 깨진다",
          expect={"canvas"},
@@ -340,8 +345,10 @@ def test_gallery_sync() -> None:
             h = h[: h.index("  <style>\n    /* 팔레트 장 전용")] + h[h.index("</head>"):]
         assert h == head, f"{name} 의 <head> 가 스타터와 다르다 — 스타터 CSS 를 갤러리에 다시 옮길 것"
         tail = start_tail(other)
-        if name == "presentation.html":
-            assert tail == start_tail(src), f"{name} 의 엔진 스크립트가 스타터와 다르다"
+        if name == "palette.html":   # 팔레트 전용 스크립트 한 덩어리만 더 붙어 있다
+            i = tail.index("  <script>\n    /* 이 장은 ?theme=")
+            tail = tail[:i] + tail[tail.index("</body>", i):]
+        assert tail == start_tail(src), f"{name} 의 엔진 스크립트가 스타터와 다르다 — ?theme·?paper 같은 엔진 수정이 빠진다"
 
 
 def main() -> int:

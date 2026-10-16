@@ -1,5 +1,4 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1350" height="450" viewBox="0 0 1350 450">
-<rect width="1350" height="450" fill="#FAF9F5"/>
 <g font-family="sans-serif" font-size="26" fill="#2B2A27">
 <path d="M170 50V370H1280" fill="none" stroke="#DEDCD3" stroke-width="2"/>
 <text x="30" y="115">기준</text><text x="30" y="225">비교</text><text x="30" y="335">최종안</text>
