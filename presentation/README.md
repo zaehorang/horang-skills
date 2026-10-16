@@ -4,7 +4,8 @@
 
 **예시**
 - [완성 발표 — 간식 서랍](https://zaehorang.github.io/horang-skills/presentation/examples/snack-drawer/presentation.html) — report 예시에서 출발해 FLOW · SCRIPT를 거친 7장 덱. ← → 로 넘긴다.
-- [장 갤러리](https://zaehorang.github.io/horang-skills/presentation/examples/gallery/) — 발표에 자주 나오는 장 22가지와 색 테마 5개, 라이트/다크. 장 종류를 고르는 견본이고 [안내서](examples/gallery/README.md)가 따로 있다.
+- [장 갤러리](https://zaehorang.github.io/horang-skills/presentation/examples/gallery/) — 발표에 자주 나오는 장 22가지, 라이트/다크. 장 종류를 고르는 견본이고 [안내서](examples/gallery/README.md)가 따로 있다.
+- [색 테마](https://zaehorang.github.io/horang-skills/presentation/examples/gallery/themes.html) — 테마 5개를 용도 · 팔레트 · 대표 장으로 비교한다.
 
 ## 왜 만들었나
 
