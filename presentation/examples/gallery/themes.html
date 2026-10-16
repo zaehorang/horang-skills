@@ -29,10 +29,13 @@
     .group{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:14px;color:var(--muted)}
     .group > span{margin-right:2px;font-weight:700}
     .group button{display:inline-flex;align-items:center;gap:.45em;flex:none;white-space:nowrap;padding:5px 11px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--body);font:inherit;font-size:14px;font-weight:700;cursor:pointer}
-    .group button:hover{border-color:var(--accent)}
-    .group button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+    .group button:hover{border-color:var(--accent);color:var(--ink)}
+    /* 고른 버튼: 반전색 대신 강조 면 + 강조 테두리 + ✓ — 라이트·다크 어디서나 같은 모양이라 "흰 버튼 = 라이트"로 오해하지 않는다 */
+    .group button[aria-pressed="false"]{background:transparent;color:var(--muted)}
+    .group button[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);color:var(--ink);font-weight:800}
+    .group button[aria-pressed="true"]::before{content:"✓";font-weight:900;color:var(--accent-dark)}
     .group .sw{width:.7em;height:.7em;border-radius:50%;background:var(--sw);flex:none;outline:1px solid rgba(0,0,0,.08)}   /* 테마의 강조색 한 점 */
-    .group button[aria-pressed="true"] .sw{outline-color:rgba(255,255,255,.35)}
+    .group button[aria-pressed="true"] .sw{outline-color:rgba(0,0,0,.15)}
     .group .sr{font-weight:400;opacity:.75}
     .info{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:8px 32px;padding:24px 0 18px;align-items:start}
     .info h2{margin:0;font-size:30px;letter-spacing:-.04em;color:var(--ink)}
@@ -78,8 +81,8 @@
     <div class="opts">
       <div class="group" id="pick-theme" role="group" aria-label="테마"><span>테마</span></div>
       <div class="group" id="pick-paper" role="group" aria-label="모드"><span>모드</span>
-        <button data-mode="" aria-pressed="true">라이트</button>
-        <button data-mode="dark" aria-pressed="false">다크</button>
+        <button data-mode="" aria-pressed="true">☀ 라이트</button>
+        <button data-mode="dark" aria-pressed="false">☾ 다크</button>
         <button data-mode="both" aria-pressed="false">나란히</button>
       </div>
     </div>
