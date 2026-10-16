@@ -62,9 +62,13 @@ Do not treat approval of one stage as permission for later stages.
 ## Bundled resources
 
 - See [examples/snack-drawer/](examples/snack-drawer/) for a complete seven-slide report-to-presentation example with FLOW, SCRIPT, reused figures, HTML, and PDF.
+- See [examples/gallery/](examples/gallery/) for a 22-slide gallery of common slide types (cover, agenda, concept, structure, code, comparison, table, key number, roadmap, decision …), one filled example per type. Open `index.html` to browse them; copy the matching `<section>` from its `presentation.html` and replace the content.
 
 - Copy [assets/starter/presentation.html](assets/starter/presentation.html) into the project when starting a harness deck. Copy the bundled files from `assets/starter/assets/` that the chosen slides actually use into the project's `assets/` directory.
 - Use [references/layout-budget.md](references/layout-budget.md) when choosing slide patterns or reducing crowded content.
+- For flows and structures (lanes, before/after, numbered diagram, row mapping), use patterns O–R and the diagram engine described in [build](references/build.md#구조도-그리기-o--p--q). Do not generate images for them.
+- For explaining code, use pattern S (step rail + highlighted code + numbered results) as described in [build](references/build.md#코드-설명하기-s).
+- Pick a color theme by presentation type — `clay` (default: proposals, reports), `ocean` (technical/architecture/data), `duo` (teaching/comparison), `forest` (operations/progress), `signal` (pitch/keynote). Compare them in [examples/gallery/themes.html](examples/gallery/themes.html). Decks are light (white background) by default; add `data-mode="dark"` to any theme for dark mode. Change colors only through a `data-theme` preset, a new theme block, or an inline `--c` override ([build](references/build.md#색-바꾸기)). Keep the default unless the user asks.
 - Consult [references/failure-catalog.md](references/failure-catalog.md) when a verification failure needs its original rationale.
 - Run `python3 <skill-dir>/scripts/deck_verify.py <deck.html>` for deck validation.
 - Run `python3 <skill-dir>/scripts/deck_numbers.py <deck.html> <results.json> [data.csv ...] --ignore-pages --ignore-years --ignore-times` when numeric evidence accompanies the deck. See [verify](references/verify.md) for limits.

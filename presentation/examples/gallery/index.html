@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>발표 장 갤러리</title>
+  <style>
+    /* 페이지 크롬 색 — 덱과 별개인 이 페이지만의 토큰. 테마·모드를 고르면 덱(iframe)과 같이 바뀌어 비교할 때 페이지 색이 덱을 방해하지 않는다.
+       강조값은 스타터 CSS 의 테마 블록과 같은 값이다(테마를 더하면 여기도 한 줄). */
+    :root{--ink:#141413;--body:#2B2A27;--muted:#57554F;--paper:#FFFFFF;--line:#D6D3CA;--card:#F1F0EB;
+          --accent:#D97757;--accent-dark:#9A4022;--accent-light:#E38F72;--accent-soft:#F5E3DA;
+          --sw-clay:#D97757;--sw-ocean:#2F6FB0;--sw-duo:#B23A7A;--sw-forest:#3F7A4A;--sw-signal:#E5322D;
+          --shadow:0 10px 28px rgba(20,20,19,.08);
+          /* 크게 보기는 모드와 상관없이 늘 어둡다 */
+          --stage:#0E0E0D;--on-stage:#FAF9F5;--on-stage-muted:#B9B7AE;--stage-line:rgba(255,255,255,.3)}
+    [data-theme="ocean"]{--accent:#2F6FB0;--accent-dark:#1F4F86;--accent-light:#7FB2E5;--accent-soft:#E2ECF6}
+    [data-theme="duo"]{--accent:#B23A7A;--accent-dark:#8C2860;--accent-light:#E58BB8;--accent-soft:#F6E1EC}
+    [data-theme="forest"]{--accent:#3F7A4A;--accent-dark:#2C5A35;--accent-light:#8FC79A;--accent-soft:#E3EEE4}
+    [data-theme="signal"]{--accent:#E5322D;--accent-dark:#B71F1B;--accent-light:#FF6B63;--accent-soft:#FCE4E3}
+    [data-mode="dark"]{--ink:#EEEBE4;--body:#DCD9D0;--muted:#B3B0A6;--paper:#1B1A18;--line:#4A4843;--card:#2A2926;
+                       --accent-dark:var(--accent-light);--accent-soft:color-mix(in srgb,var(--accent) 26%,var(--paper));
+                       --shadow:0 10px 28px rgba(0,0,0,.4)}
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+    body{margin:0;background:var(--paper);color:var(--body);font-family:Pretendard,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;line-height:1.5}
+    .wrap{max-width:1240px;margin:0 auto;padding-inline:24px}
+    code{font-family:ui-monospace,Menlo,monospace;font-size:.92em}
+    :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+    /* ── 머리글: 윗줄 제목 + 테마·모드, 아랫줄 묶음 탭(지금 보는 묶음을 표시) ── */
+    header.top{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--paper) 94%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+    .bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;padding-block:12px 8px}
+    .bar h1{margin:0;font-size:22px;letter-spacing:-.03em;color:var(--ink);white-space:nowrap}
+    .bar h1 span{color:var(--accent-dark)}
+    .controls{margin-left:auto;display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:14px;color:var(--muted)}
+    .controls .lbl{font-weight:700;margin-right:2px}
+    .controls .sep{margin-left:10px;padding-left:12px;border-left:1px solid var(--line)}
+    .controls button{display:inline-flex;align-items:center;gap:.45em;padding:5px 11px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--body);font:inherit;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap}
+    .controls button:hover{border-color:var(--accent)}
+    .controls button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+    .controls .sw{width:.7em;height:.7em;border-radius:50%;background:var(--sw);flex:none;outline:1px solid rgba(0,0,0,.08)}   /* 테마의 강조색 한 점 — 이름만으로는 어떤 색인지 모른다 */
+    .controls button[aria-pressed="true"] .sw{outline-color:rgba(255,255,255,.35)}
+    .controls .sr{font-weight:400;opacity:.75}
+    .controls .more{margin-left:8px;font-weight:800;color:var(--accent-dark);white-space:nowrap}
+    nav.groups{display:flex;flex-wrap:wrap;gap:0 4px;margin-inline:-10px}
+    nav.groups a{display:inline-flex;align-items:baseline;gap:.4em;padding:6px 10px 8px;border-bottom:2px solid transparent;color:var(--muted);font-size:14px;font-weight:700;text-decoration:none;white-space:nowrap}
+    nav.groups a small{font-size:12px;font-weight:700;color:var(--muted);opacity:.8}
+    nav.groups a:hover{color:var(--ink)}
+    nav.groups a[aria-current="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+
+    /* ── 소개 ── */
+    .intro{padding:28px 0 4px;max-width:760px}
+    .intro p{margin:0 0 8px;color:var(--body)}
+    .intro p + p{font-size:14px;color:var(--muted)}
+    .intro b{color:var(--ink)}
+    .intro .keys{display:inline-block;padding:0 .4em;border:1px solid var(--line);border-radius:4px;font-size:.9em;color:var(--body)}
+
+    /* ── 묶음과 카드 ── */
+    section.group{padding:28px 0 8px;scroll-margin-top:110px}
+    section.group > h2{margin:0 0 4px;font-size:24px;letter-spacing:-.04em;color:var(--ink)}
+    section.group > h2 small{margin-left:.5em;font-size:14px;font-weight:700;color:var(--muted);letter-spacing:0}
+    section.group > p{margin:0 0 16px;color:var(--muted)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,272px),1fr));gap:20px}
+    .card{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;background:var(--paper);overflow:hidden;color:inherit;text-decoration:none;transition:border-color .15s,box-shadow .15s}
+    .card:hover{border-color:var(--accent);box-shadow:var(--shadow)}
+    .card:focus-visible{outline-offset:0;border-color:var(--accent)}
+    .thumb{position:relative;aspect-ratio:16/9;background:var(--card);border-bottom:1px solid var(--line)}
+    .thumb iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}
+    .meta{padding:12px 14px 14px;display:flex;flex-direction:column;gap:5px}
+    .name{display:flex;align-items:baseline;gap:8px}
+    .num{flex:none;font-family:ui-monospace,Menlo,monospace;font-size:13px;font-weight:700;color:var(--muted)}
+    .name strong{flex:1;min-width:0;font-size:17px;letter-spacing:-.03em;color:var(--ink);word-break:keep-all}
+    .pat{flex:none;padding:1px 7px;border:1px solid var(--line);border-radius:4px;font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap}
+    .when{margin:0;font-size:14px;color:var(--body);word-break:keep-all}
+    .tip{margin:0;font-size:13px;color:var(--muted);word-break:keep-all}
+    .tip b{font-weight:800;color:var(--body)}
+    footer.end{padding:36px 0 48px;color:var(--muted);font-size:14px}
+
+    /* ── 크게 보기: 갤러리 위에 덮는 어두운 무대. 페이지 모드와 상관없이 늘 어둡다 ── */
+    .viewer{position:fixed;inset:0;z-index:20;display:none;flex-direction:column;background:var(--stage);color:var(--on-stage)}
+    .viewer.open{display:flex}
+    .viewer-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:12px 18px 8px}
+    .viewer-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;margin-right:auto;min-width:0}
+    .viewer-head strong{font-size:17px;letter-spacing:-.02em}
+    .viewer-head .pat{border-color:var(--stage-line);color:var(--on-stage-muted)}
+    .viewer-head .grp{font-size:14px;color:var(--on-stage-muted)}
+    .viewer-count{font-family:ui-monospace,Menlo,monospace;font-size:14px;color:var(--on-stage-muted);margin-right:6px}
+    .viewer-bar a,.viewer-bar button{padding:6px 12px;border:1px solid var(--stage-line);border-radius:999px;background:transparent;color:var(--on-stage);font:inherit;font-size:14px;font-weight:700;text-decoration:none;cursor:pointer;white-space:nowrap}
+    .viewer-bar a:hover,.viewer-bar button:hover{border-color:var(--accent);color:#fff}
+    .viewer-bar .close{font-size:18px;line-height:1;padding:6px 11px}
+    .viewer-note{display:flex;flex-wrap:wrap;gap:4px 18px;margin:0;padding:0 18px 10px;color:var(--on-stage-muted);font-size:14px}
+    .viewer-note b{color:var(--on-stage)}
+    .viewer-note .keys{margin-left:auto;white-space:nowrap}
+    .viewer-note .keys kbd{font:inherit;padding:0 .35em;border:1px solid var(--stage-line);border-radius:4px}
+    .viewer-stage{flex:1;min-height:0;display:grid;place-items:center;padding:0 18px 18px}
+    .viewer-frame{width:min(100%, calc((100vh - 124px) * 16 / 9));aspect-ratio:16/9;border:0;background:#000;border-radius:6px;pointer-events:none;outline:1px solid rgba(255,255,255,.18)}
+    body.viewing{overflow:hidden}
+
+    @media (max-width:860px){header.top{position:static}section.group{scroll-margin-top:12px}}
+    @media (max-width:640px){
+      .bar{padding-top:14px}
+      .controls{margin-left:0;flex-basis:100%}
+      .controls .br{flex-basis:100%;height:0}   /* 테마 줄과 모드 줄로 나눈다 */
+      .controls .sep{margin-left:0;padding-left:0;border-left:0}
+      .bar h1{font-size:20px}
+      .viewer-head{flex-basis:100%}.viewer-note .keys{display:none}
+    }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="wrap bar">
+      <h1>발표 장 <span>갤러리</span></h1>
+      <div class="controls" role="group" aria-label="색 테마와 모드"><span class="lbl">테마</span>
+        <button data-theme="" aria-pressed="true"><i class="sw" style="--sw:var(--sw-clay)"></i>clay<span class="sr">(기본)</span></button>
+        <button data-theme="ocean" aria-pressed="false"><i class="sw" style="--sw:var(--sw-ocean)"></i>ocean</button>
+        <button data-theme="duo" aria-pressed="false"><i class="sw" style="--sw:var(--sw-duo)"></i>duo</button>
+        <button data-theme="forest" aria-pressed="false"><i class="sw" style="--sw:var(--sw-forest)"></i>forest</button>
+        <button data-theme="signal" aria-pressed="false"><i class="sw" style="--sw:var(--sw-signal)"></i>signal</button>
+        <i class="br" aria-hidden="true"></i><span class="lbl sep">모드</span>
+        <button data-mode="" aria-pressed="true">라이트</button>
+        <button data-mode="dark" aria-pressed="false">다크</button>
+        <a class="more" href="themes.html">테마 설명 →</a>
+      </div>
+    </div>
+    <div class="wrap"><nav class="groups" id="nav" aria-label="장 묶음"></nav></div>
+  </header>
+
+  <main class="wrap">
+    <div class="intro">
+      <p>발표에서 자주 나오는 장 <b>22가지</b>를 “사내 문서에 답하는 에이전트”라는 한 주제로 채웠다.
+         카드를 누르면 그 장이 크게 열린다. <span class="keys">←</span> <span class="keys">→</span> 로 앞뒤 장, <span class="keys">Esc</span>나 × 로 닫는다.
+         위쪽 버튼으로 색 테마와 모드(라이트·다크)를 바꾸면 모든 카드가 그 색으로 다시 그려진다.</p>
+      <p>새 덱을 만들 때는 <code>presentation.html</code>에서 같은 <code>data-title</code>의 <code>&lt;section&gt;</code>을 복사해 내용만 바꾼다.
+         푸터의 점선 <b>견본</b> 표시는 안내문이라 복사한 뒤 실제 문구로 바꾼다(남아 있으면 검사기가 경고한다).</p>
+      <p>패턴을 보여주려고 같은 이야기를 여러 모양으로 반복한다(예: 5·6장, 11·20장). 실제 덱에서는 한 가지만 고른다. 15~17장 수치는 레이아웃 견본용이다.</p>
+    </div>
+    <div id="groups"></div>
+  </main>
+  <div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-labelledby="viewer-title">
+    <div class="viewer-bar">
+      <div class="viewer-head"><strong id="viewer-title"></strong><span class="pat" id="viewer-pat"></span><span class="grp" id="viewer-group"></span></div>
+      <span class="viewer-count" id="viewer-count" aria-live="polite"></span>
+      <button id="viewer-prev" aria-label="이전 장">← 이전</button>
+      <button id="viewer-next" aria-label="다음 장">다음 →</button>
+      <a id="viewer-tab" target="_blank" rel="noopener">새 탭으로</a>
+      <button class="close" id="viewer-close" aria-label="닫기">×</button>
+    </div>
+    <p class="viewer-note"><span id="viewer-note"></span><span class="keys"><kbd>←</kbd> <kbd>→</kbd> 앞뒤 장 · <kbd>Esc</kbd> 닫기</span></p>
+    <div class="viewer-stage" id="viewer-stage"><iframe class="viewer-frame" id="viewer-frame" title="크게 보기" tabindex="-1"></iframe></div>
+  </div>
+
+  <footer class="end wrap">템플릿: <code>assets/starter/presentation.html</code> · 패턴 규칙: <code>references/build.md</code> · 예산: <code>references/layout-budget.md</code></footer>
+
+  <script>
+    const GROUPS = [
+      {id:'open', name:'여는 장', desc:'청중이 주제와 순서, 왜 들어야 하는지를 잡는 장', items:[
+        [1,'표지','A','발표 주제와 한 줄 약속을 처음 보여줄 때','제목 2줄 + 부제 1줄 + 한 문장까지'],
+        [2,'목차 · 진행 지도','U','순서를 예고하고, 덩어리가 바뀔 때 지금 위치를 알릴 때','같은 목록을 다시 띄우고 지금 항목만 칠한다'],
+        [3,'문제 장면','C','청중이 "우리 얘기다"라고 공감하게 만들 때','장면 + 현장의 한 마디 + 결과 넷 + 결론 한 줄'],
+      ]},
+      {id:'explain', name:'설명하는 장', desc:'개념·구조·코드·화면이 어떻게 돌아가는지 보여주는 장', items:[
+        [4,'개념 설명','Q','처음 듣는 개념을 순서대로 이해시킬 때','그림 번호 = 범례 번호 = 말하는 순서'],
+        [5,'구조 설명','O','두 흐름이 어디서 만나는지 시스템 전체를 보일 때','만나는 두 노드를 같은 열에 두면 왕복선이 곧다'],
+        [6,'두 시점 흐름','J','같은 일이 두 시점에 다르게 도는 것을 보일 때','칩 4개씩. 갈라지거나 왕복하면 O로 바꾼다'],
+        [7,'코드 설명','S','개발자 청중에게 코드 한 조각이 무엇을 바꾸는지 단계별로 풀 때','레일은 지금 단계만, 코드는 12줄 이하, 강조 줄 번호 = 결과 번호'],
+        [8,'화면 시연','M','사용자가 화면에서 무엇을 받는지 보여줄 때','관심 영역만 잘라 핀 3~4개'],
+        [9,'사용자 여정','L','사용자가 처음부터 끝까지 거치는 단계를 보일 때','단계마다 바뀌는 곳 하나만 칠한다'],
+        [10,'행동과 API','K','개발자에게 화면 행동이 어떤 호출로 이어지는지 보일 때','행동과 API 행에 같은 번호, 표는 한 행만 짚는다'],
+      ]},
+      {id:'compare', name:'비교하는 장', desc:'둘 이상을 나란히 놓고 차이를 보이는 장', items:[
+        [11,'두 쪽 대비','B','줄어드는 것과 남는 것처럼 두 쪽의 무게를 견줄 때','강조는 한쪽만'],
+        [12,'전후 비교','P','무엇을 더하면 흐름이 어떻게 바뀌는지 설득할 때','뼈대를 두 번 그리고 새것만 칠한다'],
+        [13,'항목별 짝 비교','R','약점마다 해결이 하나씩 있다고 차근차근 보일 때','왼쪽은 글자만, 오른쪽만 상자'],
+        [14,'문제 → 기능 매핑','D','문제 다섯과 기능 다섯을 한눈에 대응시킬 때','칸마다 1~2줄. 문장이 길면 R로'],
+      ]},
+      {id:'evidence', name:'근거·데이터 장', desc:'숫자·표·그림·구현 상태로 주장을 받치는 장', items:[
+        [15,'핵심 숫자','V','발표 전체를 숫자 하나로 기억시키고 싶을 때','비교 기준과 출처를 같이 둔다'],
+        [16,'데이터 표','T','선택지 여러 개를 같은 기준으로 견주고 하나를 고를 때','6행 × 5열, 짚을 행 하나만 칠한다'],
+        [17,'분석 그림','N','보고서의 차트로 "어디가 다른지"를 보여줄 때','자르지 않고, 그림 속 글자도 14.4px 이상'],
+        [18,'구성과 상태','H','무엇이 이미 되고 무엇이 계획인지 정직하게 밝힐 때','확인됨·제안·예정 범례와 카드 색을 맞춘다'],
+      ]},
+      {id:'decide', name:'계획·결정 장', desc:'누가, 언제, 무엇을 할지와 결정 요청으로 닫는 장', items:[
+        [19,'우선순위 대상','E','누구에게 먼저 영향이 가는지로 범위를 좁힐 때','1순위만 크게. 균등 나열은 우선순위를 지운다'],
+        [20,'역할 분담','F','사람과 시스템(또는 두 팀)의 책임 경계를 정할 때','강조는 결론 쪽 카드 하나'],
+        [21,'로드맵','G','어디까지 왔고 다음에 무엇을 하는지 보일 때','지금 단계 하나만 칠한다'],
+        [22,'지표와 결정 요청','I','승인받을 것과 성공을 판단할 기준을 함께 내밀 때','결정 요청을 가장 크게, 지표는 목표와 기간까지'],
+      ]},
+    ];
+    let theme = '', mode = '';
+    try { theme = localStorage.getItem('gallery-theme') || ''; mode = localStorage.getItem('gallery-mode') || ''; } catch (e) {}
+    if (!['', 'ocean', 'duo', 'forest', 'signal'].includes(theme)) theme = '';
+    if (mode !== 'dark') mode = '';   // 저장값이 이상하면 clay·라이트로
+    /* 테마·모드는 주소 옵션으로 덱에 넘긴다 — 덱 파일은 고치지 않는다 */
+    const opts = embed => [embed && 'embed', theme && 'theme=' + theme, mode && 'mode=' + mode].filter(Boolean).join('&');
+    const src = n => `presentation.html?${opts(true)}#${n}`;
+    const full = n => `presentation.html${opts(false) ? '?' + opts(false) : ''}#${n}`;
+    const nn = n => String(n).padStart(2, '0');
+    const nav = document.getElementById('nav'), root = document.getElementById('groups');
+    for (const g of GROUPS) {
+      nav.insertAdjacentHTML('beforeend', `<a href="#${g.id}" aria-current="false">${g.name}<small>${g.items.length}</small></a>`);
+      const cards = g.items.map(([n, name, pat, when, tip]) => `
+        <a class="card" data-n="${n}" href="${full(n)}" target="_blank" rel="noopener">
+          <div class="thumb"><iframe loading="lazy" tabindex="-1" title="${name} 미리보기" src="${src(n)}"></iframe></div>
+          <div class="meta">
+            <div class="name"><span class="num">${nn(n)}</span><strong>${name}</strong><span class="pat">패턴 ${pat}</span></div>
+            <p class="when">${when}</p><p class="tip"><b>요령</b> · ${tip}</p>
+          </div>
+        </a>`).join('');
+      root.insertAdjacentHTML('beforeend', `<section class="group" id="${g.id}"><h2>${g.name}<small>${g.items.length}장</small></h2><p>${g.desc}</p><div class="grid">${cards}</div></section>`);
+    }
+    function applyTheme(t, m) {
+      theme = t ?? theme; mode = m ?? mode;
+      try { localStorage.setItem('gallery-theme', theme); localStorage.setItem('gallery-mode', mode); } catch (e) {}
+      /* 페이지 크롬도 같은 테마·모드로 — 다크 덱을 흰 페이지에서 보면 비교가 안 된다 */
+      if (theme) document.documentElement.dataset.theme = theme; else delete document.documentElement.dataset.theme;
+      if (mode) document.documentElement.dataset.mode = mode; else delete document.documentElement.dataset.mode;
+      document.querySelectorAll('.controls button[data-theme]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.theme === theme)));
+      document.querySelectorAll('.controls button[data-mode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
+      document.querySelectorAll('.card').forEach(c => {
+        const n = c.dataset.n;
+        c.href = full(n);
+        c.querySelector('iframe').src = src(n);
+      });
+    }
+    document.querySelectorAll('.controls button[data-theme]').forEach(b => b.onclick = () => applyTheme(b.dataset.theme, null));
+    document.querySelectorAll('.controls button[data-mode]').forEach(b => b.onclick = () => applyTheme(null, b.dataset.mode));
+
+    /* 지금 보는 묶음을 탭에 표시 — 머리글이 고정이라 긴 목록을 내려도 어디쯤인지 안다 */
+    const links = [...nav.querySelectorAll('a')], sections = GROUPS.map(g => document.getElementById(g.id));
+    function spy() {
+      const top = document.querySelector('header.top').getBoundingClientRect().bottom + 16;
+      let cur = sections[0];
+      for (const s of sections) if (s.getBoundingClientRect().top <= top) cur = s;
+      if (innerHeight + scrollY >= document.documentElement.scrollHeight - 2) cur = sections[sections.length - 1];
+      links.forEach(a => a.setAttribute('aria-current', String(a.hash === '#' + cur.id)));
+    }
+    addEventListener('scroll', spy, {passive: true}); addEventListener('resize', spy); spy();
+
+    /* 크게 보기 — 새 탭으로 넘어가지 않고 갤러리 위에 띄운다 */
+    const ITEMS = GROUPS.flatMap(g => g.items.map(it => [...it, g.name]));
+    const viewer = document.getElementById('viewer'), frame = document.getElementById('viewer-frame');
+    let current = 0, lastCard = null;
+    function openAt(k) {
+      current = (k + ITEMS.length) % ITEMS.length;
+      const [n, name, pat, when, tip, group] = ITEMS[current];
+      document.getElementById('viewer-note').innerHTML = `<b>언제</b> ${when} · <b>요령</b> ${tip}`;
+      document.getElementById('viewer-title').textContent = `${nn(n)} · ${name}`;
+      document.getElementById('viewer-pat').textContent = `패턴 ${pat}`;
+      document.getElementById('viewer-group').textContent = group;
+      document.getElementById('viewer-count').textContent = `${nn(current + 1)} / ${ITEMS.length}`;
+      document.getElementById('viewer-tab').href = full(n);
+      frame.src = src(n);
+      viewer.classList.add('open'); document.body.classList.add('viewing');
+      document.querySelectorAll('header.top, main, footer.end').forEach(el => el.inert = true);   // 뒤쪽은 Tab·클릭을 받지 않는다
+      document.getElementById('viewer-close').focus();
+    }
+    function closeViewer() {
+      viewer.classList.remove('open'); document.body.classList.remove('viewing');
+      document.querySelectorAll('header.top, main, footer.end').forEach(el => el.inert = false);
+      frame.src = 'about:blank';
+      const seen = document.querySelector(`.card[data-n="${ITEMS[current][0]}"]`) || lastCard;   // 마지막에 본 장의 카드로
+      if (seen) { seen.scrollIntoView({block: 'nearest'}); seen.focus({preventScroll: true}); }
+    }
+    root.addEventListener('click', e => {
+      const card = e.target.closest('.card');
+      if (!card || e.metaKey || e.ctrlKey || e.shiftKey) return;   // 수정키 클릭은 원래대로 새 탭
+      if (matchMedia('(max-width:640px)').matches) return;          // 휴대폰 폭에선 크게 보기가 카드와 같은 크기라 바로 새 탭으로
+      e.preventDefault(); lastCard = card;
+      openAt(ITEMS.findIndex(it => String(it[0]) === card.dataset.n));
+    });
+    document.getElementById('viewer-close').onclick = closeViewer;
+    document.getElementById('viewer-prev').onclick = () => openAt(current - 1);
+    document.getElementById('viewer-next').onclick = () => openAt(current + 1);
+    document.getElementById('viewer-stage').addEventListener('click', e => { if (e.target.id === 'viewer-stage') closeViewer(); });
+    addEventListener('keydown', e => {
+      if (!viewer.classList.contains('open')) return;
+      if (e.key === 'Escape') closeViewer();
+      if (e.key === 'Tab') {   // 창 안 버튼끼리만 돈다
+        const f = [...viewer.querySelectorAll('button, a[href]')];
+        const i = f.indexOf(document.activeElement);
+        if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+        else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+      }
+      if (e.key === 'ArrowRight') { e.preventDefault(); openAt(current + 1); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); openAt(current - 1); }
+    });
+    if (theme || mode) applyTheme(theme, mode);
+  </script>
+</body>
+</html>

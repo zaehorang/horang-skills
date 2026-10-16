@@ -5,15 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>발표 제목</title>
   <style>
-    /* ── 색 토큰 ──────────────────────────────────────────────
-       클레이 강조색은 "이번 제안이 새로 만드는 것"에만 쓴다.
-       중립 회색은 이미 있는 것, 연회색 점선은 아직 아닌 것. */
+    /* ── 색 ──────────────────────────────────────────────────
+       네 층으로 나눈다. 색을 바꿀 때는 1층·3층·4층만 고친다.
+       패턴 CSS 안에 색 값을 직접 쓰지 않는다 (deck_verify 가 경고한다).
+
+       1. 팔레트   아래 :root 의 원색. 라이트 모드 기준이고 바탕은 흰색이다.
+       2. 의미 토큰 --gray · --tone-a · --status-plan · --surface-dark … "무슨 뜻인가"의 이름이며 팔레트를 가리킨다.
+       3. 테마     <html data-theme="ocean"> 처럼 강조색·중립색을 바꾸는 프리셋. 한 장에만 걸 수도 있다.
+       4. 모드     <html data-mode="dark"> 다크 모드. 어느 테마와도 겹쳐 쓴다. 없으면 라이트.
+       한 요소만 다르게 칠할 때는 style="--c:#2F6FB0;--c-soft:#E2ECF6" (레인·노드·선·행 매핑).
+
+       뜻: 강조색은 그 장에서 "지금 짚는 곳" 하나에만 쓴다 — 결론 한 줄, 새로 생긴 것, 짚는 행, 지금 단계.
+       번호 원·라벨·갈래는 강조색이 아니다(먹색·회색). 회색은 이미 있는 것, 점선은 아직 아닌 것. */
     :root{
-      --ink:#141413; --body:#2B2A27; --muted:#6B6A64; --paper:#FAF9F5; --line:#DEDCD3;
-      --card:#F0EEE6;
-      --gray:var(--muted); --gray-soft:var(--card); --pending:var(--line);
-      --accent:#D97757; --accent-dark:#B5532F; --accent-soft:#F5E3DA;
+      --ink:#141413; --body:#2B2A27; --muted:#57554F; --paper:#FFFFFF; --line:#D6D3CA;
+      --card:#F1F0EB;          /* 흰 바탕 위 면 — 노란 기를 덜어 칙칙하지 않게 */
+      --accent:#D97757; --accent-dark:#9A4022; --accent-soft:#F5E3DA;
+      --accent-dm:#D97757;     /* 다크 바탕 위 강조 선·면. 다크 바탕에서 어두워 보이는 테마는 밝힌 값을 준다 */
+      --plan:#4F6F80;          /* "제안" 상태 원색. 강조색과 다른 색이어야 한다 */
+      --accent-light:#E38F72;  /* 어두운 바탕 위 강조 글자 원색 (표지·코드·다크 모드) */
+      --on-light:#141413;      /* 늘 밝은 면(조작 버튼 등) 위 글자 — 모드와 상관없이 어둡다 */
+      --code-dim:#A3A198;
+      --on-dark:#FAF9F5; --on-dark-muted:#DEDCD3;   /* 늘 어두운 면(표지·사진 위 문구·코드) 위 글자 — 모드와 상관없이 밝다 */
       --shadow:0 14px 34px rgba(20,20,19,.08);
+      /* 다크 모드 중립색 — 테마마다 색조를 맞춘다(clay 따뜻한 회색). 4층 다크 블록이 읽는다 */
+      --paper-dm:#1B1A18; --card-dm:#2A2926; --line-dm:#4A4843; --muted-dm:#B3B0A6; --body-dm:#DCD9D0; --ink-dm:#EEEBE4;
 
       /* 타이포 스케일 — 1280x720 고정 캔버스 기준 절대값.
          괄호 안은 슬라이드 높이(720) 대비 비율. 발표 가독성은 화면 해상도가
@@ -30,12 +46,76 @@
       --canvas-h: 720px;
       --pad:      54px;
     }
+    /* 2층 · 의미 토큰. 테마·모드를 건 요소에서도 다시 계산되도록 [data-theme]·[data-mode] 에도 선언한다. */
+    :root,[data-theme],[data-mode]{
+      /* --pending(= --line)은 선·면 전용이다. 뜻을 가진 글자·화살표·기호는 --muted 를 쓴다 (바탕 대비 1.3:1 이라 안 보인다) */
+      --gray:var(--muted); --gray-soft:var(--card); --pending:var(--line);
+      /* 구현 상태 3분류 — 강조색(--accent)과 섞지 않는다. 확인됨 = 먹색, 제안 = --status-plan, 예정 = 점선 */
+      --status-done:var(--ink); --status-plan:var(--plan); --status-next:var(--muted);
+      /* 구조도·행 매핑의 두 갈래(레인 둘, 전/후, 좌/우). 기본은 a = 회색, b = 먹색 — 둘 다 강조색이 아니다.
+         강조색은 갈래와 따로 "짚는 곳" 하나(.new 노드·결론 한 줄)에만 쓴다. 어떤 테마도 갈래를 강조색으로 두지 않는다.
+         테마가 갈래 A 색을 정하려면 --tone-a-base 를 준다. */
+      --tone-a:var(--tone-a-base, var(--muted)); --tone-a-soft:var(--tone-a-soft-base, var(--card));
+      --tone-b:var(--ink);    --tone-b-soft:var(--card);
+      /* 늘 어두운 면: 표지(.dark)·코드 블록. 그 위 강조 글자는 --accent-on-dark (강조색이 어두운 테마는 밝은 값을 준다) */
+      --surface-dark:var(--ink);
+      --accent-on-dark:var(--accent-light, var(--accent));
+      --code-bg:var(--surface-dark); --code-fg:var(--on-dark); --code-key:var(--accent-on-dark); --code-str:var(--accent-soft);
+    }
+    /* 3층 · 테마 프리셋 — 발표 성격에 맞춰 고른다. 기본(테마 없음)은 clay.
+       clay   제안·보고 — 따뜻한 편집물 톤
+       ocean  기술·아키텍처·데이터 설명 — 차분한 파랑
+       duo    강의·교육·비교 — 남색 갈래 A + 자홍 강조
+       forest 운영·성과 보고 — 안정적인 초록
+       signal 피치·키노트 — 고대비 + 빨강 한 점
+       새 테마는 같은 형식으로 한 블록을 더한다. 강조 셋(--accent·-dark·-soft)·--plan·--accent-light 를 함께 정한다.
+       점검(라이트): 바탕 위 -dark 글자 ≥ 4.5:1 · -soft 위 -dark 글자 ≥ 4.5:1 · -dark 위 흰 글자 ≥ 4.5:1 · 바탕 위 --accent 선·면 ≥ 3:1
+             · 먹색 바탕 위 --accent-on-dark ≥ 4.5:1 (표지 kicker·코드 키워드) · -soft 위 보조 글자는 --muted 대신 --body.
+       점검(다크): 다크 바탕 위 강조 글자 ≥ 4.5:1 · 강조 바탕 위 강조 글자 ≥ 4.5:1 · --accent 선·면 ≥ 3:1. 팔레트 장(?mode=dark)이 계산해 보여준다.
+       글자에는 --accent-dark 를, --accent 는 선·면에만 쓴다. */
+    [data-theme="clay"]{}
+    [data-theme="ocean"]{--card:#EDF1F6; --line:#CFD9E3; --muted:#4D5967; --body:#24303D; --ink:#0F1A26;
+                         --accent:#2F6FB0; --accent-dark:#1F4F86; --accent-soft:#E2ECF6; --plan:#8A6A2E; --accent-light:#7FB2E5;
+                         --accent-dm:#4D8BCB;
+                         --paper-dm:#151A20; --card-dm:#222A34; --line-dm:#3D4956; --muted-dm:#A9B3BE; --body-dm:#D8DEE5; --ink-dm:#ECF0F4}
+    [data-theme="duo"]{--card:#F1F0F4; --line:#D7D5DF; --muted:#545260; --body:#29272F; --ink:#16151A;
+                       --accent:#B23A7A; --accent-dark:#8C2860; --accent-soft:#F6E1EC; --plan:#2E7D6B; --accent-light:#E58BB8;
+                       --tone-a-base:#1F4F86; --tone-a-soft-base:#E2ECF6; --tone-a-base-dark:#7492B4;
+                       --accent-dm:#C9518F;
+                       --paper-dm:#19181C; --card-dm:#28262E; --line-dm:#46434E; --muted-dm:#B2AFBA; --body-dm:#DCDAE0; --ink-dm:#EEEDF1}
+    [data-theme="forest"]{--card:#EEF2EB; --line:#D0D7C8; --muted:#50584B; --body:#262B23; --ink:#141A12;
+                          --accent:#3F7A4A; --accent-dark:#2C5A35; --accent-soft:#E3EEE4; --plan:#7A5C8A; --accent-light:#8FC79A;
+                          --accent-dm:#4E9A5B;
+                          --paper-dm:#161A16; --card-dm:#242B24; --line-dm:#424B41; --muted-dm:#ACB4A7; --body-dm:#D9DED5; --ink-dm:#ECEFE9}
+    [data-theme="signal"]{--card:#F2F2F2; --line:#D2D2D2; --muted:#4F4F4F; --body:#1F1F1F; --ink:#0A0A0A; --accent-light:#FF6B63;
+                          --accent:#E5322D; --accent-dark:#B71F1B; --accent-soft:#FCE4E3; --plan:#2B59C3; --code-dim:#9A9A9A;
+                          --accent-dm:#E5322D;
+                          --paper-dm:#171717; --card-dm:#272727; --line-dm:#474747; --muted-dm:#B0B0B0; --body-dm:#DCDCDC; --ink-dm:#EDEDED}
+    /* 4층 · 다크 모드 — 테마 블록보다 뒤에 두어야 이긴다. 강조색 자체는 테마 값을 쓰고,
+       바탕 위에서 읽혀야 하는 값(강조 글자·연한 면·제안·갈래 A)은 그 값에서 다시 만든다.
+       그림 파일(차트 PNG 등)은 다크 바탕에서 글자가 사라지므로 밝은 판 위에 올린다(.analysis-figure img). */
+    [data-mode="dark"],[data-mode="dark"] [data-theme]{
+      /* 중립색은 테마의 *-dm 값. 본문 10~13:1 · 제목 15:1 아래로 두어 어두운 방에서 번지지 않게 한다 */
+      --paper:var(--paper-dm); --card:var(--card-dm); --line:var(--line-dm); --muted:var(--muted-dm); --body:var(--body-dm); --ink:var(--ink-dm);
+      --accent:var(--accent-dm);
+      --on-dark-muted:#B9B7AE;
+      --surface-dark:#0A0A09;
+      --accent-dark:var(--accent-on-dark);
+      --accent-soft:color-mix(in srgb, var(--accent) 26%, var(--paper));
+      --status-plan:color-mix(in srgb, var(--plan) 62%, #FFFFFF);
+      --tone-a:var(--tone-a-base-dark, var(--muted));   /* 기본은 회색 그대로 — 갈래 B(밝은 먹색)와 구분된다 */
+      --tone-a-soft:color-mix(in srgb, var(--tone-a) 16%, var(--paper));
+      --code-str:color-mix(in srgb, var(--accent-on-dark) 45%, #FFFFFF);
+      --shadow:0 14px 34px rgba(0,0,0,.4);
+    }
     *{box-sizing:border-box}
     html,body{margin:0;height:100%;background:#000;color:var(--body);font-family:Pretendard,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;overflow:hidden}
     button{font:inherit}
 
     /* ── 무대: 화면을 채우고 캔버스를 가운데 둔다. 남는 부분은 검정 레터박스 ── */
-    .stage{position:fixed;inset:0;display:grid;place-items:center;background:#000;overflow:hidden}
+    /* 칸을 화면 크기로 고정해야 창이 1280px보다 좁아도 캔버스가 가운데에서 축소된다.
+       auto 칸이면 칸이 1280px로 늘어나 축소된 캔버스가 오른쪽 밖으로 밀린다. */
+    .stage{position:fixed;inset:0;display:grid;grid-template:minmax(0,1fr) / minmax(0,1fr);place-items:center;background:#000;overflow:hidden}
 
     /* ── 고정 캔버스 ──────────────────────────────────────
        1280x720에 절대 px로 그리고, 화면 크기에 맞춰 통째로 scale한다.
@@ -43,41 +123,55 @@
     .deck{width:var(--canvas-w);height:var(--canvas-h);position:relative;flex:none;transform-origin:center center}
     .slide{position:absolute;inset:0;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr auto;grid-template-areas:"head" "content" "foot";gap:16px;
            padding:var(--pad);background:var(--paper);opacity:0;pointer-events:none;
+           color:var(--body);   /* 장마다 글자색을 다시 잡는다 — 한 장에만 data-mode 를 걸어도 본문이 따라온다 */
            transform:translateX(5%);transition:.42s ease;overflow:hidden}
     .slide.active{opacity:1;pointer-events:auto;transform:none}
     .slide.past{transform:translateX(-5%)}
-    .slide.dark{background:var(--ink);color:var(--paper)}
+    .slide.dark{background:var(--surface-dark);color:var(--on-dark)}
     .slide:not(.dark)::before{content:"";position:absolute;top:0;left:var(--pad);width:54px;height:6px;background:var(--accent)}
     .slide-head,.content,.foot{position:relative;z-index:1}
     .slide:not(:has(> .slide-head)){grid-template-rows:1fr auto;grid-template-areas:"content" "foot"}
     .slide-head{grid-area:head;z-index:2;display:flex;justify-content:space-between;gap:24px;align-items:flex-start}
     .slide-head > div{min-width:0}
     .slide-head > .badge{flex-shrink:0}
-    .content{grid-area:content;min-width:0;min-height:0;display:flex;align-items:center}
+    /* 본문은 제목 바로 아래 같은 위치에서 시작한다. 장을 넘겨도 내용이 위아래로 튀지 않게.
+       예외(표지·핵심 숫자처럼 한 덩어리를 가운데 둘 장)만 .content.center 를 붙인다. */
+    .content{grid-area:content;min-width:0;min-height:0;display:flex;align-items:flex-start;padding-top:8px}
+    .content.center,.slide.dark .content{align-items:center;padding-top:0}
 
     /* ── 타이포 ──────────────────────────────────────────── */
     h1,h2,h3,p{margin-top:0}
     h1,h2,h3{color:var(--ink);word-break:keep-all;overflow-wrap:normal;text-wrap:balance}
-    .dark h1,.dark h2,.dark h3{color:var(--paper)}
+    .dark h1,.dark h2,.dark h3{color:var(--on-dark)}
     h1{font-size:var(--fs-h1);line-height:1.06;letter-spacing:-.06em;margin-bottom:.28em}
     h2{font-size:var(--fs-h2);line-height:1.15;letter-spacing:-.055em;margin-bottom:0;max-width:20em}
     h3{font-size:var(--fs-h3);line-height:1.22;letter-spacing:-.035em;margin-bottom:.32em}
     p,li{font-size:var(--fs-body);line-height:1.5}
     .kicker{margin:0 0 .7em;color:var(--accent-dark);font-size:var(--fs-label);font-weight:900;letter-spacing:.15em;text-transform:uppercase}
-    .dark .kicker{color:var(--accent)}
-    .lead{font-size:var(--fs-lead);line-height:1.45;color:var(--muted);max-width:26em;word-break:keep-all}
-    .dark .lead{color:var(--line)}
+    .dark .kicker{color:var(--accent-on-dark)}
+    .lead{font-size:var(--fs-lead);line-height:1.45;color:var(--body);max-width:26em;word-break:keep-all}
+    .dark .lead{color:var(--on-dark-muted)}
     .accent{color:var(--accent)}
+    .dark .accent{color:var(--accent-on-dark)}
+    .slide:not(.dark) .accent{color:var(--accent-dark)}   /* 밝은 장에서는 글자용 진한 강조 */
+    p .accent,li .accent,td .accent,small .accent{font-weight:800}   /* 본문 글자 강조는 색 + 굵기. 제목은 이미 굵어 색만 */
     .final-line{font-size:var(--fs-lead);font-weight:900;color:var(--accent-dark);word-break:keep-all}
 
+    /* ── 견본 안내: 갤러리 견본에만 있는 설명. 복사한 덱에 남으면 deck_verify 가 경고한다 ── */
+    .guide{display:inline-flex;align-items:center;gap:.4em;padding:.1em .55em;border:1px dashed var(--muted);border-radius:4px;
+           color:var(--muted);font-size:var(--fs-label);font-weight:700;letter-spacing:0;text-transform:none}
+    .guide::before{content:"견본";font-weight:900;color:var(--body)}
+    .dark .guide{border-color:var(--on-dark-muted);color:var(--on-dark-muted)}
+    .dark .guide::before{color:var(--on-dark)}
+
     /* ── 상태 배지: 오직 "구현 상태" 하나의 축에만 사용한다 ──
-       done  회색   = 현재 확인됨 (.service.confirmed 회색 보더와 짝)
-       plan  클레이   = 도메인 전환안 (.service.proposed 클레이 보더와 짝)
-       next  빈 원  = Sprint 3 · 백로그 (.service.backlog 점선과 짝) */
+       done  먹색           = 현재 확인됨 (.service.confirmed 와 짝)
+       plan  --status-plan  = 제안       (.service.proposed 와 짝) — 강조색과 다른 색
+       next  빈 원          = 예정       (.service.backlog 점선과 짝) */
     .badge{display:inline-flex;align-items:center;gap:.5em;border:1px solid var(--line);padding:.45em .8em;background:var(--paper);font-size:var(--fs-label);font-weight:800;white-space:nowrap}
-    .badge::before{content:"";width:.6em;height:.6em;border-radius:50%;background:var(--gray);flex:none}
-    .badge.plan::before{background:var(--accent)}
-    .badge.next::before{background:var(--paper);border:2px solid var(--pending)}
+    .badge::before{content:"";width:.6em;height:.6em;border-radius:50%;background:var(--status-done);flex:none}
+    .badge.plan::before{background:var(--status-plan)}
+    .badge.next::before{background:var(--paper);border:2px solid var(--status-next)}
     .legend{display:flex;gap:14px;flex-wrap:wrap}
     .legend .badge{background:transparent}
 
@@ -88,9 +182,9 @@
     .cover-content.text-only h1{max-width:1000px}
     .cover-copy{max-width:840px}
     .cover-copy h1{max-width:780px}
-    .cover-copy .lead{color:var(--paper);font-weight:800;max-width:680px}
+    .cover-copy .lead{color:var(--on-dark);font-weight:800;max-width:680px}
     .bridge-question{margin:0;padding:.7em .9em;border-left:4px solid var(--accent);background:rgba(255,255,255,.1);
-                     font-size:var(--fs-body);font-weight:850;color:var(--paper);max-width:22em;word-break:keep-all}
+                     font-size:var(--fs-body);font-weight:850;color:var(--on-dark);max-width:22em;word-break:keep-all}
     .cover-visual-wrap{position:relative;padding:0 14px 14px 0}
     .cover-visual-wrap::after{content:"";position:absolute;right:0;bottom:0;width:56%;height:7px;background:var(--accent)}
     .cover-visual{width:100%;aspect-ratio:1.3;object-fit:cover;object-position:center;
@@ -102,16 +196,17 @@
     .thesis-card.fading{background:var(--gray-soft)}
     .thesis-card.keeping{background:linear-gradient(135deg,var(--accent-soft),var(--paper));border-color:var(--accent)}
     .thesis-card ul{padding-left:22px;margin-bottom:0}
-    .trend{display:inline-block;padding:.4em .7em;border-radius:2px;background:var(--card);color:var(--muted);font-size:var(--fs-label);font-weight:900}
-    .keeping .trend{background:var(--accent-soft);color:var(--accent-dark)}
+    .trend{display:inline-block;padding:.2em 0;color:var(--muted);font-size:var(--fs-label);font-weight:900}
+    .keeping .trend{color:var(--accent-dark)}
+    .thesis-card ul + p{margin-top:1em}
 
     /* ── 3 문제 ─────────────────────────────────────────── */
-    .split{width:100%;display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(28px,5vw,90px);align-items:center}
+    .split{width:100%;display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(28px,5vw,90px);align-items:start}
     .photo-card{position:relative;width:100%;height:400px;border-radius:3px;overflow:hidden;box-shadow:var(--shadow);background:var(--card)}
     .photo-card img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.06)}
-    .photo-overlay{position:absolute;inset:auto 0 0;padding:1em 1.1em;background:linear-gradient(transparent,rgba(18,18,18,.92));color:var(--paper)}
+    .photo-overlay{position:absolute;inset:auto 0 0;padding:1em 1.1em;background:linear-gradient(transparent,rgba(18,18,18,.92));color:var(--on-dark)}
     .big-quote{font-size:var(--fs-h2);font-weight:900;line-height:1.08;letter-spacing:-.04em}
-    .speech{margin:.8em 0;padding:.7em .8em;border-radius:2px;background:var(--accent-soft);border-left:4px solid var(--accent);
+    .speech{margin:.8em 0;padding:.7em .8em;border-radius:2px;background:var(--card);border-left:4px solid var(--muted);
             font-weight:800;font-size:var(--fs-body);word-break:keep-all}
 
     /* ── 4 이해관계자: 1순위 작성자를 크게, 나머지 4명은 위성 ── */
@@ -119,149 +214,292 @@
     .impact-card{padding:.85em .95em;border-radius:3px;background:var(--paper);border:1px solid var(--line);
                  display:flex;flex-direction:column;justify-content:space-between;gap:.6em;min-height:0}
     .impact-card.primary{grid-row:1 / span 2;padding:1.2em;border:2px solid var(--accent);background:linear-gradient(135deg,var(--accent-soft),var(--paper))}
-    .impact-card .avatar{width:1.9em;height:1.9em;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);font-size:var(--fs-h3)}
+    .impact-card .avatar{width:1.9em;height:1.9em;border-radius:50%;display:grid;place-items:center;background:var(--card);font-size:var(--fs-h3)}
     .impact-card.primary .avatar{font-size:calc(var(--fs-h3) * 1.2);background:var(--paper)}
     .impact-card.primary h3{font-size:calc(var(--fs-h3) * 1.25)}
     .impact-card .before{color:var(--muted);font-weight:700;margin-bottom:0}
-    .impact-card .after{color:var(--accent-dark);font-weight:900;margin-bottom:0}
-    .priority-note{margin:.7em 0 0;padding-top:.7em;border-top:2px solid var(--accent);font-weight:850;color:var(--ink);word-break:keep-all}
+    .impact-card .after{color:var(--ink);font-weight:800;margin-bottom:0}
+    .impact-card.primary{justify-content:flex-start;gap:1.4em}
+    .impact-card.primary .after{color:var(--accent-dark);font-weight:900}
+    .priority-note{margin:.7em 0 0;padding-top:.7em;border-top:1px solid var(--line);font-weight:850;color:var(--ink);word-break:keep-all}
 
     /* ── 5 문제→기능 매트릭스: 가로 1회 + 세로 1회로 읽힌다 ── */
     .matrix{width:100%;display:grid;gap:9px}
-    .matrix-caption{margin:0;font-size:var(--fs-label);font-weight:900;letter-spacing:.14em;color:var(--muted)}
+    .matrix-caption{margin:0;font-size:var(--fs-label);font-weight:900;letter-spacing:.02em;color:var(--muted)}
     .matrix-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
     .mcell{padding:.75em .8em;border-radius:3px;border:1px solid var(--line);font-size:var(--fs-body)}
     .mcell .no{display:block;font-size:var(--fs-label);font-weight:900;color:var(--muted);margin-bottom:.3em}
     .mcell strong{display:block;font-size:var(--fs-h3);letter-spacing:-.03em;margin-bottom:.25em}
-    .mcell p{margin:0;font-size:1em;color:var(--muted);word-break:keep-all;line-height:1.4}
+    .mcell p{margin:0;font-size:1em;color:var(--body);word-break:keep-all;line-height:1.4}
     .matrix-row.problems .mcell{background:var(--gray-soft);border-color:var(--line)}
     .matrix-row.features .mcell{background:var(--paper)}
     .matrix-row.features .mcell p{color:var(--ink)}
     .mcell.hot{border:2px solid var(--accent);background:linear-gradient(135deg,var(--accent-soft),var(--paper))}
     .mcell.hot .no{color:var(--accent-dark)}
-    .mcell .newly{display:inline-block;margin-top:.5em;padding:.25em .5em;background:var(--accent-dark);color:var(--paper);font-size:var(--fs-label);font-weight:900;letter-spacing:.06em}
-    .matrix-arrows{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;text-align:center;color:var(--pending);font-weight:900;font-size:var(--fs-h3)}
-    .matrix-outcome{margin:.3em 0 0;padding:.6em .8em;border-left:5px solid var(--accent);background:var(--accent-soft);
+    .mcell .newly{display:inline-block;margin-top:.5em;padding:.25em .5em;background:var(--accent-dark);color:var(--paper);font-size:var(--fs-label);font-weight:900;letter-spacing:.02em}
+    .matrix-arrows{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;text-align:center;color:var(--muted);font-weight:900;font-size:var(--fs-h3)}
+    .matrix-outcome{margin:.3em 0 0;padding:.6em .8em;border-left:5px solid var(--ink);background:var(--card);
                     font-size:var(--fs-lead);font-weight:900;word-break:keep-all}
 
     /* ── 6 AI 큐레이션 ──────────────────────────────────── */
     .ai-flow-grid{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:22px}
     .flow-card{padding:1.1em 1.2em;border-radius:3px;background:var(--paper);border:1px solid var(--line)}
-    .flow-card .mode{display:block;color:var(--accent-dark);font-size:var(--fs-label);font-weight:900;letter-spacing:.12em;margin-bottom:.4em}
-    .flow-steps{display:flex;flex-wrap:wrap;align-items:center;gap:.4em;margin-top:.9em}
+    .flow-card .mode{display:block;color:var(--muted);font-size:var(--fs-label);font-weight:900;letter-spacing:.02em;margin-bottom:.4em}
+    .flow-steps{display:flex;flex-wrap:wrap;align-items:center;gap:.4em;margin:.9em 0 1.2em}
     .flow-steps span{padding:.4em .55em;border-radius:2px;background:var(--card);font-size:var(--fs-label);font-weight:850}
-    .flow-steps span + span::before{content:"\2192";color:var(--accent);font-weight:900;margin-right:.5em}
+    .flow-steps span + span::before{content:"\2192";color:var(--muted);font-weight:900;margin-right:.5em}
 
     /* ── 7 사람의 판단: 역할 라벨은 상태 배지와 다른 토큰 ─── */
     .before-after{width:100%;display:grid;grid-template-columns:1fr 90px 1fr;gap:20px;align-items:center}
     .scene{padding:1.2em;border-radius:3px;background:var(--paper);border:1px solid var(--line);
            display:flex;flex-direction:column;justify-content:space-between;gap:.8em}
-    .scene.ai{background:linear-gradient(135deg,var(--accent-soft),var(--paper));border-color:var(--accent)}
+    .scene.key{background:linear-gradient(135deg,var(--accent-soft),var(--paper));border-color:var(--accent)}
     .scene ul{padding-left:22px}
-    .arrow{font-size:var(--fs-h2);color:var(--pending);text-align:center}
-    .role-tag{display:inline-block;padding:.4em .8em;font-size:var(--fs-label);font-weight:900;letter-spacing:.1em;color:var(--paper)}
-    .role-tag.ai{background:var(--accent)}
+    .arrow{font-size:var(--fs-h2);color:var(--muted);text-align:center}
+    .role-tag{display:inline-block;padding:.4em .8em;font-size:var(--fs-label);font-weight:900;letter-spacing:.02em;color:var(--paper)}
+    .role-tag.ai{background:var(--muted)}
     .role-tag.human{background:var(--ink)}
 
     /* ── 8 스프린트: 단계 라벨도 상태 배지와 분리 ────────── */
     .roadmap{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;position:relative}
-    .roadmap::before{content:"";position:absolute;top:44px;left:10%;right:10%;height:2px;background:var(--line);z-index:0}
-    .sprint{position:relative;z-index:1;padding-top:84px}
-    .station{position:absolute;top:18px;left:20px;width:1.7em;height:1.7em;border-radius:50%;display:grid;place-items:center;
-             background:var(--pending);color:var(--paper);font-weight:900;border:8px solid var(--paper);font-size:var(--fs-h3)}
-    .sprint:nth-child(1) .station{background:var(--gray)}
-    .sprint:nth-child(2) .station{background:var(--accent)}
+    .roadmap::before{content:"";position:absolute;top:26px;left:50px;right:calc((100% - 40px) / 3 - 50px);height:2px;background:var(--line);z-index:0}
+    .sprint{position:relative;z-index:1;padding-top:66px}
+    .station{position:absolute;top:0;left:10px;width:1.7em;height:1.7em;border-radius:50%;display:grid;place-items:center;
+             background:var(--card);color:var(--muted);font-weight:900;border:8px solid var(--paper);box-shadow:inset 0 0 0 2px var(--line);font-size:var(--fs-h3)}
+    /* 원은 카드 상태를 따른다 — .sprint-card 에 .done / .now 를 옮기면 원도 함께 바뀐다 */
+    .sprint:has(> .sprint-card.done) .station{background:var(--gray);color:var(--paper);box-shadow:none}
+    .sprint:has(> .sprint-card.now) .station{background:var(--accent-dark);color:var(--paper);box-shadow:none}
     .sprint-card{height:100%;padding:1em 1.1em;border-radius:3px;background:var(--paper);border:1px solid var(--line)}
     .sprint-card.now{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
     .sprint-card ul{padding-left:20px;margin-bottom:0}
-    .phase{display:block;font-size:var(--fs-label);font-weight:900;letter-spacing:.14em;color:var(--muted);margin-bottom:.4em}
+    .phase{display:block;font-size:var(--fs-label);font-weight:900;letter-spacing:.02em;color:var(--muted);margin-bottom:.4em}
     .sprint-card.now .phase{color:var(--accent-dark)}
 
     /* ── 9 아키텍처 ─────────────────────────────────────── */
     .architecture{width:100%;display:grid;grid-template-rows:auto auto;gap:28px}
-    .journey{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:9px}
-    .journey span{padding:.45em .7em;border-radius:2px;background:var(--ink);color:var(--paper);font-weight:800;font-size:var(--fs-body)}
-    .journey b{color:var(--accent);font-size:var(--fs-body)}
+    .journey{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+    .journey span{position:relative;padding:.35em .6em;border-radius:3px;background:var(--card);color:var(--ink);text-align:center;font-weight:800;font-size:var(--fs-body)}
+    .journey span + span::before{content:"\2192";position:absolute;left:-12px;top:50%;transform:translate(-50%,-50%);color:var(--muted);font-weight:900}
     .service-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
     .service{padding:.85em .9em;border-radius:3px;background:var(--paper);border:2px solid var(--line)}
-    .service.confirmed{border-color:var(--gray)}
-    .service.proposed{border-color:var(--accent)}
-    .service.backlog{border-style:dashed;border-color:var(--pending);background:var(--paper)}
+    .service.confirmed{border-color:var(--status-done)}
+    .service.proposed{border-color:var(--status-plan)}
+    .service.backlog{border-style:dashed;border-color:var(--status-next);background:var(--paper)}
     .service small{display:block;margin-bottom:.5em;color:var(--muted);font-weight:800;font-size:var(--fs-label)}
     .service strong{display:block;font-size:var(--fs-h3);margin-bottom:.3em;letter-spacing:-.03em;word-break:keep-all}
-    .service p{font-size:var(--fs-body);margin:0 0 .5em;color:var(--muted);line-height:1.4;word-break:keep-all}
+    .service p{font-size:var(--fs-body);margin:0 0 .5em;color:var(--body);line-height:1.4;word-break:keep-all}
     .service .chip{display:inline-flex;align-items:center;gap:.45em;font-size:var(--fs-label);font-weight:900;color:var(--muted)}
-    .service .chip::before{content:"";width:.55em;height:.55em;border-radius:50%;background:var(--gray);flex:none}
-    .service.proposed .chip::before{background:var(--accent)}
-    .service.backlog .chip::before{background:var(--paper);border:2px solid var(--pending)}
+    .service .chip::before{content:"";width:.55em;height:.55em;border-radius:50%;background:var(--status-done);flex:none}
+    .service.proposed .chip::before{background:var(--status-plan)}
+    .service.backlog .chip::before{background:var(--paper);border:2px solid var(--status-next)}
 
     /* ── 10 API ─────────────────────────────────────────── */
     .api-layout{width:100%;display:grid;grid-template-columns:.8fr 1.2fr;gap:26px;align-items:stretch}
-    .action-flow{display:flex;flex-direction:column;justify-content:center;gap:10px}
+    .action-flow{display:grid;grid-auto-rows:1fr;gap:8px}
     .action{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:.7em;padding:.6em .8em;border-radius:3px;background:var(--paper);border:1px solid var(--line)}
-    .action b{width:1.7em;height:1.7em;display:grid;place-items:center;border-radius:50%;background:var(--accent-dark);color:var(--paper);font-size:var(--fs-body)}
+    .action b{width:1.7em;height:1.7em;display:grid;place-items:center;border-radius:50%;background:var(--ink);color:var(--paper);font-size:var(--fs-body)}
     .action p{margin:0;font-weight:800}
-    .action small{color:var(--muted);font-size:var(--fs-label)}
-    .api-table{border-radius:3px;overflow:hidden;background:var(--paper);border:1px solid var(--line)}
-    .api-row{display:grid;grid-template-columns:4.5em 1.25fr 1fr;gap:.7em;padding:.55em .8em;border-bottom:1px solid var(--line);align-items:center;font-size:var(--fs-body)}
-    .api-row:last-child{border:0}
-    .method{font-family:ui-monospace,monospace;font-weight:900;color:var(--accent-dark)}
+    .action small{color:var(--body);font-size:var(--fs-label)}
+    /* 행을 왼쪽 행동 카드와 같은 간격의 카드로 둔다 — 두 열의 행이 높이·위치까지 맞는다 */
+    .api-table{display:grid;grid-auto-rows:1fr;gap:8px}
+    .api-row:has(> .dg-num){grid-template-columns:auto 4.5em 1.25fr 1fr}
+    .api-row{display:grid;grid-template-columns:4.5em 1.25fr 1fr;gap:.7em;padding:.55em .8em;border:1px solid var(--line);border-radius:3px;background:var(--paper);align-items:center;font-size:var(--fs-body)}
+    .method{font-family:ui-monospace,monospace;font-weight:900;color:var(--ink)}
+    .api-row.hot{background:var(--accent-soft);border-color:var(--accent)}
+    .api-row.hot .method{color:var(--accent-dark)}
     .path{font-family:ui-monospace,monospace;font-size:.92em;overflow-wrap:anywhere}
-    .api-row small{color:var(--muted);font-size:var(--fs-label)}
+    .api-row small{color:var(--body);font-size:var(--fs-label)}
 
     /* ── 11 동작 화면 ───────────────────────────────────── */
     .screens{width:100%;display:grid;grid-template-columns:repeat(5,1fr);gap:14px;align-items:start}
-    .screen{position:relative}
-    .screen::after{content:"\2192";position:absolute;right:-.55em;top:0;margin-top:calc(37.5% - .5em);font-size:var(--fs-h3);color:var(--pending);z-index:3}
+    .screen{position:relative;margin:0}
+    .screen::after{content:"\2192";position:absolute;right:-.55em;top:0;margin-top:calc(37.5% - .5em);font-size:var(--fs-h3);color:var(--muted);z-index:3}
     .screen:last-child::after{display:none}
     .frame{aspect-ratio:4/3;border-radius:2px;border:1px solid var(--line);background:var(--paper);overflow:hidden;box-shadow:0 12px 24px rgba(20,20,19,.08)}
     .browserbar{height:25px;background:var(--card);display:flex;align-items:center;gap:4px;padding:0 9px}
     .browserbar i{width:6px;height:6px;border-radius:50%;background:var(--muted)}
     .wire{padding:15px}
     .wire .line{height:8px;border-radius:8px;background:var(--line);margin-bottom:9px}
-    .wire .line.accent{background:var(--accent);width:46%}
-    .wire .block{height:54px;border-radius:10px;background:var(--card);margin:12px 0}
-    .wire .button{width:50%;height:22px;border-radius:7px;background:var(--accent)}
+    .wire .line.title{background:var(--muted);width:46%}
+    .wire .line.accent{background:var(--accent)}
+    .wire .block{height:36px;border-radius:10px;background:var(--card);margin:10px 0}
+    .wire .block.accent{background:var(--accent-soft);box-shadow:inset 0 0 0 2px var(--accent)}
+    .wire .button{width:50%;height:22px;border-radius:7px;background:var(--line)}
+    .wire .button.accent{background:var(--accent)}
     .screen figcaption{margin-top:.6em;font-size:var(--fs-label);line-height:1.4;word-break:keep-all}
-    .screen figcaption strong{display:block;margin-bottom:.15em}
-    .screen figcaption span{color:var(--muted);font-family:ui-monospace,monospace;font-size:.9em}
+    .screen figcaption strong{display:flex;align-items:center;gap:.4em;margin-bottom:.2em}
+    .screen figcaption > span{display:block;color:var(--body)}
 
     /* ── 11b 제품 화면 + 콜아웃 (패턴 M) ────────────────── */
     .shot-split{width:100%;display:grid;grid-template-columns:1.35fr 1fr;gap:26px;align-items:start}
-    .shot{position:relative;height:330px;border-radius:3px;border:1px solid var(--line);background:var(--paper);
+    .shot{position:relative;margin:0;height:330px;border-radius:3px;border:1px solid var(--line);background:var(--paper);
           overflow:hidden;box-shadow:0 14px 28px rgba(20,20,19,.10)}
     .shot img{display:block;width:100%;height:100%;object-fit:cover;object-position:top left}
-    .pin{position:absolute;width:1.6em;height:1.6em;border-radius:50%;background:var(--accent-dark);color:var(--paper);
+    .pin{position:absolute;width:1.6em;height:1.6em;border-radius:50%;background:var(--ink);color:var(--paper);
          font-size:var(--fs-body);font-weight:900;display:flex;align-items:center;justify-content:center;
          box-shadow:0 3px 10px rgba(0,0,0,.28);z-index:2}
     .shot-caption{margin-top:.5em;font-size:var(--fs-label);color:var(--muted);word-break:keep-all}
     .callouts{display:flex;flex-direction:column;gap:.75em}
-    .callout{display:grid;grid-template-columns:1.6em 1fr;gap:.65em;align-items:start}
+    .callout{display:grid;grid-template-columns:1.6em 1fr;gap:14px;align-items:start}
+    .shot .pin{background:var(--on-light);color:var(--on-dark)}   /* 캡처는 늘 밝은 그림 — 모드와 상관없이 어두운 핀 */
     .callout .pin{position:static;box-shadow:none}
     .callout strong{display:block;font-size:var(--fs-body);font-weight:900;word-break:keep-all}
-    .callout p{margin:.1em 0 0;font-size:var(--fs-label);color:var(--muted);line-height:1.45;word-break:keep-all}
+    .callout p{margin:.1em 0 0;font-size:var(--fs-label);color:var(--body);line-height:1.45;word-break:keep-all}
     .callout code{font-family:ui-monospace,monospace;font-size:.95em;color:var(--accent-dark);font-weight:800}
 
     /* ── 패턴 N: 전폭 분석 그림 + 결론 한 줄 ───────────────── */
     .figure-content{width:100%;display:grid;grid-template-rows:minmax(0,1fr) auto auto;gap:10px;align-items:stretch}
-    .analysis-figure{margin:0;min-height:0;display:flex;align-items:center;justify-content:center}
+    .analysis-figure{margin:0;min-height:0;display:flex;align-items:flex-start;justify-content:flex-start}
     .analysis-figure img{display:block;width:100%;height:100%;min-height:0;object-fit:contain;filter:none}
+    [data-mode="dark"] .analysis-figure img{background:#FFFFFF;border-radius:6px;padding:12px}   /* 그림 파일은 밝은 판 위에 */
+    .analysis-figure > svg{display:block;width:100%;height:auto;max-height:100%}   /* 인라인 SVG — fill 을 토큰으로 주면 테마를 따른다 */
     .figure-content .final-line{margin:0}
     .figure-source{margin:0;font-size:var(--fs-label);line-height:1.4;color:var(--muted);word-break:keep-all}
+
+    /* ── 구조도 (패턴 O · P · Q) ───────────────────────────
+       노드는 CSS 그리드 칸(--x, --y)에 놓고, 선은 엔진이 <i class="dg-edge"> 를 읽어 SVG로 그린다.
+       색은 tone-a · tone-b · --c 로만 정한다. 실선 = 주 흐름, 점선 = 되돌아감·조건·대응. */
+    .tone-a{--c:var(--tone-a);--c-soft:var(--tone-a-soft)}
+    .tone-b{--c:var(--tone-b);--c-soft:var(--tone-b-soft)}
+    .dg{position:relative;width:100%;display:grid;gap:18px;font-size:var(--fs-body)}
+    .dg-lane{position:relative;padding:14px 18px;border:1.5px solid var(--c,var(--line));border-radius:10px;background:var(--paper)}
+    .dg-lane-title{display:block;margin:0 0 8px;font-size:var(--fs-label);font-weight:900;letter-spacing:.02em;color:var(--c,var(--muted))}
+    .dg-grid{display:grid;grid-template-columns:repeat(var(--cols,4),minmax(0,1fr));column-gap:56px;row-gap:22px;align-items:center;justify-items:center}
+    .dg-node{grid-column:var(--x,auto);grid-row:var(--y,auto);position:relative;z-index:1;min-width:6.5em;padding:.5em .9em;
+             border:2px solid var(--ink);border-radius:9px;background:var(--paper);color:var(--ink);
+             font-size:var(--fs-body);font-weight:800;line-height:1.25;text-align:center;word-break:keep-all}
+    .dg-node small{display:block;font-size:var(--fs-label);font-weight:600;color:var(--muted)}
+    .dg-node.pill{border-radius:999px}
+    .dg-node.soft{border-color:var(--line);color:var(--muted)}                                  /* 이미 있는 것 · 흐린 쪽 */
+    .dg-node.new{border-color:var(--accent);background:var(--accent-soft)} /* 짚는 곳 — 레인 색과 상관없이 강조색 */
+    .dg-group{grid-column:var(--x,auto);grid-row:var(--y,auto);position:relative;z-index:1;padding:.4em .6em .6em;
+              border:1.5px dashed var(--c,var(--line));border-radius:10px;background:var(--paper);text-align:center}
+    .dg-group > small{display:block;margin-bottom:.3em;font-size:var(--fs-label);font-weight:800;color:var(--c,var(--muted))}
+    .dg-note{margin:10px 0 0;font-size:var(--fs-body);line-height:1.45;color:var(--body);word-break:keep-all}
+    .dg-note::before{content:"\2713\00a0";color:var(--c,var(--accent));font-weight:900}
+    .dg-note b{color:var(--ink)}
+    .dg-grid > .dg-note{grid-column:var(--x,auto);grid-row:var(--y,auto);justify-self:start;margin:0}  /* 빈 칸에 넣어 선과 안 겹치게 */
+    .dg-edge{display:none;color:var(--c,var(--muted))}
+    .dg-edges{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:0}
+    .dg-label{position:absolute;z-index:2;transform:translate(-50%,-50%);padding:0 .35em;background:var(--paper);
+              font-size:var(--fs-label);font-weight:800;line-height:1.3;white-space:nowrap}
+    .dg-num{display:inline-grid;place-items:center;flex:none;width:1.6em;height:1.6em;border-radius:50%;
+            background:var(--c,var(--ink));color:var(--paper);font-size:var(--fs-label);font-weight:900;line-height:1}
+    /* 번호는 순서일 뿐이라 먹색. 짚는 행·지금 단계 안의 번호만 강조색 */
+    .api-row.hot .dg-num,.walk-rail .now .dg-num{background:var(--accent-dark)}
+    .dg-node .dg-num{position:absolute;top:-.8em;left:-.8em}
+
+    /* 패턴 P · 전/후: 같은 뼈대를 두 번 그리고 오른쪽의 새것만 칠한다 */
+    .dg-compare{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:stretch}
+    /* 두 패널은 같은 뼈대 — 같은 열 수·같은 행 높이로 두면 공통 노드가 같은 자리에 선다 */
+    .dg-panel .dg-grid{grid-auto-rows:64px;justify-items:start}
+    .dg-panel{display:flex;flex-direction:column;gap:14px;padding:14px 18px 18px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper)}
+    .dg-panel-title{margin:0;font-size:var(--fs-h3);font-weight:900;letter-spacing:-.03em;color:var(--c,var(--ink))}
+    .dg-panel-title::before{content:"";display:inline-block;width:.32em;height:.32em;margin:0 .45em .18em 0;background:var(--c,var(--ink))}
+    .dg-panel .dg{flex:1;align-content:center}
+    .dg-compare + .final-line{margin:16px 0 0}
+
+    /* 패턴 Q · 번호 구조도 + 범례: 그림의 번호 = 범례 번호 = 대본 박자 순서 */
+    .dg-legend-split{width:100%;display:grid;grid-template-columns:1.35fr 1fr;gap:40px;align-items:start}
+    .dg-legend{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:18px}
+    .dg-legend li{display:grid;grid-template-columns:auto 1fr;gap:.7em;align-items:start}
+    .dg-legend strong{display:block;font-size:var(--fs-body);font-weight:900;color:var(--ink);word-break:keep-all}
+    .dg-legend p{margin:.15em 0 0;font-size:var(--fs-label);line-height:1.45;color:var(--body);word-break:keep-all}
+
+    /* ── 패턴 R · 가로 행 매핑: 왼쪽 문제 → 오른쪽 해결, 행마다 한 쌍 ── */
+    .rowmap{width:100%;display:grid;grid-template-columns:1fr 110px 1fr;column-gap:14px;row-gap:10px;align-items:center}
+    .rowmap-head{margin:0 0 4px;text-align:left;font-size:var(--fs-h3);font-weight:900;letter-spacing:-.03em;color:var(--c,var(--ink))}
+    .rowmap-from{margin:0;font-size:var(--fs-body);line-height:1.35;color:var(--body);word-break:keep-all}
+    .rowmap-from b{color:var(--c,var(--tone-a))}
+    .rowmap-link{position:relative;height:2px;border-top:2px dashed var(--muted)}
+    .rowmap-link::after{content:"";position:absolute;right:-2px;top:-7px;border:6px solid transparent;border-left:9px solid var(--muted);border-right:0}
+    .rowmap-to{margin:0;padding:.45em .8em;border:1.5px solid var(--c,var(--tone-b));border-left-width:5px;border-radius:6px;background:var(--paper);
+               font-size:var(--fs-body);line-height:1.35;word-break:keep-all}
+    .rowmap-to b{color:var(--c,var(--tone-b))}
+
+    /* ── 패턴 S · 코드 워크스루: 단계 레일 · 코드 · 결과가 같은 곳을 가리킨다 ──
+       레일은 지금 단계(.now)만 칠하고 펼친다. 코드는 설명할 줄만 12줄까지.
+       강조 줄(.hl)의 번호 = 결과(.code-out)의 번호 = 대본 박자 순서. */
+    .walk{width:100%;display:grid;grid-template-columns:280px minmax(0,1fr);gap:28px;align-items:stretch}
+    .walk-rail{margin:0;padding:16px 18px;list-style:none;counter-reset:step;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);
+               display:flex;flex-direction:column;gap:12px}
+    .walk-rail > li{counter-increment:step;font-size:var(--fs-body);font-weight:700;line-height:1.35;color:var(--muted);word-break:keep-all}
+    .walk-rail > li::before{content:counter(step) ". ";font-weight:900}
+    .walk-rail > li.now{color:var(--accent-dark);font-weight:900}
+    .walk-rail ul{margin:.35em 0 0;padding-left:1.1em;color:var(--ink)}
+    .walk-rail ul li{font-size:var(--fs-label);font-weight:700;line-height:1.4}
+    .walk-main{min-width:0;display:flex;flex-direction:column;gap:16px}
+    .code{margin:0;padding:14px 0;border-radius:8px;background:var(--code-bg);color:var(--code-fg);overflow:hidden;
+          font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:var(--fs-label);line-height:1.5;white-space:pre}
+    .code code{display:block;padding:0 18px;font:inherit}
+    .code .k{color:var(--code-key);font-weight:700}
+    .code .s{color:var(--code-str)}
+    .code .c{color:var(--code-dim)}
+    .code .hl{display:block;position:relative;margin:2px -18px;padding:2px 52px 2px 13px;border-left:5px solid var(--accent);background:rgba(255,255,255,.09)}
+    .code .hl .dg-num{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-family:Pretendard,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+    .code-out{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:14px}
+    .code-out > div{display:grid;grid-template-columns:auto 1fr;gap:.6em;align-items:start;padding:.7em .9em;border:1.5px solid var(--line);border-radius:8px;background:var(--paper)}
+    .code-out strong{display:block;font-size:var(--fs-body);font-weight:900;color:var(--ink);word-break:keep-all}
+    .code-out code{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:.95em;color:var(--ink)}
+    .code-out p{margin:.15em 0 0;font-size:var(--fs-label);line-height:1.45;color:var(--body);word-break:keep-all}
+
+    /* ── 패턴 T · 데이터 표: 한 행만 짚는다 ─────────────────── */
+    .table-wrap{width:100%;display:flex;flex-direction:column;gap:14px}
+    .data-table{width:100%;border-collapse:collapse;font-size:var(--fs-body);line-height:1.35}
+    .data-table th{padding:10px 16px;border-bottom:2px solid var(--ink);text-align:left;font-size:var(--fs-label);font-weight:900;letter-spacing:.02em;color:var(--muted)}
+    .data-table td{padding:11px 16px;border-bottom:1px solid var(--line);color:var(--body);word-break:keep-all}
+    .data-table td:first-child{font-weight:800;color:var(--ink)}
+    .data-table .num{text-align:right;font-variant-numeric:tabular-nums}
+    .data-table .num + :not(.num){padding-left:44px}   /* px 고정 — th·td 글자 크기가 달라도 왼쪽 선이 맞는다 */
+    .data-table tr.hot td{background:var(--accent-soft);font-weight:900;color:var(--ink)}
+    .data-table tr.hot td:first-child{box-shadow:inset 5px 0 0 var(--accent)}
+    .table-wrap .final-line,.table-wrap .figure-source{margin:0}
+
+    /* ── 패턴 U · 목차 · 진행 지도: 지금 장만 칠한다 ───────────── */
+    .agenda{width:100%;margin:0;padding:0;list-style:none;border-top:2px solid var(--ink)}
+    .agenda li{display:grid;grid-template-columns:84px 1fr auto;align-items:center;gap:20px;padding:14px 16px;border-bottom:1px solid var(--line)}
+    .agenda .no{font-size:var(--fs-h3);font-weight:900;color:var(--muted);font-variant-numeric:tabular-nums}
+    .agenda strong{display:block;font-size:var(--fs-h3);letter-spacing:-.03em;color:var(--ink);word-break:keep-all}
+    .agenda p{margin:.15em 0 0;font-size:var(--fs-label);color:var(--body);word-break:keep-all}
+    .agenda .time{font-size:var(--fs-label);font-weight:800;color:var(--muted)}
+    .agenda li.done strong{color:var(--muted)}
+    .agenda li.now{background:linear-gradient(90deg,var(--accent-soft),var(--paper));box-shadow:inset 5px 0 0 var(--accent)}
+    .agenda li.now .no,.agenda li.now .time{color:var(--accent-dark)}
+
+    /* ── 패턴 V · 핵심 숫자 한 장: 숫자 하나 + 비교 기준 + 출처 ─── */
+    .stat-hero{width:100%;display:grid;grid-template-columns:1.1fr 1fr;gap:56px;align-items:center}
+    .stat-num{display:block;font-size:calc(var(--fs-h1) * 2.2);font-weight:900;line-height:1;letter-spacing:-.05em;color:var(--accent-dark);font-variant-numeric:tabular-nums}
+    .stat-num small{font-size:.4em;letter-spacing:0}
+    .stat-label{margin:.5em 0 0;font-size:var(--fs-h3);font-weight:800;color:var(--ink);word-break:keep-all}
+    .stat-side{display:flex;flex-direction:column;gap:16px}
+    .stat-side .lead{margin:0}
+    .stat-compare{display:grid;gap:10px}
+    .stat-compare div{display:grid;grid-template-columns:1fr auto;align-items:baseline;padding:.5em .8em;border:1px solid var(--line);border-radius:6px;background:var(--paper)}
+    .stat-compare span{font-size:var(--fs-body);color:var(--body);word-break:keep-all}
+    .stat-compare b{font-size:var(--fs-h3);font-variant-numeric:tabular-nums;color:var(--muted)}
+    .stat-compare .hot{border-color:var(--accent)}
+    .stat-compare .hot span{color:var(--ink);font-weight:800}
+    .stat-compare .hot b{color:var(--accent-dark)}
+    .stat-side .figure-source{margin:0}
 
     /* ── 12 검증 ────────────────────────────────────────── */
     .metric-list{width:100%;display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
     .metric{padding:1em 1.1em;border-radius:3px;background:var(--paper);border:1px solid var(--line)}
-    .metric small{color:var(--accent-dark);font-weight:900;letter-spacing:.12em;font-size:var(--fs-label)}
-    .metric p{color:var(--muted);margin-bottom:0}
-    .decision-note{margin-top:.7em;padding:.7em .9em;border-left:5px solid var(--accent);background:var(--accent-soft);
-                   font-size:var(--fs-body);font-weight:850;word-break:keep-all}
+    .metric small{color:var(--muted);font-weight:900;letter-spacing:.02em;font-size:var(--fs-label)}
+    .metric p{color:var(--muted);margin-bottom:0;word-break:keep-all}
+    .decision{padding:.9em 1.2em;border-left:6px solid var(--accent);background:var(--accent-soft)}
+    .decision small{display:block;margin-bottom:.35em;font-size:var(--fs-label);font-weight:900;letter-spacing:.02em;color:var(--accent-dark)}
+    .decision ol{margin:0;padding-left:0;list-style-position:inside;display:grid;gap:.2em}
+    .decision li{font-size:var(--fs-h3);font-weight:900;line-height:1.35;color:var(--ink);word-break:keep-all}
+    .decision + .metric-list{margin-top:18px}
+    .decision + .metric-list .metric h3{font-size:var(--fs-body)}
 
     /* ── 푸터·컨트롤 ────────────────────────────────────── */
     .foot{display:flex;grid-area:foot;justify-content:space-between;align-items:center;color:var(--muted);font-size:var(--fs-label);gap:1.5em}
-    .dark .foot{color:var(--line)}
-    .controls{position:fixed;right:24px;bottom:20px;z-index:30;display:flex;gap:8px}
-    .controls button{width:42px;height:42px;border:0;border-radius:2px;background:rgba(255,255,255,.92);color:var(--ink);cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.2);font-size:18px}
+    .dark .foot{color:var(--on-dark-muted)}
+    .controls{position:fixed;right:24px;bottom:20px;z-index:30;display:flex;gap:8px;opacity:0;transition:opacity .25s;pointer-events:none}
+    .show-controls .controls,.controls:focus-within{opacity:1;pointer-events:auto}
+    .controls button{width:42px;height:42px;border:0;border-radius:2px;background:rgba(255,255,255,.92);color:var(--on-light);cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.2);font-size:18px}
     .controls button:hover{background:var(--accent-dark);color:var(--paper)}
     .progress{position:fixed;z-index:40;bottom:0;left:0;height:4px;background:var(--accent);transition:.3s;width:10%}
 
@@ -280,6 +518,8 @@
       .slide:last-child{page-break-after:auto;break-after:auto}
       .controls,.progress{display:none}
     }
+    /* ?embed — 갤러리·미리보기 iframe 안에서는 조작 버튼과 진행 막대를 숨긴다 */
+    .embed .controls,.embed .progress{display:none}
     @media(prefers-reduced-motion:reduce){.slide,.progress{transition:none}}
   </style>
 </head>
@@ -323,10 +563,26 @@
       <footer class="foot"><span>발표 제목</span><span class="page"></span></footer>
     </section>
 
+    <!-- ═══ 패턴 U · 목차 · 진행 지도 ═════════════════════════════
+         언제: 시작할 때 목차로, 큰 덩어리가 바뀔 때 같은 목록을 다시 띄워 "지금 여기"로.
+         예산: 4~5항목, 항목당 제목 1줄 + 부제 1줄 + 시간. 지난 항목 .done, 지금 항목 .now 하나. -->
+    <section class="slide" data-title="목차">
+      <header class="slide-head"><div><p class="kicker">AGENDA</p><h2>오늘 다룰 순서</h2></div></header>
+      <div class="content">
+        <ol class="agenda">
+          <li class="done"><span class="no">01</span><div><strong>덩어리 이름</strong><p>한 줄 부제</p></div><span class="time">1분</span></li>
+          <li class="now"><span class="no">02</span><div><strong>지금 다루는 덩어리</strong><p>한 줄 부제</p></div><span class="time">2분</span></li>
+          <li><span class="no">03</span><div><strong>덩어리 이름</strong><p>한 줄 부제</p></div><span class="time">2분</span></li>
+          <li><span class="no">04</span><div><strong>덩어리 이름</strong><p>한 줄 부제</p></div><span class="time">1분</span></li>
+        </ol>
+      </div>
+      <footer class="foot"><span>보조 메시지</span><span class="page"></span></footer>
+    </section>
+
     <!-- ═══ 패턴 B · 2단 대비 ═══════════════════════════════════
          예산: 카드 2개 × 6~8줄. 가장 여유 있는 레이아웃. -->
     <section class="slide" data-title="대비">
-      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>두 항목을 나란히 두고 차이를 보여줍니다</h2></div></header>
+      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>A는 감소, B는 유지</h2></div></header>
       <div class="content">
         <div class="thesis-grid">
           <article class="thesis-card fading">
@@ -347,7 +603,7 @@
     <!-- ═══ 패턴 C · 사진 + 서술 ════════════════════════════════
          예산: 우측 = 리드 2줄 + 인용 1줄 + 항목 4개 + 결론 1줄. 초과 금지. -->
     <section class="slide" data-title="문제">
-      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>상황을 장면으로 보여줍니다</h2></div></header>
+      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>문제가 드러나는 한 장면</h2></div></header>
       <div class="content split">
         <div class="photo-card">
           <img src="assets/PHOTO.png" alt="설명">
@@ -366,7 +622,7 @@
     <!-- ═══ 패턴 D · 5열 매트릭스 ═══════════════════════════════
          예산: 셀당 1~2줄, 라벨 수준만. 강조는 .hot 하나만. -->
     <section class="slide" data-title="매핑">
-      <header class="slide-head"><div><p class="kicker">A → B</p><h2>문제와 대응을 한 줄씩 잇습니다</h2></div></header>
+      <header class="slide-head"><div><p class="kicker">A → B</p><h2>문제마다 대응 기능 하나씩</h2></div></header>
       <div class="content">
         <div class="matrix">
           <p class="matrix-caption">윗줄 제목</p>
@@ -396,7 +652,7 @@
          우선순위가 있는 목록에 쓴다. 균등 5열은 "다 똑같이 중요하다"고 말해버린다.
          예산: 주 카드 6줄, 위성 2줄. -->
     <section class="slide" data-title="이해관계자">
-      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>누구에게 무엇이 바뀌는지 보여줍니다</h2></div></header>
+      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>가장 먼저 바뀌는 대상</h2></div></header>
       <div class="content">
         <div class="impact-layout">
           <article class="impact-card primary">
@@ -417,16 +673,16 @@
 
     <!-- ═══ 패턴 F · 역할 분담 (2단 + 연결기호) ══════════════════ -->
     <section class="slide" data-title="역할">
-      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>누가 무엇을 맡는지 나눕니다</h2></div></header>
+      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>실행은 AI, 결정은 사람</h2></div></header>
       <div class="content">
         <div class="before-after">
-          <article class="scene ai">
+          <article class="scene">
             <div><span class="role-tag ai">쪽 A</span><h3 style="margin-top:14px">역할</h3></div>
             <ul><li>항목</li><li>항목</li><li>항목</li></ul>
             <p class="lead">보충 한 줄.</p>
           </article>
           <div class="arrow">＋</div>
-          <article class="scene">
+          <article class="scene key">
             <div><span class="role-tag human">쪽 B</span><h3 style="margin-top:14px">역할</h3></div>
             <ul><li>항목</li><li>항목</li><li>항목</li></ul>
             <p class="final-line">경계선이 되는 한 문장.</p>
@@ -438,11 +694,11 @@
 
     <!-- ═══ 패턴 G · 3단계 로드맵 ═══════════════════════════════ -->
     <section class="slide" data-title="로드맵">
-      <header class="slide-head"><div><p class="kicker">ROADMAP</p><h2>어떤 순서로 만드는지 보여줍니다</h2></div></header>
+      <header class="slide-head"><div><p class="kicker">ROADMAP</p><h2>3단계 도입 순서</h2></div></header>
       <div class="content">
         <div class="roadmap">
           <article class="sprint"><div class="station">1</div>
-            <div class="sprint-card"><span class="phase">1단계 · 완료</span><h3>제목</h3><ul><li>항목</li><li>항목</li></ul></div></article>
+            <div class="sprint-card done"><span class="phase">1단계 · 완료</span><h3>제목</h3><ul><li>항목</li><li>항목</li></ul></div></article>
           <article class="sprint"><div class="station">2</div>
             <div class="sprint-card now"><span class="phase">2단계 · 진행 중</span><h3>제목</h3><ul><li>항목</li><li>항목</li></ul></div></article>
           <article class="sprint"><div class="station">3</div>
@@ -457,10 +713,10 @@
          confirmed=회색(확인됨) / proposed=클레이(제안) / backlog=점선(예정)
          범례와 카드 색은 반드시 같은 의미여야 한다. -->
     <section class="slide" data-title="구성">
-      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>구성요소와 각각의 상태를 밝힙니다</h2></div></header>
+      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>구성요소별 구현 상태</h2></div></header>
       <div class="content">
         <div class="architecture">
-          <div class="journey"><span>단계</span><b>→</b><span>단계</span><b>→</b><span>단계</span><b>→</b><span>단계</span></div>
+          <div class="journey"><span>단계</span><span>단계</span><span>단계</span><span>단계</span><span>단계</span></div>
           <div class="service-grid">
             <article class="service confirmed"><small>코드명</small><strong>이름</strong><p>역할</p><span class="chip">현재 확인됨</span></article>
             <article class="service proposed"><small>코드명</small><strong>이름</strong><p>역할</p><span class="chip">제안</span></article>
@@ -480,7 +736,7 @@
     <!-- ═══ 패턴 J · 2단 흐름 카드 ══════════════════════════════
          칩이 줄바꿈돼도 화살표가 줄 끝에 매달리지 않는다(::before 로 붙임). -->
     <section class="slide" data-title="흐름">
-      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>두 가지 동작 시점을 나눠 설명합니다</h2></div></header>
+      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>두 가지 동작 시점</h2></div></header>
       <div class="content">
         <div class="ai-flow-grid">
           <article class="flow-card">
@@ -501,9 +757,10 @@
     </section>
 
     <!-- ═══ 패턴 K · 행동 흐름 + 표 ═════════════════════════════
-         예산: 좌측 4단계, 우측 6행까지. 표를 다 읽지 말고 한 행만 짚는다. -->
+         예산: 좌측 4단계, 우측 6행까지. 표를 다 읽지 말고 한 행만 짚는다.
+         행동과 API 행이 짝이면 행 앞에 같은 번호(<span class="dg-num">)를 붙인다. 두 열의 행 높이는 엔진 없이 CSS로 맞춰진다. -->
     <section class="slide" data-title="계약">
-      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>행동이 상태 변화로 이어집니다</h2></div><span class="badge">현재 확인됨</span></header>
+      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>사용자 행동별 상태 변화</h2></div><span class="badge">현재 확인됨</span></header>
       <div class="content">
         <div class="api-layout">
           <div class="action-flow">
@@ -513,10 +770,10 @@
             <div class="action"><b>4</b><p>행동<br><small>보조</small></p></div>
           </div>
           <div class="api-table">
-            <div class="api-row"><span class="method">GET</span><span class="path">/api/thing</span><small>설명</small></div>
-            <div class="api-row"><span class="method">POST</span><span class="path">/api/thing</span><small>설명</small></div>
-            <div class="api-row"><span class="method">GET</span><span class="path">/api/thing/:id</span><small>설명</small></div>
-            <div class="api-row"><span class="method">POST</span><span class="path">/api/other</span><small>설명</small></div>
+            <div class="api-row"><span class="dg-num">1</span><span class="method">GET</span><span class="path">/api/thing</span><small>설명</small></div>
+            <div class="api-row"><span class="dg-num">2</span><span class="method">POST</span><span class="path">/api/thing</span><small>설명</small></div>
+            <div class="api-row"><span class="dg-num">3</span><span class="method">GET</span><span class="path">/api/thing/:id</span><small>설명</small></div>
+            <div class="api-row"><span class="dg-num">4</span><span class="method">POST</span><span class="path">/api/other</span><small>설명</small></div>
           </div>
         </div>
       </div>
@@ -527,14 +784,14 @@
          .frame 은 실제 화면 캡처로 교체한다. 와이어프레임 상태로 발표하면
          "구현했다"가 아니라 "이렇게 만들고 있다"로 말해야 한다. -->
     <section class="slide" data-title="스토리보드">
-      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>사용자가 무엇을 경험하는지 보여줍니다</h2></div><span class="badge">현재 확인됨</span></header>
+      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>사용자가 겪는 흐름</h2></div><span class="badge">현재 확인됨</span></header>
       <div class="content">
         <div class="screens">
-          <figure class="screen"><div class="frame"><div class="browserbar"><i></i><i></i><i></i></div><div class="wire"><div class="line accent"></div><div class="line"></div><div class="block"></div><div class="line"></div><div class="button"></div></div></div><figcaption><strong>① 단계</strong><span>보조</span></figcaption></figure>
-          <figure class="screen"><div class="frame"><div class="browserbar"><i></i><i></i><i></i></div><div class="wire"><div class="line accent"></div><div class="line"></div><div class="block"></div><div class="line"></div><div class="button"></div></div></div><figcaption><strong>② 단계</strong><span>보조</span></figcaption></figure>
-          <figure class="screen"><div class="frame"><div class="browserbar"><i></i><i></i><i></i></div><div class="wire"><div class="line accent"></div><div class="line"></div><div class="block"></div><div class="line"></div><div class="button"></div></div></div><figcaption><strong>③ 단계</strong><span>보조</span></figcaption></figure>
-          <figure class="screen"><div class="frame"><div class="browserbar"><i></i><i></i><i></i></div><div class="wire"><div class="line accent"></div><div class="line"></div><div class="block"></div><div class="line"></div><div class="button"></div></div></div><figcaption><strong>④ 단계</strong><span>보조</span></figcaption></figure>
-          <figure class="screen"><div class="frame"><div class="browserbar"><i></i><i></i><i></i></div><div class="wire"><div class="line accent"></div><div class="line"></div><div class="block"></div><div class="line"></div><div class="button"></div></div></div><figcaption><strong>⑤ 단계</strong><span>보조</span></figcaption></figure>
+          <figure class="screen"><div class="frame"><div class="browserbar"><i></i><i></i><i></i></div><div class="wire"><div class="line title"></div><div class="line accent"></div><div class="block"></div><div class="line"></div><div class="button"></div></div></div><figcaption><strong><span class="dg-num">1</span>단계</strong><span>바뀌는 것 한 줄</span></figcaption></figure>
+          <figure class="screen"><div class="frame"><div class="browserbar"><i></i><i></i><i></i></div><div class="wire"><div class="line title"></div><div class="line"></div><div class="block accent"></div><div class="line"></div><div class="button"></div></div></div><figcaption><strong><span class="dg-num">2</span>단계</strong><span>바뀌는 것 한 줄</span></figcaption></figure>
+          <figure class="screen"><div class="frame"><div class="browserbar"><i></i><i></i><i></i></div><div class="wire"><div class="line title"></div><div class="line accent"></div><div class="block"></div><div class="line accent"></div><div class="button"></div></div></div><figcaption><strong><span class="dg-num">3</span>단계</strong><span>바뀌는 것 한 줄</span></figcaption></figure>
+          <figure class="screen"><div class="frame"><div class="browserbar"><i></i><i></i><i></i></div><div class="wire"><div class="line title"></div><div class="line"></div><div class="block"></div><div class="line"></div><div class="button accent"></div></div></div><figcaption><strong><span class="dg-num">4</span>단계</strong><span>바뀌는 것 한 줄</span></figcaption></figure>
+          <figure class="screen"><div class="frame"><div class="browserbar"><i></i><i></i><i></i></div><div class="wire"><div class="line title accent"></div><div class="line"></div><div class="block"></div><div class="line"></div><div class="button"></div></div></div><figcaption><strong><span class="dg-num">5</span>단계</strong><span>바뀌는 것 한 줄</span></figcaption></figure>
         </div>
       </div>
       <footer class="foot"><span>보조 메시지</span><span class="page"></span></footer>
@@ -548,7 +805,7 @@
                잘라 낸 이미지 안의 글자도 슬라이드 높이의 2% 하한을 지켜야 한다.
          핀 좌표(left/top %)는 잘라 낸 이미지에 맞춰 직접 맞춘다. -->
     <section class="slide" data-title="동작">
-      <header class="slide-head"><div><p class="kicker">EXPERIENCE</p><h2>화면에서 무엇을 받는지 보여줍니다</h2></div></header>
+      <header class="slide-head"><div><p class="kicker">EXPERIENCE</p><h2>화면에서 받는 결과</h2></div></header>
       <div class="content shot-split">
         <div>
           <figure class="shot">
@@ -574,13 +831,59 @@
       <footer class="foot"><span>보조 메시지</span><span class="page"></span></footer>
     </section>
 
+    <!-- ═══ 패턴 V · 핵심 숫자 한 장 ═════════════════════════════
+         언제: 발표 전체를 대표하는 숫자 하나를 각인시킬 때. 덱에 한두 번만.
+         예산: 숫자 1개 + 무엇의 숫자인지 1줄, 오른쪽에 맥락 2줄 + 비교 기준 2~3행 + 출처 1줄.
+         비교 기준 없이 숫자만 두지 않는다. 크기를 판단할 수 없다. -->
+    <section class="slide" data-title="핵심 숫자">
+      <header class="slide-head"><div><p class="kicker">KEY NUMBER</p><h2>핵심 지표 하나의 변화</h2></div></header>
+      <div class="content center">
+        <div class="stat-hero">
+          <div><span class="stat-num">00<small>%</small></span><p class="stat-label">무엇을 잰 숫자인지 한 줄</p></div>
+          <div class="stat-side">
+            <p class="lead">이 숫자가 왜 중요한지 두 줄까지.</p>
+            <div class="stat-compare">
+              <div><span>비교 기준</span><b>00%</b></div>
+              <div class="hot"><span>이번 결과</span><b>00%</b></div>
+            </div>
+            <p class="figure-source">출처 한 줄</p>
+          </div>
+        </div>
+      </div>
+      <footer class="foot"><span>보조 메시지</span><span class="page"></span></footer>
+    </section>
+
+    <!-- ═══ 패턴 T · 데이터 표 ═══════════════════════════════════
+         언제: 여러 항목을 같은 기준 몇 개로 나란히 봐야 할 때.
+         예산: 6행 × 5열, 칸은 숫자나 짧은 구절. 짚을 행 하나에 .hot, 숫자 열은 .num 오른쪽 정렬.
+         표를 다 읽지 않는다. 결론 한 줄이 짚을 행을 말한다. -->
+    <section class="slide" data-title="데이터 표">
+      <header class="slide-head"><div><p class="kicker">TABLE</p><h2>같은 기준으로 견준 결과, 짚는 한 행</h2></div></header>
+      <div class="content">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>항목</th><th class="num">기준 1</th><th class="num">기준 2</th><th>비고</th></tr></thead>
+            <tbody>
+              <tr><td>항목 A</td><td class="num">00</td><td class="num">00</td><td>짧은 구절</td></tr>
+              <tr><td>항목 B</td><td class="num">00</td><td class="num">00</td><td>짧은 구절</td></tr>
+              <tr class="hot"><td>짚을 항목</td><td class="num">00</td><td class="num">00</td><td>짧은 구절</td></tr>
+              <tr><td>항목 D</td><td class="num">00</td><td class="num">00</td><td>짧은 구절</td></tr>
+            </tbody>
+          </table>
+          <p class="final-line">짚은 행이 무엇을 말하는지 한 문장.</p>
+          <p class="figure-source">출처 한 줄</p>
+        </div>
+      </div>
+      <footer class="foot"><span>보조 메시지</span><span class="page"></span></footer>
+    </section>
+
     <!-- ═══ 패턴 N · 전폭 그림 + 결론 한 줄 ══════════════════════
          언제: 보고서의 가로로 긴 분석 그림을 색과 범위를 유지하며 재사용할 때.
          예산: 제목 1줄 + 그림 1개 + 결론 1줄 + 출처 1줄.
          예시 원본 1350×450 → 본문 1172×391. 자르거나 흑백 처리하지 않는다.
          이미지 안 글자는 축소 후에도 14.4px 이상인지 직접 확인한다. -->
     <section class="slide" data-title="분석 그림">
-      <header class="slide-head"><div><p class="kicker">ANALYSIS</p><h2>분석 그림을 온전히 보여줍니다</h2></div></header>
+      <header class="slide-head"><div><p class="kicker">ANALYSIS</p><h2>분석 그림 한 장의 결론</h2></div></header>
       <div class="content figure-content">
         <figure class="analysis-figure">
           <img src="assets/ANALYSIS.svg" alt="예시 지표: 기준 40, 비교 55, 최종안 70. 최종안을 클레이 색으로 강조">
@@ -591,17 +894,189 @@
       <footer class="foot"><span>분석 메시지</span><span class="page"></span></footer>
     </section>
 
+    <!-- ═══ 패턴 O · 레인 흐름 ═══════════════════════════════════
+         언제: 두 시점·두 단계가 각자 흐르면서 서로 주고받는 구조. 갈라짐·합쳐짐·왕복이 있을 때.
+         예산: 레인 2개, 구조도 전체 노드 8~9개, 선 라벨 3개, 레인마다 ✓ 한 문장.
+         ✓ 문장은 선이 지나가지 않는 자리에 둔다. 그리드 빈 칸에 넣으려면 .dg-grid 안에 style="--x:3 / 6;--y:2".
+         그리기: 노드는 style="--x:열;--y:행" 으로 칸에 놓는다. 두 레인의 --cols 를 같게 두면 열이 맞는다.
+                레인을 건너는 두 노드는 같은 열에 둔다. 그래야 왕복선이 곧은 두 줄로 나란히 선다.
+                (그래서 예시의 아래 레인은 오른쪽에서 왼쪽으로 흐른다.)
+                선은 <i class="dg-edge" data-from data-to> 한 줄씩. 왕복선은 data-offset 으로 서로 비켜 놓는다. 색은 레인의 tone-a / tone-b 를 따른다. -->
+    <section class="slide" data-title="레인 흐름">
+      <header class="slide-head"><div><p class="kicker">STRUCTURE</p><h2>두 흐름이 만나는 지점</h2></div></header>
+      <div class="content">
+        <div class="dg">
+          <div class="dg-lane tone-b">
+            <span class="dg-lane-title">실행 시점</span>
+            <div class="dg-grid" style="--cols:5">
+              <div class="dg-node" id="o-in" style="--x:1;--y:1">입력</div>
+              <div class="dg-node new" id="o-aug" style="--x:2;--y:2">보강</div>
+              <div class="dg-node" id="o-mix" style="--x:3;--y:1">조립</div>
+              <div class="dg-node" id="o-run" style="--x:4;--y:1">처리</div>
+              <div class="dg-node" id="o-out" style="--x:5;--y:1">결과</div>
+              <p class="dg-note" style="--x:4 / 6;--y:2">요청마다 <b>저장소</b>에서 근거를 찾아 <b>함께 넘긴다</b></p>
+            </div>
+          </div>
+          <div class="dg-lane tone-a">
+            <span class="dg-lane-title">사전 준비</span>
+            <div class="dg-grid" style="--cols:5">
+              <div class="dg-node" id="o-load" style="--x:5;--y:1">수집</div>
+              <div class="dg-node" id="o-split" style="--x:4;--y:1">정리</div>
+              <div class="dg-node" id="o-conv" style="--x:3;--y:1">변환</div>
+              <div class="dg-node" id="o-db" style="--x:2;--y:1">저장소</div>
+            </div>
+            <p class="dg-note">자료를 <b>찾기 좋은 형태</b>로 바꿔 미리 쌓아 둔다</p>
+          </div>
+          <i class="dg-edge tone-b" data-from="o-in" data-to="o-mix"></i>
+          <i class="dg-edge tone-b" data-from="o-in" data-to="o-aug" data-from-side="b" data-to-side="l"></i>
+          <i class="dg-edge tone-b" data-from="o-aug" data-to="o-mix" data-from-side="r" data-to-side="b"></i>
+          <i class="dg-edge tone-b" data-from="o-mix" data-to="o-run"></i>
+          <i class="dg-edge tone-b" data-from="o-run" data-to="o-out"></i>
+          <i class="dg-edge tone-a" data-from="o-load" data-to="o-split"></i>
+          <i class="dg-edge tone-a" data-from="o-split" data-to="o-conv"></i>
+          <i class="dg-edge tone-a" data-from="o-conv" data-to="o-db"></i>
+          <i class="dg-edge tone-b" data-from="o-aug" data-to="o-db" data-offset="-14" data-label="조회" data-label-at=".45"></i>
+          <i class="dg-edge tone-a" data-from="o-db" data-to="o-aug" data-offset="14" data-kind="dashed"></i>
+        </div>
+      </div>
+      <footer class="foot"><span>보조 메시지</span><span class="page"></span></footer>
+    </section>
+
+    <!-- ═══ 패턴 P · 전/후 구조도 ════════════════════════════════
+         언제: "무엇이 더해지는가"를 보여줄 때. 같은 뼈대를 두 번 그려 차이만 칠한다.
+         예산: 패널 2개, 패널당 노드 5개, 새로 생긴 노드(.new)는 오른쪽에만 1~2개, 결론 1줄.
+         왼쪽 노드는 .soft 로 흐리게 둔다. 두 패널의 같은 노드는 같은 칸에 둔다. -->
+    <section class="slide" data-title="전후 구조">
+      <header class="slide-head"><div><p class="kicker">BEFORE → AFTER</p><h2>기존 흐름에 더해지는 것</h2></div></header>
+      <div class="content" style="flex-direction:column;align-items:stretch">
+        <div class="dg-compare">
+          <div class="dg-panel tone-a">
+            <p class="dg-panel-title">지금</p>
+            <div class="dg">
+              <div class="dg-grid" style="--cols:2">
+                <div class="dg-node soft" id="p1-in" style="--x:1;--y:1">요청</div>
+                <div class="dg-node soft" id="p1-run" style="--x:1;--y:2">처리</div>
+                <div class="dg-node soft" id="p1-out" style="--x:1;--y:3">응답</div>
+              </div>
+              <i class="dg-edge" data-from="p1-in" data-to="p1-run"></i>
+              <i class="dg-edge" data-from="p1-run" data-to="p1-out"></i>
+            </div>
+          </div>
+          <div class="dg-panel tone-b">
+            <p class="dg-panel-title">바꾸면</p>
+            <div class="dg">
+              <div class="dg-grid" style="--cols:2">
+                <div class="dg-node" id="p2-in" style="--x:1;--y:1">요청</div>
+                <div class="dg-node new" id="p2-aug" style="--x:2;--y:1">보강</div>
+                <div class="dg-node" id="p2-run" style="--x:1;--y:2">처리</div>
+                <div class="dg-node" id="p2-out" style="--x:1;--y:3">응답</div>
+              </div>
+              <i class="dg-edge" data-from="p2-in" data-to="p2-run"></i>
+              <i class="dg-edge tone-b" data-from="p2-in" data-to="p2-aug"></i>
+              <i class="dg-edge tone-b" data-from="p2-aug" data-to="p2-run" data-from-side="b" data-to-side="r" data-label="근거"></i>
+              <i class="dg-edge" data-from="p2-run" data-to="p2-out"></i>
+            </div>
+          </div>
+        </div>
+        <p class="final-line">달라진 한 곳을 한 문장으로 짚습니다.</p>
+      </div>
+      <footer class="foot"><span>보조 메시지</span><span class="page"></span></footer>
+    </section>
+
+    <!-- ═══ 패턴 Q · 번호 구조도 + 범례 ═══════════════════════════
+         언제: 한 구조를 순서대로 짚어 가며 설명할 때. 번호 = 범례 = 대본 박자 순서.
+         예산: 노드 6개, 번호 3~5개, 범례 항목당 제목 1줄 + 설명 2줄, 되돌아가는 점선 1개.
+         번호는 노드 안 <span class="dg-num"> 과 범례 <span class="dg-num"> 이 같은 숫자여야 한다 (검사기가 본다). -->
+    <section class="slide" data-title="번호 구조도">
+      <header class="slide-head"><div><p class="kicker">HOW IT WORKS</p><h2>순서대로 짚는 구조</h2></div></header>
+      <div class="content">
+        <div class="dg-legend-split">
+          <div class="dg">
+            <div class="dg-grid" style="--cols:3;row-gap:64px">
+              <div class="dg-node pill" id="q-in" style="--x:1;--y:1">요청</div>
+              <div class="dg-node" id="q-think" style="--x:2;--y:1"><span class="dg-num">1</span>판단</div>
+              <div class="dg-node" id="q-tool" style="--x:2;--y:2"><span class="dg-num">2</span>실행</div>
+              <div class="dg-node pill" id="q-out" style="--x:3;--y:1"><span class="dg-num">3</span>결과</div>
+            </div>
+            <i class="dg-edge" data-from="q-in" data-to="q-think"></i>
+            <i class="dg-edge" data-from="q-think" data-to="q-tool" data-offset="-28" data-kind="dashed" data-label="행동"></i>
+            <i class="dg-edge" data-from="q-tool" data-to="q-think" data-offset="28" data-label="관찰"></i>
+            <i class="dg-edge" data-from="q-think" data-to="q-out"></i>
+          </div>
+          <ol class="dg-legend">
+            <li><span class="dg-num">1</span><div><strong>판단</strong><p>무엇을 할지 고른다. 한두 줄로.</p></div></li>
+            <li><span class="dg-num">2</span><div><strong>실행</strong><p>고른 행동을 하고 결과를 돌려준다.</p></div></li>
+            <li><span class="dg-num">3</span><div><strong>결과</strong><p>충분하면 멈추고 답을 낸다.</p></div></li>
+          </ol>
+        </div>
+      </div>
+      <footer class="foot"><span>보조 메시지</span><span class="page"></span></footer>
+    </section>
+
+    <!-- ═══ 패턴 R · 가로 행 매핑 ════════════════════════════════
+         언제: 문제 하나에 해결 하나가 짝지어지는 목록. D(5열 세로)보다 문장이 길 때.
+         예산: 6행, 칸마다 "이름 : 한 구절" 1줄. 왼쪽은 글자만, 오른쪽만 상자로 둔다.
+         왼쪽 이름은 --tone-a, 오른쪽 상자는 --tone-b. 한 행만 다르게 칠할 때는 그 행에 style="--c:…". -->
+    <section class="slide" data-title="행 매핑">
+      <header class="slide-head"><div><p class="kicker">PROBLEM → ANSWER</p><h2>문제별 대응 짝</h2></div></header>
+      <div class="content">
+        <div class="rowmap">
+          <p class="rowmap-head tone-a">“ 지금 ”</p><span></span><p class="rowmap-head tone-b">“ 바꾸면 ”</p>
+          <p class="rowmap-from"><b>문제 하나</b> : 한 구절</p><i class="rowmap-link"></i><p class="rowmap-to"><b>해결 하나</b> : 한 구절</p>
+          <p class="rowmap-from"><b>문제 둘</b> : 한 구절</p><i class="rowmap-link"></i><p class="rowmap-to"><b>해결 둘</b> : 한 구절</p>
+          <p class="rowmap-from"><b>문제 셋</b> : 한 구절</p><i class="rowmap-link"></i><p class="rowmap-to"><b>해결 셋</b> : 한 구절</p>
+          <p class="rowmap-from"><b>문제 넷</b> : 한 구절</p><i class="rowmap-link"></i><p class="rowmap-to"><b>해결 넷</b> : 한 구절</p>
+          <p class="rowmap-from"><b>문제 다섯</b> : 한 구절</p><i class="rowmap-link"></i><p class="rowmap-to"><b>해결 다섯</b> : 한 구절</p>
+          <p class="rowmap-from"><b>문제 여섯</b> : 한 구절</p><i class="rowmap-link"></i><p class="rowmap-to"><b>해결 여섯</b> : 한 구절</p>
+        </div>
+      </div>
+      <footer class="foot"><span>보조 메시지</span><span class="page"></span></footer>
+    </section>
+
+    <!-- ═══ 패턴 S · 코드 워크스루 ════════════════════════════════
+         언제: 코드를 단계별로 설명할 때. 같은 레일을 여러 장에 반복하고 .now 만 옮긴다.
+         예산: 레일 5단계(지금 단계만 하위 2줄), 코드 12줄·한 줄 80자, 강조 줄 묶음 1~2곳, 결과 2~3칸.
+         코드: 설명에 필요 없는 줄은 지우거나 "…" 로 접는다. 글자를 줄이지 않는다.
+               <pre> 안 줄바꿈이 그대로 화면 줄이 되므로 들여쓰기·빈 줄도 예산에 든다.
+               .k 키워드 · .s 문자열 · .c 주석. 강조 줄은 <span class="hl"> 로 감싸고 끝에 번호.
+         결과: .code-out 대신 작은 구조도(.dg)를 둘 수 있다. 둘 다 두지 않는다. -->
+    <section class="slide" data-title="코드 워크스루">
+      <header class="slide-head"><div><p class="kicker">CODE · 3 / 5</p><h2>이 단계 코드가 바꾸는 값</h2></div></header>
+      <div class="content">
+        <div class="walk">
+          <ol class="walk-rail">
+            <li>준비</li>
+            <li>입력 정의</li>
+            <li class="now">처리 함수<ul><li>지켜야 할 규칙 하나</li><li>무엇을 돌려주는지</li></ul></li>
+            <li>연결</li>
+            <li>실행</li>
+          </ol>
+          <div class="walk-main">
+<pre class="code"><code><span class="c"># 설명할 줄만 남긴다</span>
+<span class="k">def</span> handle(state):
+    result = run(state[<span class="s">"input"</span>])
+<span class="hl">    <span class="k">return</span> {<span class="s">"output"</span>: result,<span class="dg-num">1</span></span><span class="hl">            <span class="s">"count"</span>: state[<span class="s">"count"</span>] + 1}<span class="dg-num">2</span></span></code></pre>
+            <div class="code-out">
+              <div><span class="dg-num">1</span><div><strong>바뀌는 것을 말로</strong><p><code>output</code> 전 → 후</p></div></div>
+              <div><span class="dg-num">2</span><div><strong>바뀌는 것을 말로</strong><p><code>count</code> 2 → 3</p></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <footer class="foot"><span>보조 메시지</span><span class="page"></span></footer>
+    </section>
+
     <!-- ═══ 패턴 I · 4열 지표 + 결정 요청 (마무리) ═══════════════ -->
     <section class="slide" data-title="검증">
-      <header class="slide-head"><div><p class="kicker">DECISION</p><h2>무엇으로 성공을 판단할지 정합니다</h2></div></header>
-      <div class="content" style="flex-direction:column;align-items:stretch;justify-content:center">
+      <header class="slide-head"><div><p class="kicker">DECISION</p><h2>성공 판단 지표</h2></div></header>
+      <div class="content" style="flex-direction:column;align-items:stretch">
+        <div class="decision"><small>요청하는 결정</small><ol><li>결정 하나</li><li>결정 둘</li><li>결정 셋</li></ol></div>
         <div class="metric-list">
           <article class="metric"><small>영역</small><h3>지표</h3><p>무엇을 재는지.</p></article>
           <article class="metric"><small>영역</small><h3>지표</h3><p>무엇을 재는지.</p></article>
           <article class="metric"><small>영역</small><h3>지표</h3><p>무엇을 재는지.</p></article>
           <article class="metric"><small>영역</small><h3>지표</h3><p>무엇을 재는지.</p></article>
         </div>
-        <p class="decision-note">요청하는 결정: 항목 · 항목 · 항목</p>
       </div>
       <footer class="foot"><span>마무리 메시지</span><span class="page"></span></footer>
     </section>
@@ -615,6 +1090,11 @@
     /* ── 엔진 ── 여기는 건드리지 않는다. 내용은 위 마크업에서만 바꾼다. ── */
 
     /* 화면에 맞춰 캔버스를 통째로 확대·축소한다. 16:9가 아니면 검정 여백이 남는다. */
+    /* ?embed — 미리보기 iframe 용, ?theme=이름 · ?mode=dark — 파일을 고치지 않고 테마·모드를 바꿔 본다 */
+    const params=new URLSearchParams(location.search);
+    if(params.has('embed')) document.documentElement.classList.add('embed');
+    if(params.get('theme')) document.documentElement.dataset.theme=params.get('theme');
+    if(params.get('mode')) document.documentElement.dataset.mode=params.get('mode');
     const deck=document.querySelector('.deck');
     function fit(){ deck.style.transform=`scale(${Math.min(innerWidth/1280, innerHeight/720)})`; }
     addEventListener('resize',fit); fit();
@@ -628,19 +1108,100 @@
     }
     document.querySelector('#prev').onclick=()=>show(index-1);
     document.querySelector('#next').onclick=()=>show(index+1);
-    addEventListener('keydown',e=>{
+    /* 마우스를 움직이면 조작 버튼을 잠깐 보여준다. 평소엔 숨겨 쪽 번호를 가리지 않는다. */
+    let controlsTimer;
+    addEventListener('mousemove',()=>{
+      document.documentElement.classList.add('show-controls');
+      clearTimeout(controlsTimer);
+      controlsTimer=setTimeout(()=>document.documentElement.classList.remove('show-controls'),1800);
+    });
+    /* ?embed(갤러리 미리보기·크게 보기) 안에서는 키를 받지 않는다. 장 넘김은 바깥 페이지가 맡는다. */
+    if(!params.has('embed')) addEventListener('keydown',e=>{
       if(['ArrowRight',' ','PageDown'].includes(e.key)){e.preventDefault();show(index+1)}
       if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();show(index-1)}
       if(e.key==='Home')show(0); if(e.key==='End')show(slides.length-1);
     });
     const initial=Number(location.hash.slice(1));
     show(Number.isFinite(initial)&&initial>0?initial-1:0);
+    /* 주소의 #번호가 바뀌면 그 장으로 간다 — 갤러리 크게 보기의 이전/다음이 같은 문서에서 해시만 바꾼다 */
+    addEventListener('hashchange',()=>{const n=Number(location.hash.slice(1)); if(Number.isFinite(n)&&n>0&&n-1!==index) show(n-1)});
 
     /* 페이지 번호를 자동으로 채운다. 슬라이드를 넣고 빼도 어긋나지 않는다. */
     slides.forEach((s,i)=>{
       const n=s.querySelector('.foot .page');
       if(n) n.textContent=`${String(i+1).padStart(2,'0')} / ${slides.length}`;
     });
+
+    /* 구조도 선을 그린다. .dg 안의 <i class="dg-edge"> 한 개가 선 한 개다.
+         data-from / data-to   잇는 두 노드의 id (같은 .dg 안)
+         data-kind             solid(기본) | dashed
+         data-route            auto(기본: 같은 줄이면 직선, 아니면 곡선) | straight | curve | elbow
+         data-from-side / data-to-side   t r b l — 생략하면 두 노드 위치로 정한다
+         data-offset           왕복선을 비켜 놓는 간격(px, 음수 가능)
+         data-arrow            end(기본) | both | none
+         data-label · data-label-at   선 위 글자와 그 위치(0~1, 기본 0.5)
+         data-label-dx · data-label-dy  글자를 선에서 옆으로 비킨다(px). 왕복선 사이에 끼면 바깥으로 뺀다
+       잇지 못한 선은 .dg-broken 이 붙고 deck_verify 가 오류로 알린다. */
+    const SVGNS='http://www.w3.org/2000/svg';
+    function drawDiagrams(){
+      document.querySelectorAll('.dg').forEach(dg=>{
+        dg.querySelectorAll(':scope > .dg-edges, :scope > .dg-label').forEach(n=>n.remove());
+        if(!dg.offsetWidth) return;
+        const box=dg.getBoundingClientRect(), k=box.width/dg.offsetWidth;
+        const rel=el=>{const r=el.getBoundingClientRect();return{l:(r.left-box.left)/k,t:(r.top-box.top)/k,w:r.width/k,h:r.height/k}};
+        const svg=document.createElementNS(SVGNS,'svg'); svg.classList.add('dg-edges'); dg.appendChild(svg);
+        const at=(r,side,off)=>({
+          t:{x:r.l+r.w/2+off,y:r.t,dx:0,dy:-1}, b:{x:r.l+r.w/2+off,y:r.t+r.h,dx:0,dy:1},
+          l:{x:r.l,y:r.t+r.h/2+off,dx:-1,dy:0}, r:{x:r.l+r.w,y:r.t+r.h/2+off,dx:1,dy:0}})[side];
+        dg.querySelectorAll('.dg-edge').forEach(e=>{
+          e.classList.remove('dg-broken');
+          const pick=id=>id&&dg.querySelector('#'+CSS.escape(id));
+          const A=pick(e.dataset.from), B=pick(e.dataset.to);
+          if(!A||!B){e.classList.add('dg-broken');return}
+          const a=rel(A), b=rel(B);
+          const gx=Math.max(b.l-(a.l+a.w), a.l-(b.l+b.w)), gy=Math.max(b.t-(a.t+a.h), a.t-(b.t+b.h));
+          const horiz=gx>=gy, cx=(b.l+b.w/2)-(a.l+a.w/2), cy=(b.t+b.h/2)-(a.t+a.h/2);
+          const s1=e.dataset.fromSide||(horiz?(cx>=0?'r':'l'):(cy>=0?'b':'t'));
+          const s2=e.dataset.toSide||(horiz?(cx>=0?'l':'r'):(cy>=0?'t':'b'));
+          const off=parseFloat(e.dataset.offset)||0, p=at(a,s1,off), q=at(b,s2,off);
+          let route=e.dataset.route||'auto';
+          if(route==='auto') route=(Math.abs(p.x-q.x)<3||Math.abs(p.y-q.y)<3)&&p.dx===-q.dx&&p.dy===-q.dy?'straight':'curve';
+          let d=`M${p.x},${p.y}`;
+          if(route==='straight') d+=` L${q.x},${q.y}`;
+          else if(route==='elbow'){
+            if(p.dx&&q.dx){const m=(p.x+q.x)/2; d+=` H${m} V${q.y} H${q.x}`}
+            else if(p.dy&&q.dy){const m=(p.y+q.y)/2; d+=` V${m} H${q.x} V${q.y}`}
+            else d+=p.dx?` H${q.x} V${q.y}`:` V${q.y} H${q.x}`;
+          } else {
+            const t=Math.max(28,Math.hypot(q.x-p.x,q.y-p.y)*.4);
+            d+=` C${p.x+p.dx*t},${p.y+p.dy*t} ${q.x+q.dx*t},${q.y+q.dy*t} ${q.x},${q.y}`;
+          }
+          const color=getComputedStyle(e).color, g=document.createElementNS(SVGNS,'g');
+          const path=document.createElementNS(SVGNS,'path');
+          path.setAttribute('d',d); path.setAttribute('fill','none'); path.setAttribute('stroke',color);
+          path.setAttribute('stroke-width','2'); if(e.dataset.kind==='dashed') path.setAttribute('stroke-dasharray','6 5');
+          g.appendChild(path); svg.appendChild(g);
+          const len=path.getTotalLength();
+          const head=(tip,back)=>{
+            const P=path.getPointAtLength(tip), Q=path.getPointAtLength(back);
+            const ux=P.x-Q.x, uy=P.y-Q.y, n=Math.hypot(ux,uy)||1, x=ux/n, y=uy/n;
+            const tri=document.createElementNS(SVGNS,'path');
+            tri.setAttribute('d',`M${P.x},${P.y} L${P.x-x*10-y*5},${P.y-y*10+x*5} L${P.x-x*10+y*5},${P.y-y*10-x*5}Z`);
+            tri.setAttribute('fill',color); g.appendChild(tri);
+          };
+          const arrow=e.dataset.arrow||'end';
+          if(arrow!=='none') head(len,Math.max(0,len-10));
+          if(arrow==='both') head(0,Math.min(len,10));
+          if(e.dataset.label){
+            const m=path.getPointAtLength(len*(parseFloat(e.dataset.labelAt)||.5));
+            const tag=document.createElement('span'); tag.className='dg-label'; tag.textContent=e.dataset.label;
+            tag.style.left=`${m.x+(parseFloat(e.dataset.labelDx)||0)}px`; tag.style.top=`${m.y+(parseFloat(e.dataset.labelDy)||0)}px`; tag.style.color=color; dg.appendChild(tag);
+          }
+        });
+      });
+    }
+    drawDiagrams();
+    if(document.fonts) document.fonts.ready.then(drawDiagrams);
   </script>
 </body>
 </html>

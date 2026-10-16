@@ -1,0 +1,1109 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>발표 장 갤러리</title>
+  <style>
+    /* ── 색 ──────────────────────────────────────────────────
+       네 층으로 나눈다. 색을 바꿀 때는 1층·3층·4층만 고친다.
+       패턴 CSS 안에 색 값을 직접 쓰지 않는다 (deck_verify 가 경고한다).
+
+       1. 팔레트   아래 :root 의 원색. 라이트 모드 기준이고 바탕은 흰색이다.
+       2. 의미 토큰 --gray · --tone-a · --status-plan · --surface-dark … "무슨 뜻인가"의 이름이며 팔레트를 가리킨다.
+       3. 테마     <html data-theme="ocean"> 처럼 강조색·중립색을 바꾸는 프리셋. 한 장에만 걸 수도 있다.
+       4. 모드     <html data-mode="dark"> 다크 모드. 어느 테마와도 겹쳐 쓴다. 없으면 라이트.
+       한 요소만 다르게 칠할 때는 style="--c:#2F6FB0;--c-soft:#E2ECF6" (레인·노드·선·행 매핑).
+
+       뜻: 강조색은 그 장에서 "지금 짚는 곳" 하나에만 쓴다 — 결론 한 줄, 새로 생긴 것, 짚는 행, 지금 단계.
+       번호 원·라벨·갈래는 강조색이 아니다(먹색·회색). 회색은 이미 있는 것, 점선은 아직 아닌 것. */
+    :root{
+      --ink:#141413; --body:#2B2A27; --muted:#57554F; --paper:#FFFFFF; --line:#D6D3CA;
+      --card:#F1F0EB;          /* 흰 바탕 위 면 — 노란 기를 덜어 칙칙하지 않게 */
+      --accent:#D97757; --accent-dark:#9A4022; --accent-soft:#F5E3DA;
+      --accent-dm:#D97757;     /* 다크 바탕 위 강조 선·면. 다크 바탕에서 어두워 보이는 테마는 밝힌 값을 준다 */
+      --plan:#4F6F80;          /* "제안" 상태 원색. 강조색과 다른 색이어야 한다 */
+      --accent-light:#E38F72;  /* 어두운 바탕 위 강조 글자 원색 (표지·코드·다크 모드) */
+      --on-light:#141413;      /* 늘 밝은 면(조작 버튼 등) 위 글자 — 모드와 상관없이 어둡다 */
+      --code-dim:#A3A198;
+      --on-dark:#FAF9F5; --on-dark-muted:#DEDCD3;   /* 늘 어두운 면(표지·사진 위 문구·코드) 위 글자 — 모드와 상관없이 밝다 */
+      --shadow:0 14px 34px rgba(20,20,19,.08);
+      /* 다크 모드 중립색 — 테마마다 색조를 맞춘다(clay 따뜻한 회색). 4층 다크 블록이 읽는다 */
+      --paper-dm:#1B1A18; --card-dm:#2A2926; --line-dm:#4A4843; --muted-dm:#B3B0A6; --body-dm:#DCD9D0; --ink-dm:#EEEBE4;
+
+      /* 타이포 스케일 — 1280x720 고정 캔버스 기준 절대값.
+         괄호 안은 슬라이드 높이(720) 대비 비율. 발표 가독성은 화면 해상도가
+         아니라 이 비율이 결정한다. 절대 하한 2.0%(=14.4px) 아래로 내리지 않는다.
+         캔버스가 고정이므로 어떤 화면에서도 줄바꿈까지 동일하다. */
+      --fs-h1:    72px;   /* 10.0% */
+      --fs-h2:    50px;   /*  6.9% */
+      --fs-h3:    25px;   /*  3.5% */
+      --fs-lead:  24px;   /*  3.3% */
+      --fs-body:  20px;   /*  2.8% */
+      --fs-label: 16px;   /*  2.2% */
+
+      --canvas-w: 1280px;
+      --canvas-h: 720px;
+      --pad:      54px;
+    }
+    /* 2층 · 의미 토큰. 테마·모드를 건 요소에서도 다시 계산되도록 [data-theme]·[data-mode] 에도 선언한다. */
+    :root,[data-theme],[data-mode]{
+      /* --pending(= --line)은 선·면 전용이다. 뜻을 가진 글자·화살표·기호는 --muted 를 쓴다 (바탕 대비 1.3:1 이라 안 보인다) */
+      --gray:var(--muted); --gray-soft:var(--card); --pending:var(--line);
+      /* 구현 상태 3분류 — 강조색(--accent)과 섞지 않는다. 확인됨 = 먹색, 제안 = --status-plan, 예정 = 점선 */
+      --status-done:var(--ink); --status-plan:var(--plan); --status-next:var(--muted);
+      /* 구조도·행 매핑의 두 갈래(레인 둘, 전/후, 좌/우). 기본은 a = 회색, b = 먹색 — 둘 다 강조색이 아니다.
+         강조색은 갈래와 따로 "짚는 곳" 하나(.new 노드·결론 한 줄)에만 쓴다. 어떤 테마도 갈래를 강조색으로 두지 않는다.
+         테마가 갈래 A 색을 정하려면 --tone-a-base 를 준다. */
+      --tone-a:var(--tone-a-base, var(--muted)); --tone-a-soft:var(--tone-a-soft-base, var(--card));
+      --tone-b:var(--ink);    --tone-b-soft:var(--card);
+      /* 늘 어두운 면: 표지(.dark)·코드 블록. 그 위 강조 글자는 --accent-on-dark (강조색이 어두운 테마는 밝은 값을 준다) */
+      --surface-dark:var(--ink);
+      --accent-on-dark:var(--accent-light, var(--accent));
+      --code-bg:var(--surface-dark); --code-fg:var(--on-dark); --code-key:var(--accent-on-dark); --code-str:var(--accent-soft);
+    }
+    /* 3층 · 테마 프리셋 — 발표 성격에 맞춰 고른다. 기본(테마 없음)은 clay.
+       clay   제안·보고 — 따뜻한 편집물 톤
+       ocean  기술·아키텍처·데이터 설명 — 차분한 파랑
+       duo    강의·교육·비교 — 남색 갈래 A + 자홍 강조
+       forest 운영·성과 보고 — 안정적인 초록
+       signal 피치·키노트 — 고대비 + 빨강 한 점
+       새 테마는 같은 형식으로 한 블록을 더한다. 강조 셋(--accent·-dark·-soft)·--plan·--accent-light 를 함께 정한다.
+       점검(라이트): 바탕 위 -dark 글자 ≥ 4.5:1 · -soft 위 -dark 글자 ≥ 4.5:1 · -dark 위 흰 글자 ≥ 4.5:1 · 바탕 위 --accent 선·면 ≥ 3:1
+             · 먹색 바탕 위 --accent-on-dark ≥ 4.5:1 (표지 kicker·코드 키워드) · -soft 위 보조 글자는 --muted 대신 --body.
+       점검(다크): 다크 바탕 위 강조 글자 ≥ 4.5:1 · 강조 바탕 위 강조 글자 ≥ 4.5:1 · --accent 선·면 ≥ 3:1. 팔레트 장(?mode=dark)이 계산해 보여준다.
+       글자에는 --accent-dark 를, --accent 는 선·면에만 쓴다. */
+    [data-theme="clay"]{}
+    [data-theme="ocean"]{--card:#EDF1F6; --line:#CFD9E3; --muted:#4D5967; --body:#24303D; --ink:#0F1A26;
+                         --accent:#2F6FB0; --accent-dark:#1F4F86; --accent-soft:#E2ECF6; --plan:#8A6A2E; --accent-light:#7FB2E5;
+                         --accent-dm:#4D8BCB;
+                         --paper-dm:#151A20; --card-dm:#222A34; --line-dm:#3D4956; --muted-dm:#A9B3BE; --body-dm:#D8DEE5; --ink-dm:#ECF0F4}
+    [data-theme="duo"]{--card:#F1F0F4; --line:#D7D5DF; --muted:#545260; --body:#29272F; --ink:#16151A;
+                       --accent:#B23A7A; --accent-dark:#8C2860; --accent-soft:#F6E1EC; --plan:#2E7D6B; --accent-light:#E58BB8;
+                       --tone-a-base:#1F4F86; --tone-a-soft-base:#E2ECF6; --tone-a-base-dark:#7492B4;
+                       --accent-dm:#C9518F;
+                       --paper-dm:#19181C; --card-dm:#28262E; --line-dm:#46434E; --muted-dm:#B2AFBA; --body-dm:#DCDAE0; --ink-dm:#EEEDF1}
+    [data-theme="forest"]{--card:#EEF2EB; --line:#D0D7C8; --muted:#50584B; --body:#262B23; --ink:#141A12;
+                          --accent:#3F7A4A; --accent-dark:#2C5A35; --accent-soft:#E3EEE4; --plan:#7A5C8A; --accent-light:#8FC79A;
+                          --accent-dm:#4E9A5B;
+                          --paper-dm:#161A16; --card-dm:#242B24; --line-dm:#424B41; --muted-dm:#ACB4A7; --body-dm:#D9DED5; --ink-dm:#ECEFE9}
+    [data-theme="signal"]{--card:#F2F2F2; --line:#D2D2D2; --muted:#4F4F4F; --body:#1F1F1F; --ink:#0A0A0A; --accent-light:#FF6B63;
+                          --accent:#E5322D; --accent-dark:#B71F1B; --accent-soft:#FCE4E3; --plan:#2B59C3; --code-dim:#9A9A9A;
+                          --accent-dm:#E5322D;
+                          --paper-dm:#171717; --card-dm:#272727; --line-dm:#474747; --muted-dm:#B0B0B0; --body-dm:#DCDCDC; --ink-dm:#EDEDED}
+    /* 4층 · 다크 모드 — 테마 블록보다 뒤에 두어야 이긴다. 강조색 자체는 테마 값을 쓰고,
+       바탕 위에서 읽혀야 하는 값(강조 글자·연한 면·제안·갈래 A)은 그 값에서 다시 만든다.
+       그림 파일(차트 PNG 등)은 다크 바탕에서 글자가 사라지므로 밝은 판 위에 올린다(.analysis-figure img). */
+    [data-mode="dark"],[data-mode="dark"] [data-theme]{
+      /* 중립색은 테마의 *-dm 값. 본문 10~13:1 · 제목 15:1 아래로 두어 어두운 방에서 번지지 않게 한다 */
+      --paper:var(--paper-dm); --card:var(--card-dm); --line:var(--line-dm); --muted:var(--muted-dm); --body:var(--body-dm); --ink:var(--ink-dm);
+      --accent:var(--accent-dm);
+      --on-dark-muted:#B9B7AE;
+      --surface-dark:#0A0A09;
+      --accent-dark:var(--accent-on-dark);
+      --accent-soft:color-mix(in srgb, var(--accent) 26%, var(--paper));
+      --status-plan:color-mix(in srgb, var(--plan) 62%, #FFFFFF);
+      --tone-a:var(--tone-a-base-dark, var(--muted));   /* 기본은 회색 그대로 — 갈래 B(밝은 먹색)와 구분된다 */
+      --tone-a-soft:color-mix(in srgb, var(--tone-a) 16%, var(--paper));
+      --code-str:color-mix(in srgb, var(--accent-on-dark) 45%, #FFFFFF);
+      --shadow:0 14px 34px rgba(0,0,0,.4);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;background:#000;color:var(--body);font-family:Pretendard,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;overflow:hidden}
+    button{font:inherit}
+
+    /* ── 무대: 화면을 채우고 캔버스를 가운데 둔다. 남는 부분은 검정 레터박스 ── */
+    /* 칸을 화면 크기로 고정해야 창이 1280px보다 좁아도 캔버스가 가운데에서 축소된다.
+       auto 칸이면 칸이 1280px로 늘어나 축소된 캔버스가 오른쪽 밖으로 밀린다. */
+    .stage{position:fixed;inset:0;display:grid;grid-template:minmax(0,1fr) / minmax(0,1fr);place-items:center;background:#000;overflow:hidden}
+
+    /* ── 고정 캔버스 ──────────────────────────────────────
+       1280x720에 절대 px로 그리고, 화면 크기에 맞춰 통째로 scale한다.
+       고정 규격 발표 화면 방식. 해상도가 달라도 줄바꿈이 변하지 않는다. */
+    .deck{width:var(--canvas-w);height:var(--canvas-h);position:relative;flex:none;transform-origin:center center}
+    .slide{position:absolute;inset:0;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr auto;grid-template-areas:"head" "content" "foot";gap:16px;
+           padding:var(--pad);background:var(--paper);opacity:0;pointer-events:none;
+           color:var(--body);   /* 장마다 글자색을 다시 잡는다 — 한 장에만 data-mode 를 걸어도 본문이 따라온다 */
+           transform:translateX(5%);transition:.42s ease;overflow:hidden}
+    .slide.active{opacity:1;pointer-events:auto;transform:none}
+    .slide.past{transform:translateX(-5%)}
+    .slide.dark{background:var(--surface-dark);color:var(--on-dark)}
+    .slide:not(.dark)::before{content:"";position:absolute;top:0;left:var(--pad);width:54px;height:6px;background:var(--accent)}
+    .slide-head,.content,.foot{position:relative;z-index:1}
+    .slide:not(:has(> .slide-head)){grid-template-rows:1fr auto;grid-template-areas:"content" "foot"}
+    .slide-head{grid-area:head;z-index:2;display:flex;justify-content:space-between;gap:24px;align-items:flex-start}
+    .slide-head > div{min-width:0}
+    .slide-head > .badge{flex-shrink:0}
+    /* 본문은 제목 바로 아래 같은 위치에서 시작한다. 장을 넘겨도 내용이 위아래로 튀지 않게.
+       예외(표지·핵심 숫자처럼 한 덩어리를 가운데 둘 장)만 .content.center 를 붙인다. */
+    .content{grid-area:content;min-width:0;min-height:0;display:flex;align-items:flex-start;padding-top:8px}
+    .content.center,.slide.dark .content{align-items:center;padding-top:0}
+
+    /* ── 타이포 ──────────────────────────────────────────── */
+    h1,h2,h3,p{margin-top:0}
+    h1,h2,h3{color:var(--ink);word-break:keep-all;overflow-wrap:normal;text-wrap:balance}
+    .dark h1,.dark h2,.dark h3{color:var(--on-dark)}
+    h1{font-size:var(--fs-h1);line-height:1.06;letter-spacing:-.06em;margin-bottom:.28em}
+    h2{font-size:var(--fs-h2);line-height:1.15;letter-spacing:-.055em;margin-bottom:0;max-width:20em}
+    h3{font-size:var(--fs-h3);line-height:1.22;letter-spacing:-.035em;margin-bottom:.32em}
+    p,li{font-size:var(--fs-body);line-height:1.5}
+    .kicker{margin:0 0 .7em;color:var(--accent-dark);font-size:var(--fs-label);font-weight:900;letter-spacing:.15em;text-transform:uppercase}
+    .dark .kicker{color:var(--accent-on-dark)}
+    .lead{font-size:var(--fs-lead);line-height:1.45;color:var(--body);max-width:26em;word-break:keep-all}
+    .dark .lead{color:var(--on-dark-muted)}
+    .accent{color:var(--accent)}
+    .dark .accent{color:var(--accent-on-dark)}
+    .slide:not(.dark) .accent{color:var(--accent-dark)}   /* 밝은 장에서는 글자용 진한 강조 */
+    p .accent,li .accent,td .accent,small .accent{font-weight:800}   /* 본문 글자 강조는 색 + 굵기. 제목은 이미 굵어 색만 */
+    .final-line{font-size:var(--fs-lead);font-weight:900;color:var(--accent-dark);word-break:keep-all}
+
+    /* ── 견본 안내: 갤러리 견본에만 있는 설명. 복사한 덱에 남으면 deck_verify 가 경고한다 ── */
+    .guide{display:inline-flex;align-items:center;gap:.4em;padding:.1em .55em;border:1px dashed var(--muted);border-radius:4px;
+           color:var(--muted);font-size:var(--fs-label);font-weight:700;letter-spacing:0;text-transform:none}
+    .guide::before{content:"견본";font-weight:900;color:var(--body)}
+    .dark .guide{border-color:var(--on-dark-muted);color:var(--on-dark-muted)}
+    .dark .guide::before{color:var(--on-dark)}
+
+    /* ── 상태 배지: 오직 "구현 상태" 하나의 축에만 사용한다 ──
+       done  먹색           = 현재 확인됨 (.service.confirmed 와 짝)
+       plan  --status-plan  = 제안       (.service.proposed 와 짝) — 강조색과 다른 색
+       next  빈 원          = 예정       (.service.backlog 점선과 짝) */
+    .badge{display:inline-flex;align-items:center;gap:.5em;border:1px solid var(--line);padding:.45em .8em;background:var(--paper);font-size:var(--fs-label);font-weight:800;white-space:nowrap}
+    .badge::before{content:"";width:.6em;height:.6em;border-radius:50%;background:var(--status-done);flex:none}
+    .badge.plan::before{background:var(--status-plan)}
+    .badge.next::before{background:var(--paper);border:2px solid var(--status-next)}
+    .legend{display:flex;gap:14px;flex-wrap:wrap}
+    .legend .badge{background:transparent}
+
+    /* ── 1 표지 ─────────────────────────────────────────── */
+    .cover-content{width:100%;display:grid;grid-template-columns:1fr .86fr;gap:clamp(36px,5vw,86px);align-items:center}
+    .cover-content.text-only{grid-template-columns:1fr}
+    .cover-content.text-only .cover-copy{max-width:1000px}
+    .cover-content.text-only h1{max-width:1000px}
+    .cover-copy{max-width:840px}
+    .cover-copy h1{max-width:780px}
+    .cover-copy .lead{color:var(--on-dark);font-weight:800;max-width:680px}
+    .bridge-question{margin:0;padding:.7em .9em;border-left:4px solid var(--accent);background:rgba(255,255,255,.1);
+                     font-size:var(--fs-body);font-weight:850;color:var(--on-dark);max-width:22em;word-break:keep-all}
+    .cover-visual-wrap{position:relative;padding:0 14px 14px 0}
+    .cover-visual-wrap::after{content:"";position:absolute;right:0;bottom:0;width:56%;height:7px;background:var(--accent)}
+    .cover-visual{width:100%;aspect-ratio:1.3;object-fit:cover;object-position:center;
+                  border:1px solid rgba(255,255,255,.22);box-shadow:0 24px 70px rgba(0,0,0,.3);filter:saturate(.72) contrast(1.06)}
+
+    /* ── 2 조직 맥락 ─────────────────────────────────────── */
+    .thesis-grid{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:22px}
+    .thesis-card{padding:1.1em 1.2em;border-radius:3px;background:var(--paper);border:1px solid var(--line)}
+    .thesis-card.fading{background:var(--gray-soft)}
+    .thesis-card.keeping{background:linear-gradient(135deg,var(--accent-soft),var(--paper));border-color:var(--accent)}
+    .thesis-card ul{padding-left:22px;margin-bottom:0}
+    .trend{display:inline-block;padding:.2em 0;color:var(--muted);font-size:var(--fs-label);font-weight:900}
+    .keeping .trend{color:var(--accent-dark)}
+    .thesis-card ul + p{margin-top:1em}
+
+    /* ── 3 문제 ─────────────────────────────────────────── */
+    .split{width:100%;display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(28px,5vw,90px);align-items:start}
+    .photo-card{position:relative;width:100%;height:400px;border-radius:3px;overflow:hidden;box-shadow:var(--shadow);background:var(--card)}
+    .photo-card img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.06)}
+    .photo-overlay{position:absolute;inset:auto 0 0;padding:1em 1.1em;background:linear-gradient(transparent,rgba(18,18,18,.92));color:var(--on-dark)}
+    .big-quote{font-size:var(--fs-h2);font-weight:900;line-height:1.08;letter-spacing:-.04em}
+    .speech{margin:.8em 0;padding:.7em .8em;border-radius:2px;background:var(--card);border-left:4px solid var(--muted);
+            font-weight:800;font-size:var(--fs-body);word-break:keep-all}
+
+    /* ── 4 이해관계자: 1순위 작성자를 크게, 나머지 4명은 위성 ── */
+    .impact-layout{width:100%;display:grid;grid-template-columns:1.25fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:14px}
+    .impact-card{padding:.85em .95em;border-radius:3px;background:var(--paper);border:1px solid var(--line);
+                 display:flex;flex-direction:column;justify-content:space-between;gap:.6em;min-height:0}
+    .impact-card.primary{grid-row:1 / span 2;padding:1.2em;border:2px solid var(--accent);background:linear-gradient(135deg,var(--accent-soft),var(--paper))}
+    .impact-card .avatar{width:1.9em;height:1.9em;border-radius:50%;display:grid;place-items:center;background:var(--card);font-size:var(--fs-h3)}
+    .impact-card.primary .avatar{font-size:calc(var(--fs-h3) * 1.2);background:var(--paper)}
+    .impact-card.primary h3{font-size:calc(var(--fs-h3) * 1.25)}
+    .impact-card .before{color:var(--muted);font-weight:700;margin-bottom:0}
+    .impact-card .after{color:var(--ink);font-weight:800;margin-bottom:0}
+    .impact-card.primary{justify-content:flex-start;gap:1.4em}
+    .impact-card.primary .after{color:var(--accent-dark);font-weight:900}
+    .priority-note{margin:.7em 0 0;padding-top:.7em;border-top:1px solid var(--line);font-weight:850;color:var(--ink);word-break:keep-all}
+
+    /* ── 5 문제→기능 매트릭스: 가로 1회 + 세로 1회로 읽힌다 ── */
+    .matrix{width:100%;display:grid;gap:9px}
+    .matrix-caption{margin:0;font-size:var(--fs-label);font-weight:900;letter-spacing:.02em;color:var(--muted)}
+    .matrix-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+    .mcell{padding:.75em .8em;border-radius:3px;border:1px solid var(--line);font-size:var(--fs-body)}
+    .mcell .no{display:block;font-size:var(--fs-label);font-weight:900;color:var(--muted);margin-bottom:.3em}
+    .mcell strong{display:block;font-size:var(--fs-h3);letter-spacing:-.03em;margin-bottom:.25em}
+    .mcell p{margin:0;font-size:1em;color:var(--body);word-break:keep-all;line-height:1.4}
+    .matrix-row.problems .mcell{background:var(--gray-soft);border-color:var(--line)}
+    .matrix-row.features .mcell{background:var(--paper)}
+    .matrix-row.features .mcell p{color:var(--ink)}
+    .mcell.hot{border:2px solid var(--accent);background:linear-gradient(135deg,var(--accent-soft),var(--paper))}
+    .mcell.hot .no{color:var(--accent-dark)}
+    .mcell .newly{display:inline-block;margin-top:.5em;padding:.25em .5em;background:var(--accent-dark);color:var(--paper);font-size:var(--fs-label);font-weight:900;letter-spacing:.02em}
+    .matrix-arrows{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;text-align:center;color:var(--muted);font-weight:900;font-size:var(--fs-h3)}
+    .matrix-outcome{margin:.3em 0 0;padding:.6em .8em;border-left:5px solid var(--ink);background:var(--card);
+                    font-size:var(--fs-lead);font-weight:900;word-break:keep-all}
+
+    /* ── 6 AI 큐레이션 ──────────────────────────────────── */
+    .ai-flow-grid{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:22px}
+    .flow-card{padding:1.1em 1.2em;border-radius:3px;background:var(--paper);border:1px solid var(--line)}
+    .flow-card .mode{display:block;color:var(--muted);font-size:var(--fs-label);font-weight:900;letter-spacing:.02em;margin-bottom:.4em}
+    .flow-steps{display:flex;flex-wrap:wrap;align-items:center;gap:.4em;margin:.9em 0 1.2em}
+    .flow-steps span{padding:.4em .55em;border-radius:2px;background:var(--card);font-size:var(--fs-label);font-weight:850}
+    .flow-steps span + span::before{content:"\2192";color:var(--muted);font-weight:900;margin-right:.5em}
+
+    /* ── 7 사람의 판단: 역할 라벨은 상태 배지와 다른 토큰 ─── */
+    .before-after{width:100%;display:grid;grid-template-columns:1fr 90px 1fr;gap:20px;align-items:center}
+    .scene{padding:1.2em;border-radius:3px;background:var(--paper);border:1px solid var(--line);
+           display:flex;flex-direction:column;justify-content:space-between;gap:.8em}
+    .scene.key{background:linear-gradient(135deg,var(--accent-soft),var(--paper));border-color:var(--accent)}
+    .scene ul{padding-left:22px}
+    .arrow{font-size:var(--fs-h2);color:var(--muted);text-align:center}
+    .role-tag{display:inline-block;padding:.4em .8em;font-size:var(--fs-label);font-weight:900;letter-spacing:.02em;color:var(--paper)}
+    .role-tag.ai{background:var(--muted)}
+    .role-tag.human{background:var(--ink)}
+
+    /* ── 8 스프린트: 단계 라벨도 상태 배지와 분리 ────────── */
+    .roadmap{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;position:relative}
+    .roadmap::before{content:"";position:absolute;top:26px;left:50px;right:calc((100% - 40px) / 3 - 50px);height:2px;background:var(--line);z-index:0}
+    .sprint{position:relative;z-index:1;padding-top:66px}
+    .station{position:absolute;top:0;left:10px;width:1.7em;height:1.7em;border-radius:50%;display:grid;place-items:center;
+             background:var(--card);color:var(--muted);font-weight:900;border:8px solid var(--paper);box-shadow:inset 0 0 0 2px var(--line);font-size:var(--fs-h3)}
+    /* 원은 카드 상태를 따른다 — .sprint-card 에 .done / .now 를 옮기면 원도 함께 바뀐다 */
+    .sprint:has(> .sprint-card.done) .station{background:var(--gray);color:var(--paper);box-shadow:none}
+    .sprint:has(> .sprint-card.now) .station{background:var(--accent-dark);color:var(--paper);box-shadow:none}
+    .sprint-card{height:100%;padding:1em 1.1em;border-radius:3px;background:var(--paper);border:1px solid var(--line)}
+    .sprint-card.now{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+    .sprint-card ul{padding-left:20px;margin-bottom:0}
+    .phase{display:block;font-size:var(--fs-label);font-weight:900;letter-spacing:.02em;color:var(--muted);margin-bottom:.4em}
+    .sprint-card.now .phase{color:var(--accent-dark)}
+
+    /* ── 9 아키텍처 ─────────────────────────────────────── */
+    .architecture{width:100%;display:grid;grid-template-rows:auto auto;gap:28px}
+    .journey{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+    .journey span{position:relative;padding:.35em .6em;border-radius:3px;background:var(--card);color:var(--ink);text-align:center;font-weight:800;font-size:var(--fs-body)}
+    .journey span + span::before{content:"\2192";position:absolute;left:-12px;top:50%;transform:translate(-50%,-50%);color:var(--muted);font-weight:900}
+    .service-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+    .service{padding:.85em .9em;border-radius:3px;background:var(--paper);border:2px solid var(--line)}
+    .service.confirmed{border-color:var(--status-done)}
+    .service.proposed{border-color:var(--status-plan)}
+    .service.backlog{border-style:dashed;border-color:var(--status-next);background:var(--paper)}
+    .service small{display:block;margin-bottom:.5em;color:var(--muted);font-weight:800;font-size:var(--fs-label)}
+    .service strong{display:block;font-size:var(--fs-h3);margin-bottom:.3em;letter-spacing:-.03em;word-break:keep-all}
+    .service p{font-size:var(--fs-body);margin:0 0 .5em;color:var(--body);line-height:1.4;word-break:keep-all}
+    .service .chip{display:inline-flex;align-items:center;gap:.45em;font-size:var(--fs-label);font-weight:900;color:var(--muted)}
+    .service .chip::before{content:"";width:.55em;height:.55em;border-radius:50%;background:var(--status-done);flex:none}
+    .service.proposed .chip::before{background:var(--status-plan)}
+    .service.backlog .chip::before{background:var(--paper);border:2px solid var(--status-next)}
+
+    /* ── 10 API ─────────────────────────────────────────── */
+    .api-layout{width:100%;display:grid;grid-template-columns:.8fr 1.2fr;gap:26px;align-items:stretch}
+    .action-flow{display:grid;grid-auto-rows:1fr;gap:8px}
+    .action{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:.7em;padding:.6em .8em;border-radius:3px;background:var(--paper);border:1px solid var(--line)}
+    .action b{width:1.7em;height:1.7em;display:grid;place-items:center;border-radius:50%;background:var(--ink);color:var(--paper);font-size:var(--fs-body)}
+    .action p{margin:0;font-weight:800}
+    .action small{color:var(--body);font-size:var(--fs-label)}
+    /* 행을 왼쪽 행동 카드와 같은 간격의 카드로 둔다 — 두 열의 행이 높이·위치까지 맞는다 */
+    .api-table{display:grid;grid-auto-rows:1fr;gap:8px}
+    .api-row:has(> .dg-num){grid-template-columns:auto 4.5em 1.25fr 1fr}
+    .api-row{display:grid;grid-template-columns:4.5em 1.25fr 1fr;gap:.7em;padding:.55em .8em;border:1px solid var(--line);border-radius:3px;background:var(--paper);align-items:center;font-size:var(--fs-body)}
+    .method{font-family:ui-monospace,monospace;font-weight:900;color:var(--ink)}
+    .api-row.hot{background:var(--accent-soft);border-color:var(--accent)}
+    .api-row.hot .method{color:var(--accent-dark)}
+    .path{font-family:ui-monospace,monospace;font-size:.92em;overflow-wrap:anywhere}
+    .api-row small{color:var(--body);font-size:var(--fs-label)}
+
+    /* ── 11 동작 화면 ───────────────────────────────────── */
+    .screens{width:100%;display:grid;grid-template-columns:repeat(5,1fr);gap:14px;align-items:start}
+    .screen{position:relative;margin:0}
+    .screen::after{content:"\2192";position:absolute;right:-.55em;top:0;margin-top:calc(37.5% - .5em);font-size:var(--fs-h3);color:var(--muted);z-index:3}
+    .screen:last-child::after{display:none}
+    .frame{aspect-ratio:4/3;border-radius:2px;border:1px solid var(--line);background:var(--paper);overflow:hidden;box-shadow:0 12px 24px rgba(20,20,19,.08)}
+    .browserbar{height:25px;background:var(--card);display:flex;align-items:center;gap:4px;padding:0 9px}
+    .browserbar i{width:6px;height:6px;border-radius:50%;background:var(--muted)}
+    .wire{padding:15px}
+    .wire .line{height:8px;border-radius:8px;background:var(--line);margin-bottom:9px}
+    .wire .line.title{background:var(--muted);width:46%}
+    .wire .line.accent{background:var(--accent)}
+    .wire .block{height:36px;border-radius:10px;background:var(--card);margin:10px 0}
+    .wire .block.accent{background:var(--accent-soft);box-shadow:inset 0 0 0 2px var(--accent)}
+    .wire .button{width:50%;height:22px;border-radius:7px;background:var(--line)}
+    .wire .button.accent{background:var(--accent)}
+    .screen figcaption{margin-top:.6em;font-size:var(--fs-label);line-height:1.4;word-break:keep-all}
+    .screen figcaption strong{display:flex;align-items:center;gap:.4em;margin-bottom:.2em}
+    .screen figcaption > span{display:block;color:var(--body)}
+
+    /* ── 11b 제품 화면 + 콜아웃 (패턴 M) ────────────────── */
+    .shot-split{width:100%;display:grid;grid-template-columns:1.35fr 1fr;gap:26px;align-items:start}
+    .shot{position:relative;margin:0;height:330px;border-radius:3px;border:1px solid var(--line);background:var(--paper);
+          overflow:hidden;box-shadow:0 14px 28px rgba(20,20,19,.10)}
+    .shot img{display:block;width:100%;height:100%;object-fit:cover;object-position:top left}
+    .pin{position:absolute;width:1.6em;height:1.6em;border-radius:50%;background:var(--ink);color:var(--paper);
+         font-size:var(--fs-body);font-weight:900;display:flex;align-items:center;justify-content:center;
+         box-shadow:0 3px 10px rgba(0,0,0,.28);z-index:2}
+    .shot-caption{margin-top:.5em;font-size:var(--fs-label);color:var(--muted);word-break:keep-all}
+    .callouts{display:flex;flex-direction:column;gap:.75em}
+    .callout{display:grid;grid-template-columns:1.6em 1fr;gap:14px;align-items:start}
+    .shot .pin{background:var(--on-light);color:var(--on-dark)}   /* 캡처는 늘 밝은 그림 — 모드와 상관없이 어두운 핀 */
+    .callout .pin{position:static;box-shadow:none}
+    .callout strong{display:block;font-size:var(--fs-body);font-weight:900;word-break:keep-all}
+    .callout p{margin:.1em 0 0;font-size:var(--fs-label);color:var(--body);line-height:1.45;word-break:keep-all}
+    .callout code{font-family:ui-monospace,monospace;font-size:.95em;color:var(--accent-dark);font-weight:800}
+
+    /* ── 패턴 N: 전폭 분석 그림 + 결론 한 줄 ───────────────── */
+    .figure-content{width:100%;display:grid;grid-template-rows:minmax(0,1fr) auto auto;gap:10px;align-items:stretch}
+    .analysis-figure{margin:0;min-height:0;display:flex;align-items:flex-start;justify-content:flex-start}
+    .analysis-figure img{display:block;width:100%;height:100%;min-height:0;object-fit:contain;filter:none}
+    [data-mode="dark"] .analysis-figure img{background:#FFFFFF;border-radius:6px;padding:12px}   /* 그림 파일은 밝은 판 위에 */
+    .analysis-figure > svg{display:block;width:100%;height:auto;max-height:100%}   /* 인라인 SVG — fill 을 토큰으로 주면 테마를 따른다 */
+    .figure-content .final-line{margin:0}
+    .figure-source{margin:0;font-size:var(--fs-label);line-height:1.4;color:var(--muted);word-break:keep-all}
+
+    /* ── 구조도 (패턴 O · P · Q) ───────────────────────────
+       노드는 CSS 그리드 칸(--x, --y)에 놓고, 선은 엔진이 <i class="dg-edge"> 를 읽어 SVG로 그린다.
+       색은 tone-a · tone-b · --c 로만 정한다. 실선 = 주 흐름, 점선 = 되돌아감·조건·대응. */
+    .tone-a{--c:var(--tone-a);--c-soft:var(--tone-a-soft)}
+    .tone-b{--c:var(--tone-b);--c-soft:var(--tone-b-soft)}
+    .dg{position:relative;width:100%;display:grid;gap:18px;font-size:var(--fs-body)}
+    .dg-lane{position:relative;padding:14px 18px;border:1.5px solid var(--c,var(--line));border-radius:10px;background:var(--paper)}
+    .dg-lane-title{display:block;margin:0 0 8px;font-size:var(--fs-label);font-weight:900;letter-spacing:.02em;color:var(--c,var(--muted))}
+    .dg-grid{display:grid;grid-template-columns:repeat(var(--cols,4),minmax(0,1fr));column-gap:56px;row-gap:22px;align-items:center;justify-items:center}
+    .dg-node{grid-column:var(--x,auto);grid-row:var(--y,auto);position:relative;z-index:1;min-width:6.5em;padding:.5em .9em;
+             border:2px solid var(--ink);border-radius:9px;background:var(--paper);color:var(--ink);
+             font-size:var(--fs-body);font-weight:800;line-height:1.25;text-align:center;word-break:keep-all}
+    .dg-node small{display:block;font-size:var(--fs-label);font-weight:600;color:var(--muted)}
+    .dg-node.pill{border-radius:999px}
+    .dg-node.soft{border-color:var(--line);color:var(--muted)}                                  /* 이미 있는 것 · 흐린 쪽 */
+    .dg-node.new{border-color:var(--accent);background:var(--accent-soft)} /* 짚는 곳 — 레인 색과 상관없이 강조색 */
+    .dg-group{grid-column:var(--x,auto);grid-row:var(--y,auto);position:relative;z-index:1;padding:.4em .6em .6em;
+              border:1.5px dashed var(--c,var(--line));border-radius:10px;background:var(--paper);text-align:center}
+    .dg-group > small{display:block;margin-bottom:.3em;font-size:var(--fs-label);font-weight:800;color:var(--c,var(--muted))}
+    .dg-note{margin:10px 0 0;font-size:var(--fs-body);line-height:1.45;color:var(--body);word-break:keep-all}
+    .dg-note::before{content:"\2713\00a0";color:var(--c,var(--accent));font-weight:900}
+    .dg-note b{color:var(--ink)}
+    .dg-grid > .dg-note{grid-column:var(--x,auto);grid-row:var(--y,auto);justify-self:start;margin:0}  /* 빈 칸에 넣어 선과 안 겹치게 */
+    .dg-edge{display:none;color:var(--c,var(--muted))}
+    .dg-edges{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:0}
+    .dg-label{position:absolute;z-index:2;transform:translate(-50%,-50%);padding:0 .35em;background:var(--paper);
+              font-size:var(--fs-label);font-weight:800;line-height:1.3;white-space:nowrap}
+    .dg-num{display:inline-grid;place-items:center;flex:none;width:1.6em;height:1.6em;border-radius:50%;
+            background:var(--c,var(--ink));color:var(--paper);font-size:var(--fs-label);font-weight:900;line-height:1}
+    /* 번호는 순서일 뿐이라 먹색. 짚는 행·지금 단계 안의 번호만 강조색 */
+    .api-row.hot .dg-num,.walk-rail .now .dg-num{background:var(--accent-dark)}
+    .dg-node .dg-num{position:absolute;top:-.8em;left:-.8em}
+
+    /* 패턴 P · 전/후: 같은 뼈대를 두 번 그리고 오른쪽의 새것만 칠한다 */
+    .dg-compare{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:stretch}
+    /* 두 패널은 같은 뼈대 — 같은 열 수·같은 행 높이로 두면 공통 노드가 같은 자리에 선다 */
+    .dg-panel .dg-grid{grid-auto-rows:64px;justify-items:start}
+    .dg-panel{display:flex;flex-direction:column;gap:14px;padding:14px 18px 18px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper)}
+    .dg-panel-title{margin:0;font-size:var(--fs-h3);font-weight:900;letter-spacing:-.03em;color:var(--c,var(--ink))}
+    .dg-panel-title::before{content:"";display:inline-block;width:.32em;height:.32em;margin:0 .45em .18em 0;background:var(--c,var(--ink))}
+    .dg-panel .dg{flex:1;align-content:center}
+    .dg-compare + .final-line{margin:16px 0 0}
+
+    /* 패턴 Q · 번호 구조도 + 범례: 그림의 번호 = 범례 번호 = 대본 박자 순서 */
+    .dg-legend-split{width:100%;display:grid;grid-template-columns:1.35fr 1fr;gap:40px;align-items:start}
+    .dg-legend{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:18px}
+    .dg-legend li{display:grid;grid-template-columns:auto 1fr;gap:.7em;align-items:start}
+    .dg-legend strong{display:block;font-size:var(--fs-body);font-weight:900;color:var(--ink);word-break:keep-all}
+    .dg-legend p{margin:.15em 0 0;font-size:var(--fs-label);line-height:1.45;color:var(--body);word-break:keep-all}
+
+    /* ── 패턴 R · 가로 행 매핑: 왼쪽 문제 → 오른쪽 해결, 행마다 한 쌍 ── */
+    .rowmap{width:100%;display:grid;grid-template-columns:1fr 110px 1fr;column-gap:14px;row-gap:10px;align-items:center}
+    .rowmap-head{margin:0 0 4px;text-align:left;font-size:var(--fs-h3);font-weight:900;letter-spacing:-.03em;color:var(--c,var(--ink))}
+    .rowmap-from{margin:0;font-size:var(--fs-body);line-height:1.35;color:var(--body);word-break:keep-all}
+    .rowmap-from b{color:var(--c,var(--tone-a))}
+    .rowmap-link{position:relative;height:2px;border-top:2px dashed var(--muted)}
+    .rowmap-link::after{content:"";position:absolute;right:-2px;top:-7px;border:6px solid transparent;border-left:9px solid var(--muted);border-right:0}
+    .rowmap-to{margin:0;padding:.45em .8em;border:1.5px solid var(--c,var(--tone-b));border-left-width:5px;border-radius:6px;background:var(--paper);
+               font-size:var(--fs-body);line-height:1.35;word-break:keep-all}
+    .rowmap-to b{color:var(--c,var(--tone-b))}
+
+    /* ── 패턴 S · 코드 워크스루: 단계 레일 · 코드 · 결과가 같은 곳을 가리킨다 ──
+       레일은 지금 단계(.now)만 칠하고 펼친다. 코드는 설명할 줄만 12줄까지.
+       강조 줄(.hl)의 번호 = 결과(.code-out)의 번호 = 대본 박자 순서. */
+    .walk{width:100%;display:grid;grid-template-columns:280px minmax(0,1fr);gap:28px;align-items:stretch}
+    .walk-rail{margin:0;padding:16px 18px;list-style:none;counter-reset:step;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);
+               display:flex;flex-direction:column;gap:12px}
+    .walk-rail > li{counter-increment:step;font-size:var(--fs-body);font-weight:700;line-height:1.35;color:var(--muted);word-break:keep-all}
+    .walk-rail > li::before{content:counter(step) ". ";font-weight:900}
+    .walk-rail > li.now{color:var(--accent-dark);font-weight:900}
+    .walk-rail ul{margin:.35em 0 0;padding-left:1.1em;color:var(--ink)}
+    .walk-rail ul li{font-size:var(--fs-label);font-weight:700;line-height:1.4}
+    .walk-main{min-width:0;display:flex;flex-direction:column;gap:16px}
+    .code{margin:0;padding:14px 0;border-radius:8px;background:var(--code-bg);color:var(--code-fg);overflow:hidden;
+          font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:var(--fs-label);line-height:1.5;white-space:pre}
+    .code code{display:block;padding:0 18px;font:inherit}
+    .code .k{color:var(--code-key);font-weight:700}
+    .code .s{color:var(--code-str)}
+    .code .c{color:var(--code-dim)}
+    .code .hl{display:block;position:relative;margin:2px -18px;padding:2px 52px 2px 13px;border-left:5px solid var(--accent);background:rgba(255,255,255,.09)}
+    .code .hl .dg-num{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-family:Pretendard,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+    .code-out{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:14px}
+    .code-out > div{display:grid;grid-template-columns:auto 1fr;gap:.6em;align-items:start;padding:.7em .9em;border:1.5px solid var(--line);border-radius:8px;background:var(--paper)}
+    .code-out strong{display:block;font-size:var(--fs-body);font-weight:900;color:var(--ink);word-break:keep-all}
+    .code-out code{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:.95em;color:var(--ink)}
+    .code-out p{margin:.15em 0 0;font-size:var(--fs-label);line-height:1.45;color:var(--body);word-break:keep-all}
+
+    /* ── 패턴 T · 데이터 표: 한 행만 짚는다 ─────────────────── */
+    .table-wrap{width:100%;display:flex;flex-direction:column;gap:14px}
+    .data-table{width:100%;border-collapse:collapse;font-size:var(--fs-body);line-height:1.35}
+    .data-table th{padding:10px 16px;border-bottom:2px solid var(--ink);text-align:left;font-size:var(--fs-label);font-weight:900;letter-spacing:.02em;color:var(--muted)}
+    .data-table td{padding:11px 16px;border-bottom:1px solid var(--line);color:var(--body);word-break:keep-all}
+    .data-table td:first-child{font-weight:800;color:var(--ink)}
+    .data-table .num{text-align:right;font-variant-numeric:tabular-nums}
+    .data-table .num + :not(.num){padding-left:44px}   /* px 고정 — th·td 글자 크기가 달라도 왼쪽 선이 맞는다 */
+    .data-table tr.hot td{background:var(--accent-soft);font-weight:900;color:var(--ink)}
+    .data-table tr.hot td:first-child{box-shadow:inset 5px 0 0 var(--accent)}
+    .table-wrap .final-line,.table-wrap .figure-source{margin:0}
+
+    /* ── 패턴 U · 목차 · 진행 지도: 지금 장만 칠한다 ───────────── */
+    .agenda{width:100%;margin:0;padding:0;list-style:none;border-top:2px solid var(--ink)}
+    .agenda li{display:grid;grid-template-columns:84px 1fr auto;align-items:center;gap:20px;padding:14px 16px;border-bottom:1px solid var(--line)}
+    .agenda .no{font-size:var(--fs-h3);font-weight:900;color:var(--muted);font-variant-numeric:tabular-nums}
+    .agenda strong{display:block;font-size:var(--fs-h3);letter-spacing:-.03em;color:var(--ink);word-break:keep-all}
+    .agenda p{margin:.15em 0 0;font-size:var(--fs-label);color:var(--body);word-break:keep-all}
+    .agenda .time{font-size:var(--fs-label);font-weight:800;color:var(--muted)}
+    .agenda li.done strong{color:var(--muted)}
+    .agenda li.now{background:linear-gradient(90deg,var(--accent-soft),var(--paper));box-shadow:inset 5px 0 0 var(--accent)}
+    .agenda li.now .no,.agenda li.now .time{color:var(--accent-dark)}
+
+    /* ── 패턴 V · 핵심 숫자 한 장: 숫자 하나 + 비교 기준 + 출처 ─── */
+    .stat-hero{width:100%;display:grid;grid-template-columns:1.1fr 1fr;gap:56px;align-items:center}
+    .stat-num{display:block;font-size:calc(var(--fs-h1) * 2.2);font-weight:900;line-height:1;letter-spacing:-.05em;color:var(--accent-dark);font-variant-numeric:tabular-nums}
+    .stat-num small{font-size:.4em;letter-spacing:0}
+    .stat-label{margin:.5em 0 0;font-size:var(--fs-h3);font-weight:800;color:var(--ink);word-break:keep-all}
+    .stat-side{display:flex;flex-direction:column;gap:16px}
+    .stat-side .lead{margin:0}
+    .stat-compare{display:grid;gap:10px}
+    .stat-compare div{display:grid;grid-template-columns:1fr auto;align-items:baseline;padding:.5em .8em;border:1px solid var(--line);border-radius:6px;background:var(--paper)}
+    .stat-compare span{font-size:var(--fs-body);color:var(--body);word-break:keep-all}
+    .stat-compare b{font-size:var(--fs-h3);font-variant-numeric:tabular-nums;color:var(--muted)}
+    .stat-compare .hot{border-color:var(--accent)}
+    .stat-compare .hot span{color:var(--ink);font-weight:800}
+    .stat-compare .hot b{color:var(--accent-dark)}
+    .stat-side .figure-source{margin:0}
+
+    /* ── 12 검증 ────────────────────────────────────────── */
+    .metric-list{width:100%;display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+    .metric{padding:1em 1.1em;border-radius:3px;background:var(--paper);border:1px solid var(--line)}
+    .metric small{color:var(--muted);font-weight:900;letter-spacing:.02em;font-size:var(--fs-label)}
+    .metric p{color:var(--muted);margin-bottom:0;word-break:keep-all}
+    .decision{padding:.9em 1.2em;border-left:6px solid var(--accent);background:var(--accent-soft)}
+    .decision small{display:block;margin-bottom:.35em;font-size:var(--fs-label);font-weight:900;letter-spacing:.02em;color:var(--accent-dark)}
+    .decision ol{margin:0;padding-left:0;list-style-position:inside;display:grid;gap:.2em}
+    .decision li{font-size:var(--fs-h3);font-weight:900;line-height:1.35;color:var(--ink);word-break:keep-all}
+    .decision + .metric-list{margin-top:18px}
+    .decision + .metric-list .metric h3{font-size:var(--fs-body)}
+
+    /* ── 푸터·컨트롤 ────────────────────────────────────── */
+    .foot{display:flex;grid-area:foot;justify-content:space-between;align-items:center;color:var(--muted);font-size:var(--fs-label);gap:1.5em}
+    .dark .foot{color:var(--on-dark-muted)}
+    .controls{position:fixed;right:24px;bottom:20px;z-index:30;display:flex;gap:8px;opacity:0;transition:opacity .25s;pointer-events:none}
+    .show-controls .controls,.controls:focus-within{opacity:1;pointer-events:auto}
+    .controls button{width:42px;height:42px;border:0;border-radius:2px;background:rgba(255,255,255,.92);color:var(--on-light);cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.2);font-size:18px}
+    .controls button:hover{background:var(--accent-dark);color:var(--paper)}
+    .progress{position:fixed;z-index:40;bottom:0;left:0;height:4px;background:var(--accent);transition:.3s;width:10%}
+
+    /* 모바일 반응형 없음 — 발표용 덱은 16:9 화면과 인쇄만 대상으로 한다.
+       캔버스가 고정이라 레이아웃이 화면에 따라 변하지 않는다. */
+    @media print{
+      /* 1280x720px = 96dpi 기준 13.333x7.5in = 960x540pt. 화면 캔버스와 완전히 동일하다. */
+      @page{size:1280px 720px;margin:0}
+      html,body{overflow:visible;background:var(--paper);height:auto}
+      *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      .stage{position:static;display:block;background:var(--paper);overflow:visible}
+      /* JS가 넣은 인라인 transform을 !important로 눌러야 한다. */
+      .deck{width:auto;height:auto;transform:none!important}
+      .slide{position:relative;display:grid!important;opacity:1!important;transform:none!important;
+             page-break-after:always;break-after:page;width:var(--canvas-w);height:var(--canvas-h);overflow:hidden}
+      .slide:last-child{page-break-after:auto;break-after:auto}
+      .controls,.progress{display:none}
+    }
+    /* ?embed — 갤러리·미리보기 iframe 안에서는 조작 버튼과 진행 막대를 숨긴다 */
+    .embed .controls,.embed .progress{display:none}
+    @media(prefers-reduced-motion:reduce){.slide,.progress{transition:none}}
+  </style>
+</head>
+<body>
+  <div class="stage">
+  <main class="deck" aria-label="발표자료">
+
+    <section class="slide dark active" data-title="표지">
+      <div class="content">
+        <div class="cover-content text-only">
+          <div class="cover-copy">
+            <p class="kicker">SLIDE TYPE GALLERY</p>
+            <h1>사내 문서에 답하는<br><span class="accent">에이전트</span></h1>
+            <p class="lead">발표에서 자주 나오는 장 22가지를 한 주제로 채운 견본</p>
+            <p class="bridge-question">장마다 패턴 하나. 같은 이야기를 이어 붙였다.</p>
+          </div>
+        </div>
+      </div>
+      <footer class="foot"><span class="guide">패턴 A · 표지</span><span class="page"></span></footer>
+    </section>
+    <section class="slide" data-title="목차">
+      <header class="slide-head"><div><p class="kicker">AGENDA</p><h2>네 덩어리로 보는 오늘의 순서</h2></div></header>
+      <div class="content">
+        <ol class="agenda">
+          <li class="now"><span class="no">01</span><div><strong>왜 필요한가</strong><p>모델만 쓸 때의 약점</p></div><span class="time">1분</span></li>
+          <li><span class="no">02</span><div><strong>어떻게 동작하나</strong><p>검색과 에이전트 구조</p></div><span class="time">2분</span></li>
+          <li><span class="no">03</span><div><strong>무엇이 좋아졌나</strong><p>정답률과 질문 유형별 결과</p></div><span class="time">2분</span></li>
+          <li><span class="no">04</span><div><strong>어떻게 도입하나</strong><p>일정과 결정 요청</p></div><span class="time">1분</span></li>
+        </ol>
+      </div>
+      <footer class="foot"><span class="guide">패턴 U · 시작용 목차. 덩어리가 바뀌면 같은 목록에서 .now 를 옮겨 다시 띄운다</span><span class="page"></span></footer>
+    </section>
+    <section class="slide" data-title="문제 장면">
+      <header class="slide-head"><div><p class="kicker">PROBLEM</p><h2>문서는 있어도 찾을 수 없는 현장</h2></div></header>
+      <div class="content split">
+        <div class="photo-card">
+          <img src="assets/SCENE.svg" alt="위키·드라이브·메신저·메일에 흩어진 문서와 '최신본이 어디 있었죠?' 말풍선">
+          <div class="photo-overlay"><div class="big-quote">오늘도<br>또 찾는다.</div></div>
+        </div>
+        <div>
+          <p class="lead">필요한 규정이 저장소 네 곳에 흩어져 있다.</p>
+          <div class="speech">“휴가 규정 최신본이 어디 있었죠?”</div>
+          <ul><li>같은 질문이 매주 반복된다</li><li>개정 전 문서로 답한다</li><li>담당자 한 명에게 질문이 몰린다</li><li>찾다가 포기하고 추측한다</li></ul>
+          <p class="final-line">찾는 시간이 일하는 시간을 먹는다.</p>
+        </div>
+      </div>
+      <footer class="foot"><span class="guide">패턴 C · 공감해야 하는 상황은 장면으로</span><span class="page"></span></footer>
+    </section>
+    <section class="slide" data-title="개념 설명">
+      <header class="slide-head"><div><p class="kicker">CONCEPT</p><h2>RAG = 검색 · 증강 · 생성 세 단계</h2></div></header>
+      <div class="content">
+        <div class="dg-legend-split">
+          <div class="dg">
+            <div class="dg-grid" style="--cols:3;row-gap:40px;column-gap:44px">
+              <div class="dg-node pill soft" id="gc-q" style="--x:1;--y:1">질문</div>
+              <div class="dg-node" id="gc-r" style="--x:2;--y:1"><span class="dg-num">1</span>검색</div>
+              <div class="dg-node soft" id="gc-db" style="--x:2;--y:2">문서 저장소</div>
+              <div class="dg-node" id="gc-a" style="--x:3;--y:1"><span class="dg-num">2</span>증강<small>질문 + 근거</small></div>
+              <div class="dg-node" id="gc-g" style="--x:3;--y:2"><span class="dg-num">3</span>생성</div>
+              <div class="dg-node pill" id="gc-out" style="--x:3;--y:3">답변</div>
+            </div>
+            <i class="dg-edge" data-from="gc-q" data-to="gc-r"></i>
+            <i class="dg-edge" data-from="gc-r" data-to="gc-db" data-kind="dashed" data-arrow="both"></i>
+            <i class="dg-edge" data-from="gc-r" data-to="gc-a"></i>
+            <i class="dg-edge" data-from="gc-a" data-to="gc-g"></i>
+            <i class="dg-edge" data-from="gc-g" data-to="gc-out"></i>
+          </div>
+          <ol class="dg-legend">
+            <li><span class="dg-num">1</span><div><strong>검색 · Retrieval</strong><p>질문과 뜻이 가장 가까운 문서 조각을 저장소에서 찾는다.</p></div></li>
+            <li><span class="dg-num">2</span><div><strong>증강 · Augmented</strong><p>찾은 조각을 원래 질문과 합쳐 프롬프트(모델에 보낼 입력)를 채운다.</p></div></li>
+            <li><span class="dg-num">3</span><div><strong>생성 · Generation</strong><p>채워진 프롬프트로 모델이 근거 있는 답을 쓴다.</p></div></li>
+          </ol>
+        </div>
+      </div>
+      <footer class="foot"><span class="guide">패턴 Q · 번호 = 범례 = 말하는 순서</span><span class="page"></span></footer>
+    </section>
+    <section class="slide" data-title="구조 설명">
+      <header class="slide-head"><div><p class="kicker">STRUCTURE</p><h2>미리 쌓은 색인에서 질문마다 <span class="accent">근거 추출</span></h2></div></header>
+      <div class="content">
+        <div class="dg">
+          <div class="dg-lane tone-b">
+            <span class="dg-lane-title">질문할 때</span>
+            <div class="dg-grid" style="--cols:5">
+              <div class="dg-node" id="eo-q" style="--x:1;--y:1">질문</div>
+              <div class="dg-node new" id="eo-r" style="--x:2;--y:2">검색</div>
+              <div class="dg-node" id="eo-p" style="--x:3;--y:1">프롬프트<small>질문 + 근거</small></div>
+              <div class="dg-node" id="eo-m" style="--x:4;--y:1">LLM<small>답을 쓰는 모델</small></div>
+              <div class="dg-node" id="eo-a" style="--x:5;--y:1">답변</div>
+              <p class="dg-note" style="--x:4 / 6;--y:2">질문과 <b>뜻이 가장 가까운 조각</b>을 찾아 넘긴다</p>
+            </div>
+          </div>
+          <div class="dg-lane tone-a">
+            <span class="dg-lane-title">미리 해 둘 일</span>
+            <div class="dg-grid" style="--cols:5">
+              <div class="dg-node" id="eo-load" style="--x:5;--y:1">문서 수집</div>
+              <div class="dg-node" id="eo-split" style="--x:4;--y:1">쪼개기<small>문단 단위로</small></div>
+              <div class="dg-node" id="eo-emb" style="--x:3;--y:1">임베딩<small>뜻을 숫자로</small></div>
+              <div class="dg-node" id="eo-db" style="--x:2;--y:1">벡터 DB<small>뜻으로 찾는 저장소</small></div>
+            </div>
+            <p class="dg-note">사내 문서를 <b>찾기 좋은 벡터</b>로 바꿔 쌓아 둔다</p>
+          </div>
+          <i class="dg-edge tone-b" data-from="eo-q" data-to="eo-p"></i>
+          <i class="dg-edge tone-b" data-from="eo-q" data-to="eo-r" data-from-side="b" data-to-side="l"></i>
+          <i class="dg-edge tone-b" data-from="eo-r" data-to="eo-p" data-from-side="r" data-to-side="b"></i>
+          <i class="dg-edge tone-b" data-from="eo-p" data-to="eo-m"></i>
+          <i class="dg-edge tone-b" data-from="eo-m" data-to="eo-a"></i>
+          <i class="dg-edge tone-a" data-from="eo-load" data-to="eo-split"></i>
+          <i class="dg-edge tone-a" data-from="eo-split" data-to="eo-emb"></i>
+          <i class="dg-edge tone-a" data-from="eo-emb" data-to="eo-db"></i>
+          <i class="dg-edge tone-b" data-from="eo-r" data-to="eo-db" data-offset="-16" data-label="유사도 검색" data-label-at=".45" data-label-dx="-72"></i>
+          <i class="dg-edge tone-a" data-from="eo-db" data-to="eo-r" data-offset="16" data-kind="dashed" data-label="근거 조각" data-label-at=".55" data-label-dx="64"></i>
+        </div>
+      </div>
+      <footer class="foot"><span class="guide">패턴 O · 무거운 일은 미리, 질문 때는 찾기만</span><span class="page"></span></footer>
+    </section>
+    <section class="slide" data-title="두 시점 흐름">
+      <header class="slide-head"><div><p class="kicker">TWO MODES</p><h2>새 문서는 즉시, 수정 문서는 매일 밤 재색인</h2></div></header>
+      <div class="content">
+        <div class="ai-flow-grid">
+          <article class="flow-card">
+            <span class="mode">MODE A · 문서가 올라올 때</span>
+            <h3>새 문서는 바로 검색 저장소에 넣는다</h3>
+            <div class="flow-steps"><span>업로드 감지</span><span>쪼개기</span><span>임베딩</span><span>저장</span></div>
+            <p class="lead">올린 지 몇 분 안에 답에 쓰인다.</p>
+          </article>
+          <article class="flow-card">
+            <span class="mode">MODE B · 매일 밤</span>
+            <h3>고친 문서만 골라 다시 넣는다</h3>
+            <div class="flow-steps"><span>변경 비교</span><span>바뀐 문단만</span><span>다시 임베딩</span><span>교체</span></div>
+            <p class="lead">밤사이 교체가 끝나면 개정 전 문단은 답에서 빠진다.</p>
+          </article>
+        </div>
+      </div>
+      <footer class="foot"><span class="guide">패턴 J · 갈라짐·왕복이 없는 직선 흐름이면 J로 충분하다</span><span class="page"></span></footer>
+    </section>
+    <section class="slide" data-title="코드 설명">
+      <header class="slide-head"><div><p class="kicker">CODE · 2 / 5</p><h2>검색 노드의 반환값은 <span class="accent">찾은 조각과 횟수</span>뿐</h2></div></header>
+      <div class="content">
+        <div class="walk">
+          <ol class="walk-rail">
+            <li>State 정의</li>
+            <li class="now">검색 노드<ul><li>state: 노드들이 함께 쓰는 메모</li><li>돌려준 칸만 바뀐다</li></ul></li>
+            <li>답변 노드</li>
+            <li>그래프 연결</li>
+            <li>실행</li>
+          </ol>
+          <div class="walk-main">
+<pre class="code"><code><span class="c"># 검색 노드: 질문으로 문서 조각을 찾는다</span>
+<span class="k">def</span> retrieve(state: DocState):
+    question = state[<span class="s">"messages"</span>][-1].content
+    chunks = vector_db.similarity_search(question, k=3)
+    <span class="k">return</span> {
+<span class="hl">        <span class="s">"context"</span>: chunks,<span class="dg-num">1</span></span><span class="hl">        <span class="s">"search_count"</span>: state[<span class="s">"search_count"</span>] + 1,<span class="dg-num">2</span></span>    }</code></pre>
+            <div class="code-out">
+              <div><span class="dg-num">1</span><div><strong>근거 조각 3개를 넘긴다</strong><p><code>context</code> 비어 있음 → 조각 3개. 답변 노드가 읽는다.</p></div></div>
+              <div><span class="dg-num">2</span><div><strong>검색 횟수를 1 올린다</strong><p><code>search_count</code> 2 → 3</p></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <footer class="foot"><span class="guide">패턴 S · 레일은 지금 단계만, 강조 줄 번호 = 결과 번호</span><span class="page"></span></footer>
+    </section>
+    <section class="slide" data-title="화면 시연">
+      <header class="slide-head"><div><p class="kicker">PRODUCT</p><h2>답변마다 <span class="accent">근거 문서</span> 바로 열기</h2></div><span class="badge plan">제안</span></header>
+      <div class="content shot-split">
+        <div>
+          <figure class="shot">
+            <img src="assets/SCREEN.svg" alt="질문, 근거 2건 배지가 붙은 답변, 근거 문서 카드 두 장, 피드백 버튼이 있는 예시 화면">
+            <span class="pin" style="left:1%;top:33%">1</span>
+            <span class="pin" style="left:1%;top:62%">2</span>
+            <span class="pin" style="left:1%;top:87%">3</span>
+          </figure>
+          <p class="shot-caption">예시 화면 · 실제 제품 캡처로 교체한다.</p>
+        </div>
+        <div class="callouts">
+          <div class="callout"><span class="pin">1</span><div>
+            <strong>답변과 근거 수</strong>
+            <p>답 위에 근거를 몇 건 찾았는지 먼저 보인다.</p></div></div>
+          <div class="callout"><span class="pin">2</span><div>
+            <strong>근거 문서 카드</strong>
+            <p>개정일과 조항이 보이고, 누르면 그 조항의 원문이 열린다.</p></div></div>
+          <div class="callout"><span class="pin">3</span><div>
+            <strong>피드백</strong>
+            <p>틀린 답은 한 번에 신고하고, 문서 담당자에게 간다.</p></div></div>
+        </div>
+      </div>
+      <footer class="foot"><span class="guide">패턴 M · 관심 영역만 잘라 핀으로 짚는다</span><span class="page"></span></footer>
+    </section>
+    <section class="slide" data-title="사용자 여정">
+      <header class="slide-head"><div><p class="kicker">JOURNEY</p><h2>질문부터 문서 수정까지 한 흐름</h2></div><span class="badge plan">제안</span></header>
+      <div class="content">
+        <div class="screens">
+          <figure class="screen"><div class="frame"><div class="browserbar"><i></i><i></i><i></i></div><div class="wire"><div class="line title"></div><div class="line accent"></div><div class="block"></div><div class="line"></div><div class="button"></div></div></div><figcaption><strong><span class="dg-num">1</span>질문</strong><span>메신저에서 바로 묻는다</span></figcaption></figure>
+          <figure class="screen"><div class="frame"><div class="browserbar"><i></i><i></i><i></i></div><div class="wire"><div class="line title"></div><div class="line"></div><div class="block accent"></div><div class="line"></div><div class="button"></div></div></div><figcaption><strong><span class="dg-num">2</span>답변</strong><span>근거 2건과 함께 받는다</span></figcaption></figure>
+          <figure class="screen"><div class="frame"><div class="browserbar"><i></i><i></i><i></i></div><div class="wire"><div class="line title"></div><div class="line"></div><div class="block"></div><div class="line accent"></div><div class="button"></div></div></div><figcaption><strong><span class="dg-num">3</span>원문</strong><span>해당 조항이 열린다</span></figcaption></figure>
+          <figure class="screen"><div class="frame"><div class="browserbar"><i></i><i></i><i></i></div><div class="wire"><div class="line title"></div><div class="line"></div><div class="block"></div><div class="line"></div><div class="button accent"></div></div></div><figcaption><strong><span class="dg-num">4</span>신고</strong><span>틀린 답을 누른다</span></figcaption></figure>
+          <figure class="screen"><div class="frame"><div class="browserbar"><i></i><i></i><i></i></div><div class="wire"><div class="line title accent"></div><div class="line"></div><div class="block"></div><div class="line"></div><div class="button"></div></div></div><figcaption><strong><span class="dg-num">5</span>수정</strong><span>담당자가 문서를 고친다</span></figcaption></figure>
+        </div>
+      </div>
+      <footer class="foot"><span class="guide">패턴 L · 단계마다 바뀌는 곳 하나만 칠한다. 화면이 없으면 와이어프레임으로</span><span class="page"></span></footer>
+    </section>
+    <section class="slide" data-title="행동과 API">
+      <header class="slide-head"><div><p class="kicker">CONTRACT</p><h2>사용자 행동 4개와 API 4개의 1:1 대응</h2></div><span class="badge plan">제안</span></header>
+      <div class="content">
+        <div class="api-layout">
+          <div class="action-flow">
+            <div class="action"><b>1</b><p>질문 보내기<br><small>메신저 · 웹</small></p></div>
+            <div class="action"><b>2</b><p><span class="accent">근거 열기</span><br><small>출처 카드 클릭</small></p></div>
+            <div class="action"><b>3</b><p>답변 평가<br><small>도움 됨 · 틀렸어요</small></p></div>
+            <div class="action"><b>4</b><p>문서 갱신<br><small>담당자가 수정</small></p></div>
+          </div>
+          <div class="api-table">
+            <div class="api-row"><span class="dg-num">1</span><span class="method">POST</span><span class="path">/ask</span><small>답변과 출처 목록</small></div>
+            <div class="api-row hot"><span class="dg-num">2</span><span class="method">GET</span><span class="path">/docs/:id</span><small>근거 문서 원문</small></div>
+            <div class="api-row"><span class="dg-num">3</span><span class="method">POST</span><span class="path">/feedback</span><small>답변 평가 저장</small></div>
+            <div class="api-row"><span class="dg-num">4</span><span class="method">POST</span><span class="path">/reindex</span><small>바뀐 문서 다시 색인</small></div>
+          </div>
+        </div>
+      </div>
+      <footer class="foot"><span class="guide">패턴 K · 행동과 API 행에 같은 번호. 표는 한 행만 짚는다</span><span class="page"></span></footer>
+    </section>
+    <section class="slide" data-title="두 쪽 대비">
+      <header class="slide-head"><div><p class="kicker">CONTRAST</p><h2>찾는 일은 감소, 판단하는 일은 유지</h2></div></header>
+      <div class="content">
+        <div class="thesis-grid">
+          <article class="thesis-card fading">
+            <span class="trend">↓ 줄어드는 일</span><h3>찾기</h3>
+            <ul><li>위키·드라이브를 뒤지는 시간</li><li>담당자에게 묻는 메신저</li><li>같은 질문에 반복해서 답하기</li></ul>
+            <p class="lead">에이전트가 대신 찾는다.</p>
+          </article>
+          <article class="thesis-card keeping">
+            <span class="trend">↑ 남는 일</span><h3>판단</h3>
+            <ul><li>근거가 맞는지 확인하기</li><li>규정이 바뀌면 문서 고치기</li><li>문서에 없는 예외 결정하기</li></ul>
+            <p class="final-line">사람은 판단에 시간을 쓴다.</p>
+          </article>
+        </div>
+      </div>
+      <footer class="foot"><span class="guide">패턴 B · 두 개념을 나란히, 강조는 한쪽만</span><span class="page"></span></footer>
+    </section>
+    <section class="slide" data-title="전후 비교">
+      <header class="slide-head"><div><p class="kicker">BEFORE → AFTER</p><h2>검색기 추가로 프롬프트에 근거 주입</h2></div></header>
+      <div class="content" style="flex-direction:column;align-items:stretch">
+        <div class="dg-compare">
+          <div class="dg-panel tone-a">
+            <p class="dg-panel-title">모델만 쓸 때</p>
+            <div class="dg">
+              <div class="dg-grid" style="--cols:2;row-gap:18px">
+                <div class="dg-node soft" id="pa-q" style="--x:1;--y:1">질문</div>
+                <div class="dg-node soft" id="pa-p" style="--x:1;--y:2">프롬프트</div>
+                <div class="dg-node soft" id="pa-m" style="--x:1;--y:3">LLM</div>
+                <div class="dg-node soft" id="pa-a" style="--x:1;--y:4">답변</div>
+              </div>
+              <i class="dg-edge" data-from="pa-q" data-to="pa-p"></i>
+              <i class="dg-edge" data-from="pa-p" data-to="pa-m"></i>
+              <i class="dg-edge" data-from="pa-m" data-to="pa-a"></i>
+            </div>
+          </div>
+          <div class="dg-panel tone-b">
+            <p class="dg-panel-title">문서 검색을 붙이면</p>
+            <div class="dg">
+              <div class="dg-grid" style="--cols:2;row-gap:18px">
+                <div class="dg-node" id="pb-q" style="--x:1;--y:1">질문</div>
+                <div class="dg-node new" id="pb-r" style="--x:2;--y:1">검색기</div>
+                <div class="dg-node" id="pb-p" style="--x:1;--y:2">프롬프트 + 근거</div>
+                <div class="dg-node" id="pb-m" style="--x:1;--y:3">LLM</div>
+                <div class="dg-node" id="pb-a" style="--x:1;--y:4">답변</div>
+              </div>
+              <i class="dg-edge" data-from="pb-q" data-to="pb-p"></i>
+              <i class="dg-edge tone-b" data-from="pb-q" data-to="pb-r"></i>
+              <i class="dg-edge tone-b" data-from="pb-r" data-to="pb-p" data-from-side="b" data-to-side="r" data-label="근거 조각"></i>
+              <i class="dg-edge" data-from="pb-p" data-to="pb-m"></i>
+              <i class="dg-edge" data-from="pb-m" data-to="pb-a"></i>
+            </div>
+          </div>
+        </div>
+        <p class="final-line">모델은 그대로 두고, 질문과 함께 찾은 문서 조각을 넘긴다.</p>
+      </div>
+      <footer class="foot"><span class="guide">패턴 P · 나머지 흐름은 바뀌지 않는다</span><span class="page"></span></footer>
+    </section>
+    <section class="slide" data-title="항목별 짝 비교">
+      <header class="slide-head"><div><p class="kicker">WHY</p><h2>문서 검색으로 메우는 LLM 약점 6가지</h2></div></header>
+      <div class="content">
+        <div class="rowmap">
+          <p class="rowmap-head tone-a">“모델 지식에만 기대면”</p><span></span><p class="rowmap-head tone-b">“문서 검색을 붙이면”</p>
+          <p class="rowmap-from"><b>지식 시점</b> : 학습 이후 정보는 모른다</p><i class="rowmap-link"></i><p class="rowmap-to"><b>최신 정보</b> : 문서만 바꾸면 반영된다</p>
+          <p class="rowmap-from"><b>환각</b> : 없는 사실을 그럴듯하게 만든다</p><i class="rowmap-link"></i><p class="rowmap-to"><b>근거 답변</b> : 찾은 문서를 근거로 답한다</p>
+          <p class="rowmap-from"><b>도메인 부족</b> : 회사 사정을 모른다</p><i class="rowmap-link"></i><p class="rowmap-to"><b>사내 특화</b> : 내부 문서를 그대로 쓴다</p>
+          <p class="rowmap-from"><b>출처 불명</b> : 어디서 온 말인지 모른다</p><i class="rowmap-link"></i><p class="rowmap-to"><b>출처 표시</b> : 근거 문서를 함께 보여준다</p>
+          <p class="rowmap-from"><b>갱신 부담</b> : 모델 지식을 바꾸려면 재학습한다</p><i class="rowmap-link"></i><p class="rowmap-to"><b>쉬운 갱신</b> : 문서는 다시 색인하면 된다</p>
+          <p class="rowmap-from"><b>비용</b> : 재학습 비용이 크다</p><i class="rowmap-link"></i><p class="rowmap-to"><b>비용 절감</b> : 재학습 없이 붙인다</p>
+        </div>
+      </div>
+      <footer class="foot"><span class="guide">패턴 R · 약점마다 짝이 되는 해결이 하나씩 있다</span><span class="page"></span></footer>
+    </section>
+    <section class="slide" data-title="문제→기능 매핑">
+      <header class="slide-head"><div><p class="kicker">PROBLEM → FEATURE</p><h2>문제 5개에 기능 5개를 1:1로 대응</h2></div></header>
+      <div class="content">
+        <div class="matrix">
+          <p class="matrix-caption">지금 겪는 문제</p>
+          <div class="matrix-row problems">
+            <div class="mcell"><span class="no">P1</span><strong>흩어짐</strong><p>저장소 네 곳</p></div>
+            <div class="mcell"><span class="no">P2</span><strong>낡은 답</strong><p>개정 전 문서 인용</p></div>
+            <div class="mcell"><span class="no">P3</span><strong>출처 없음</strong><p>근거를 못 댄다</p></div>
+            <div class="mcell"><span class="no">P4</span><strong>쏠림</strong><p>담당자 한 명</p></div>
+            <div class="mcell"><span class="no">P5</span><strong>방치</strong><p>틀려도 못 고친다</p></div>
+          </div>
+          <div class="matrix-arrows"><span>↓</span><span>↓</span><span>↓</span><span>↓</span><span>↓</span></div>
+          <p class="matrix-caption">대응하는 기능</p>
+          <div class="matrix-row features">
+            <div class="mcell"><p>통합 색인</p></div>
+            <div class="mcell"><p>최신본 우선 검색</p></div>
+            <div class="mcell hot"><p>출처 카드</p></div>
+            <div class="mcell"><p>메신저 봇</p></div>
+            <div class="mcell"><p>피드백 신고</p></div>
+          </div>
+          <p class="matrix-outcome">→ <span class="accent">출처 카드</span>가 근거를 확인하는 시간을 줄인다.</p>
+        </div>
+      </div>
+      <footer class="foot"><span class="guide">패턴 D · 칸마다 라벨 수준만, 문장은 R로</span><span class="page"></span></footer>
+    </section>
+    <section class="slide" data-title="핵심 숫자">
+      <header class="slide-head"><div><p class="kicker">KEY NUMBER</p><h2>정답률 54% → <span class="accent">81%</span> 상승</h2></div></header>
+      <div class="content center">
+        <div class="stat-hero">
+          <div><span class="stat-num">81<small>%</small></span><p class="stat-label">사내 규정 질문 정답률</p></div>
+          <div class="stat-side">
+            <p class="lead">같은 질문 200건을 두 방식으로 묻고 사람이 채점했다.</p>
+            <div class="stat-compare">
+              <div><span>모델만</span><b>54%</b></div>
+              <div class="hot"><span>문서 검색을 붙이면</span><b>81%</b></div>
+            </div>
+            <p class="figure-source">예시 데이터 · 레이아웃 견본용 수치</p>
+          </div>
+        </div>
+      </div>
+      <footer class="foot"><span class="guide">패턴 V · 숫자는 비교 기준과 함께</span><span class="page"></span></footer>
+    </section>
+    <section class="slide" data-title="데이터 표">
+      <header class="slide-head"><div><p class="kicker">TABLE</p><h2>정확도와 속도의 균형점은 벡터 검색</h2></div></header>
+      <div class="content">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>방식</th><th class="num">정답률</th><th class="num">출처 제시</th><th class="num">응답 시간</th><th>비고</th></tr></thead>
+            <tbody>
+              <tr><td>모델만</td><td class="num">54%</td><td class="num">0%</td><td class="num">1.2초</td><td>근거 없음</td></tr>
+              <tr><td>키워드 검색 + 모델</td><td class="num">68%</td><td class="num">92%</td><td class="num">1.8초</td><td>동의어에 약함</td></tr>
+              <tr class="hot"><td>벡터 검색 + 모델</td><td class="num">81%</td><td class="num">97%</td><td class="num">2.1초</td><td>이번 제안</td></tr>
+              <tr><td>벡터 + 재순위</td><td class="num">84%</td><td class="num">97%</td><td class="num">3.4초</td><td>찾은 결과를 다시 정렬 · 느림</td></tr>
+            </tbody>
+          </table>
+          <p class="final-line">벡터 검색은 재순위보다 3%p 낮지만 <span class="accent">1.3초 빠르다</span>.</p>
+          <p class="figure-source">예시 데이터 · 레이아웃 견본용 수치</p>
+        </div>
+      </div>
+      <footer class="foot"><span class="guide">패턴 T · 짚을 행 하나만 칠한다</span><span class="page"></span></footer>
+    </section>
+    <section class="slide" data-title="분석 그림">
+      <header class="slide-head"><div><p class="kicker">ANALYSIS</p><h2>담당자 찾기 질문만 낮은 정답률</h2></div></header>
+      <div class="content figure-content">
+        <figure class="analysis-figure">
+          <svg viewBox="0 0 1350 450" preserveAspectRatio="xMinYMin meet" role="img" aria-label="질문 유형별 정답률: 양식 위치 88%, 규정 해석 82%, 처리 절차 79%, 담당자 찾기 61%(강조)" style="font-family:inherit;font-size:26px">
+            <text x="0" y="26" style="fill:var(--muted)">질문 유형별 정답률 · 예시 데이터</text>
+            <path d="M230 36V390" style="fill:none;stroke:var(--line);stroke-width:2"/>
+            <g style="fill:var(--body)"><text x="210" y="82" text-anchor="end">양식 위치</text><text x="210" y="172" text-anchor="end">규정 해석</text><text x="210" y="262" text-anchor="end">처리 절차</text></g>
+            <text x="210" y="352" text-anchor="end" style="fill:var(--ink);font-weight:800">담당자 찾기</text>
+            <g style="fill:var(--muted);opacity:.75"><rect x="230" y="50" width="924" height="46"/><rect x="230" y="140" width="861" height="46"/><rect x="230" y="230" width="830" height="46"/></g>
+            <rect x="230" y="320" width="641" height="46" style="fill:var(--accent)"/>
+            <g style="fill:var(--body)"><text x="1170" y="82">88%</text><text x="1107" y="172">82%</text><text x="1076" y="262">79%</text></g>
+            <text x="887" y="352" style="fill:var(--accent-dark);font-weight:800">61%</text>
+            <g style="fill:var(--muted)"><text x="230" y="425">0</text><text x="1280" y="425" text-anchor="middle">100%</text></g>
+          </svg>
+        </figure>
+        <p class="final-line">원인 가설: 담당자 정보가 문서에 없다. 조직도를 색인에 더해 확인한다.</p>
+        <p class="figure-source">출처: 예시 데이터 · 레이아웃 견본용 수치</p>
+      </div>
+      <footer class="foot"><span class="guide">패턴 N · 그림을 자르지 않고 온전히. 인라인 SVG면 테마 색을 따른다</span><span class="page"></span></footer>
+    </section>
+    <section class="slide" data-title="구성과 상태">
+      <header class="slide-head"><div><p class="kicker">COMPONENTS</p><h2>부품 5개 중 2개 동작, 3개 개발 예정</h2></div></header>
+      <div class="content">
+        <div class="architecture">
+          <div class="journey"><span>수집</span><span>색인</span><span>검색</span><span>질문 창구</span><span>피드백</span></div>
+          <div class="service-grid">
+            <article class="service confirmed"><small>collector</small><strong>수집기</strong><p>위키 연결</p><span class="chip">현재 확인됨</span></article>
+            <article class="service confirmed"><small>indexer</small><strong>색인기</strong><p>쪼개기·임베딩</p><span class="chip">현재 확인됨</span></article>
+            <article class="service proposed"><small>retriever</small><strong>검색기</strong><p>벡터 검색 + 최신본 우선</p><span class="chip">제안</span></article>
+            <article class="service proposed"><small>bot</small><strong>메신저 봇</strong><p>질문 창구</p><span class="chip">제안</span></article>
+            <article class="service backlog"><small>dashboard</small><strong>피드백 보드</strong><p>틀린 답 모아 보기</p><span class="chip">예정</span></article>
+          </div>
+        </div>
+      </div>
+      <footer class="foot">
+        <span class="guide">패턴 H · 범례와 카드 색을 맞춘다</span>
+        <div class="legend"><span class="badge">현재 확인됨</span><span class="badge plan">제안</span><span class="badge next">예정</span></div>
+        <span class="page"></span>
+      </footer>
+    </section>
+    <section class="slide" data-title="우선순위 대상">
+      <header class="slide-head"><div><p class="kicker">WHO FIRST</p><h2>가장 먼저 바뀌는 사람, <span class="accent">신규 입사자</span></h2></div></header>
+      <div class="content">
+        <div class="impact-layout">
+          <article class="impact-card primary">
+            <div><div class="avatar">★</div><h3>신규 입사자</h3></div>
+            <div>
+              <p class="before">규정을 옆자리에 묻는다</p><p class="after">첫 주 질문을 봇이 받는다</p>
+              <p class="priority-note">질문이 가장 많고, 문서 위치를 모른다.</p>
+            </div>
+          </article>
+          <article class="impact-card"><div class="avatar">인</div><div><h3>인사 담당</h3><p class="before">같은 질문에 반복 답변</p><p class="after">예외만 답한다</p></div></article>
+          <article class="impact-card"><div class="avatar">팀</div><div><h3>팀장</h3><p class="before">규정 확인을 대신 해 줌</p><p class="after">링크 하나로 끝</p></div></article>
+          <article class="impact-card"><div class="avatar">문</div><div><h3>문서 관리자</h3><p class="before">낡은 문서를 모른다</p><p class="after">신고가 모인다</p></div></article>
+          <article class="impact-card"><div class="avatar">보</div><div><h3>보안 담당</h3><p class="before">문서 유출 걱정</p><p class="after">권한별 검색</p></div></article>
+        </div>
+      </div>
+      <footer class="foot"><span class="guide">패턴 E · 균등하게 나열하지 않는다</span><span class="page"></span></footer>
+    </section>
+    <section class="slide" data-title="역할 분담">
+      <header class="slide-head"><div><p class="kicker">ROLES</p><h2>찾기는 에이전트, 결정은 사람</h2></div></header>
+      <div class="content">
+        <div class="before-after">
+          <article class="scene">
+            <div><span class="role-tag ai">에이전트</span><h3 style="margin-top:14px">찾고 초안 쓰기</h3></div>
+            <ul><li>문서 검색과 요약</li><li>근거를 붙인 답변</li><li>모르면 모른다고 답하기</li></ul>
+            <p class="lead">답마다 출처를 단다.</p>
+          </article>
+          <div class="arrow">＋</div>
+          <article class="scene key">
+            <div><span class="role-tag human">사람</span><h3 style="margin-top:14px">확인하고 결정하기</h3></div>
+            <ul><li>근거가 맞는지 확인</li><li>규정 예외 판단</li><li>문서 수정 승인</li></ul>
+            <p class="final-line">규정 해석은 사람이 한다.</p>
+          </article>
+        </div>
+      </div>
+      <footer class="foot"><span class="guide">패턴 F · 역할 라벨은 상태 배지와 다른 토큰</span><span class="page"></span></footer>
+    </section>
+    <section class="slide" data-title="로드맵">
+      <header class="slide-head"><div><p class="kicker">ROADMAP</p><h2>위키에서 시작해 한 분기 안에 전사 확대</h2></div></header>
+      <div class="content">
+        <div class="roadmap">
+          <article class="sprint"><div class="station">1</div>
+            <div class="sprint-card done"><span class="phase">1단계 · 완료</span><h3>위키 색인과 채점</h3><ul><li>위키 3,000쪽 색인</li><li>질문 200건 채점</li></ul></div></article>
+          <article class="sprint"><div class="station">2</div>
+            <div class="sprint-card now"><span class="phase">2단계 · 승인 대기</span><h3>메신저 봇 시범 4주</h3><ul><li>인사팀 한 곳에서</li><li>피드백 수집</li></ul></div></article>
+          <article class="sprint"><div class="station">3</div>
+            <div class="sprint-card"><span class="phase">3단계 · 분기 말</span><h3>전사 확대</h3><ul><li>드라이브 연결</li><li>조직도 색인</li></ul></div></article>
+        </div>
+      </div>
+      <footer class="foot"><span class="guide">패턴 G · 지금 단계 하나만 칠한다</span><span class="page"></span></footer>
+    </section>
+    <section class="slide" data-title="지표와 결정 요청">
+      <header class="slide-head"><div><p class="kicker">DECISION</p><h2><span class="accent">4주 시범</span> 승인 요청과 판단 지표 4개</h2></div></header>
+      <div class="content" style="flex-direction:column;align-items:stretch">
+        <div class="decision"><small>요청하는 결정</small><ol><li>메신저 봇 시범 4주 · 인사팀 한 곳 · 종료 시 네 지표로 판정</li><li>인사팀 문서 읽기 권한</li><li>채점 인력 주 2시간</li></ol></div>
+        <div class="metric-list">
+          <article class="metric"><small>정확도</small><h3>정답률 85% 이상</h3><p>매주 질문 50건을 채점한다.</p></article>
+          <article class="metric"><small>부담</small><h3>재문의 30% 감소</h3><p>도입 전 4주 대비, 담당자에게 다시 물은 비율.</p></article>
+          <article class="metric"><small>근거 활용</small><h3>근거 확인 40% 이상</h3><p>답변 중 근거 문서를 연 비율.</p></article>
+          <article class="metric"><small>운영</small><h3>반영 하루 이내</h3><p>문서를 고친 뒤 답에 쓰이기까지.</p></article>
+        </div>
+      </div>
+      <footer class="foot"><span class="guide">패턴 I · 결정 요청을 가장 크게, 지표는 목표와 기간까지</span><span class="page"></span></footer>
+    </section>
+
+  </main>
+  </div>
+  <div class="controls" aria-label="슬라이드 제어"><button id="prev" aria-label="이전">←</button><button id="next" aria-label="다음">→</button></div>
+  <div id="progress" class="progress"></div>
+
+  <script>
+    /* ── 엔진 ── 여기는 건드리지 않는다. 내용은 위 마크업에서만 바꾼다. ── */
+
+    /* 화면에 맞춰 캔버스를 통째로 확대·축소한다. 16:9가 아니면 검정 여백이 남는다. */
+    /* ?embed — 미리보기 iframe 용, ?theme=이름 · ?mode=dark — 파일을 고치지 않고 테마·모드를 바꿔 본다 */
+    const params=new URLSearchParams(location.search);
+    if(params.has('embed')) document.documentElement.classList.add('embed');
+    if(params.get('theme')) document.documentElement.dataset.theme=params.get('theme');
+    if(params.get('mode')) document.documentElement.dataset.mode=params.get('mode');
+    const deck=document.querySelector('.deck');
+    function fit(){ deck.style.transform=`scale(${Math.min(innerWidth/1280, innerHeight/720)})`; }
+    addEventListener('resize',fit); fit();
+
+    const slides=[...document.querySelectorAll('.slide')]; let index=0;
+    function show(next){
+      index=Math.max(0,Math.min(slides.length-1,next));
+      slides.forEach((s,i)=>{s.classList.toggle('active',i===index);s.classList.toggle('past',i<index)});
+      document.querySelector('#progress').style.width=`${(index+1)/slides.length*100}%`;
+      history.replaceState(null,'',`#${index+1}`);
+    }
+    document.querySelector('#prev').onclick=()=>show(index-1);
+    document.querySelector('#next').onclick=()=>show(index+1);
+    /* 마우스를 움직이면 조작 버튼을 잠깐 보여준다. 평소엔 숨겨 쪽 번호를 가리지 않는다. */
+    let controlsTimer;
+    addEventListener('mousemove',()=>{
+      document.documentElement.classList.add('show-controls');
+      clearTimeout(controlsTimer);
+      controlsTimer=setTimeout(()=>document.documentElement.classList.remove('show-controls'),1800);
+    });
+    /* ?embed(갤러리 미리보기·크게 보기) 안에서는 키를 받지 않는다. 장 넘김은 바깥 페이지가 맡는다. */
+    if(!params.has('embed')) addEventListener('keydown',e=>{
+      if(['ArrowRight',' ','PageDown'].includes(e.key)){e.preventDefault();show(index+1)}
+      if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();show(index-1)}
+      if(e.key==='Home')show(0); if(e.key==='End')show(slides.length-1);
+    });
+    const initial=Number(location.hash.slice(1));
+    show(Number.isFinite(initial)&&initial>0?initial-1:0);
+    /* 주소의 #번호가 바뀌면 그 장으로 간다 — 갤러리 크게 보기의 이전/다음이 같은 문서에서 해시만 바꾼다 */
+    addEventListener('hashchange',()=>{const n=Number(location.hash.slice(1)); if(Number.isFinite(n)&&n>0&&n-1!==index) show(n-1)});
+
+    /* 페이지 번호를 자동으로 채운다. 슬라이드를 넣고 빼도 어긋나지 않는다. */
+    slides.forEach((s,i)=>{
+      const n=s.querySelector('.foot .page');
+      if(n) n.textContent=`${String(i+1).padStart(2,'0')} / ${slides.length}`;
+    });
+
+    /* 구조도 선을 그린다. .dg 안의 <i class="dg-edge"> 한 개가 선 한 개다.
+         data-from / data-to   잇는 두 노드의 id (같은 .dg 안)
+         data-kind             solid(기본) | dashed
+         data-route            auto(기본: 같은 줄이면 직선, 아니면 곡선) | straight | curve | elbow
+         data-from-side / data-to-side   t r b l — 생략하면 두 노드 위치로 정한다
+         data-offset           왕복선을 비켜 놓는 간격(px, 음수 가능)
+         data-arrow            end(기본) | both | none
+         data-label · data-label-at   선 위 글자와 그 위치(0~1, 기본 0.5)
+         data-label-dx · data-label-dy  글자를 선에서 옆으로 비킨다(px). 왕복선 사이에 끼면 바깥으로 뺀다
+       잇지 못한 선은 .dg-broken 이 붙고 deck_verify 가 오류로 알린다. */
+    const SVGNS='http://www.w3.org/2000/svg';
+    function drawDiagrams(){
+      document.querySelectorAll('.dg').forEach(dg=>{
+        dg.querySelectorAll(':scope > .dg-edges, :scope > .dg-label').forEach(n=>n.remove());
+        if(!dg.offsetWidth) return;
+        const box=dg.getBoundingClientRect(), k=box.width/dg.offsetWidth;
+        const rel=el=>{const r=el.getBoundingClientRect();return{l:(r.left-box.left)/k,t:(r.top-box.top)/k,w:r.width/k,h:r.height/k}};
+        const svg=document.createElementNS(SVGNS,'svg'); svg.classList.add('dg-edges'); dg.appendChild(svg);
+        const at=(r,side,off)=>({
+          t:{x:r.l+r.w/2+off,y:r.t,dx:0,dy:-1}, b:{x:r.l+r.w/2+off,y:r.t+r.h,dx:0,dy:1},
+          l:{x:r.l,y:r.t+r.h/2+off,dx:-1,dy:0}, r:{x:r.l+r.w,y:r.t+r.h/2+off,dx:1,dy:0}})[side];
+        dg.querySelectorAll('.dg-edge').forEach(e=>{
+          e.classList.remove('dg-broken');
+          const pick=id=>id&&dg.querySelector('#'+CSS.escape(id));
+          const A=pick(e.dataset.from), B=pick(e.dataset.to);
+          if(!A||!B){e.classList.add('dg-broken');return}
+          const a=rel(A), b=rel(B);
+          const gx=Math.max(b.l-(a.l+a.w), a.l-(b.l+b.w)), gy=Math.max(b.t-(a.t+a.h), a.t-(b.t+b.h));
+          const horiz=gx>=gy, cx=(b.l+b.w/2)-(a.l+a.w/2), cy=(b.t+b.h/2)-(a.t+a.h/2);
+          const s1=e.dataset.fromSide||(horiz?(cx>=0?'r':'l'):(cy>=0?'b':'t'));
+          const s2=e.dataset.toSide||(horiz?(cx>=0?'l':'r'):(cy>=0?'t':'b'));
+          const off=parseFloat(e.dataset.offset)||0, p=at(a,s1,off), q=at(b,s2,off);
+          let route=e.dataset.route||'auto';
+          if(route==='auto') route=(Math.abs(p.x-q.x)<3||Math.abs(p.y-q.y)<3)&&p.dx===-q.dx&&p.dy===-q.dy?'straight':'curve';
+          let d=`M${p.x},${p.y}`;
+          if(route==='straight') d+=` L${q.x},${q.y}`;
+          else if(route==='elbow'){
+            if(p.dx&&q.dx){const m=(p.x+q.x)/2; d+=` H${m} V${q.y} H${q.x}`}
+            else if(p.dy&&q.dy){const m=(p.y+q.y)/2; d+=` V${m} H${q.x} V${q.y}`}
+            else d+=p.dx?` H${q.x} V${q.y}`:` V${q.y} H${q.x}`;
+          } else {
+            const t=Math.max(28,Math.hypot(q.x-p.x,q.y-p.y)*.4);
+            d+=` C${p.x+p.dx*t},${p.y+p.dy*t} ${q.x+q.dx*t},${q.y+q.dy*t} ${q.x},${q.y}`;
+          }
+          const color=getComputedStyle(e).color, g=document.createElementNS(SVGNS,'g');
+          const path=document.createElementNS(SVGNS,'path');
+          path.setAttribute('d',d); path.setAttribute('fill','none'); path.setAttribute('stroke',color);
+          path.setAttribute('stroke-width','2'); if(e.dataset.kind==='dashed') path.setAttribute('stroke-dasharray','6 5');
+          g.appendChild(path); svg.appendChild(g);
+          const len=path.getTotalLength();
+          const head=(tip,back)=>{
+            const P=path.getPointAtLength(tip), Q=path.getPointAtLength(back);
+            const ux=P.x-Q.x, uy=P.y-Q.y, n=Math.hypot(ux,uy)||1, x=ux/n, y=uy/n;
+            const tri=document.createElementNS(SVGNS,'path');
+            tri.setAttribute('d',`M${P.x},${P.y} L${P.x-x*10-y*5},${P.y-y*10+x*5} L${P.x-x*10+y*5},${P.y-y*10-x*5}Z`);
+            tri.setAttribute('fill',color); g.appendChild(tri);
+          };
+          const arrow=e.dataset.arrow||'end';
+          if(arrow!=='none') head(len,Math.max(0,len-10));
+          if(arrow==='both') head(0,Math.min(len,10));
+          if(e.dataset.label){
+            const m=path.getPointAtLength(len*(parseFloat(e.dataset.labelAt)||.5));
+            const tag=document.createElement('span'); tag.className='dg-label'; tag.textContent=e.dataset.label;
+            tag.style.left=`${m.x+(parseFloat(e.dataset.labelDx)||0)}px`; tag.style.top=`${m.y+(parseFloat(e.dataset.labelDy)||0)}px`; tag.style.color=color; dg.appendChild(tag);
+          }
+        });
+      });
+    }
+    drawDiagrams();
+    if(document.fonts) document.fonts.ready.then(drawDiagrams);
+  </script>
+</body>
+</html>
