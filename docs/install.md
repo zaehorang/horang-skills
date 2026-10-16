@@ -16,7 +16,7 @@ marketplace를 한 번 등록하면 bundle 단위로 설치한다.
 | bundle | 스킬 |
 |---|---|
 | `study` | `mechanism-explainer` · `explorable-world` |
-| `dev` | `ai-readiness-cartography` · `herdr-dispatch` |
+| `dev` | `ai-readiness-cartography` · `herdr-dispatch` · `ios-video-qa` |
 | `deliver` | `report` · `presentation` |
 
 - 설치한 스킬은 `/study:mechanism-explainer`처럼 bundle 이름이 앞에 붙는다. auto-trigger는 그대로 동작한다.

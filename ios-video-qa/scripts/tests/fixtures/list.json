@@ -1,0 +1,7 @@
+[{"type": "Application", "AXLabel": "메모", "frame": {"x": 0, "y": 0, "width": 400, "height": 800}, "children": [
+  {"type": "Heading", "AXLabel": "메모", "frame": {"x": 20, "y": 60, "width": 120, "height": 30}},
+  {"type": "StaticText", "AXLabel": "장보기", "frame": {"x": 20, "y": 120, "width": 200, "height": 22}},
+  {"type": "StaticText", "AXLabel": "메모 3개", "frame": {"x": 20, "y": 740, "width": 120, "height": 20}},
+  {"type": "Button", "AXLabel": "새 메모", "enabled": true, "frame": {"x": 300, "y": 730, "width": 80, "height": 44}},
+  {"type": "Button", "AXLabel": "저장", "enabled": true, "frame": {"x": 300, "y": 300, "width": 80, "height": 44}}
+]}]

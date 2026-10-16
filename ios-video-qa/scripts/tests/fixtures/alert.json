@@ -1,0 +1,6 @@
+[{"type": "Application", "AXLabel": "메모", "frame": {"x": 0, "y": 0, "width": 400, "height": 800}, "children": [
+  {"type": "Button", "AXLabel": "저장", "enabled": true, "frame": {"x": 300, "y": 300, "width": 80, "height": 44}},
+  {"type": "Sheet", "AXLabel": "삭제할까요?", "frame": {"x": 40, "y": 250, "width": 320, "height": 200}, "children": [
+    {"type": "Button", "AXLabel": "삭제", "enabled": true, "frame": {"x": 60, "y": 380, "width": 280, "height": 44}}
+  ]}
+]}]
