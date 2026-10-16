@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="400" viewBox="0 0 560 400">
+<rect width="560" height="400" fill="#E9E6DC"/>
+<g font-family="Pretendard, 'Apple SD Gothic Neo', sans-serif" font-weight="700">
+  <!-- 흩어진 문서 -->
+  <g fill="#FAF9F5" stroke="#6B6A64" stroke-width="2">
+    <rect x="40" y="40" width="96" height="120" rx="6" transform="rotate(-8 88 100)"/>
+    <rect x="170" y="70" width="96" height="120" rx="6" transform="rotate(5 218 130)"/>
+    <rect x="300" y="36" width="96" height="120" rx="6" transform="rotate(-4 348 96)"/>
+    <rect x="420" y="80" width="96" height="120" rx="6" transform="rotate(9 468 140)"/>
+  </g>
+  <g fill="#2B2A27" font-size="20" text-anchor="middle">
+    <text x="88" y="105" transform="rotate(-8 88 100)">위키</text>
+    <text x="218" y="135" transform="rotate(5 218 130)">드라이브</text>
+    <text x="348" y="101" transform="rotate(-4 348 96)">메신저</text>
+    <text x="468" y="145" transform="rotate(9 468 140)">메일</text>
+  </g>
+  <!-- 말풍선 — 아래쪽은 슬라이드 문구 오버레이가 덮으므로 위에 둔다 -->
+  <g transform="translate(0,-48)">
+  <path d="M120 222h320a14 14 0 0 1 14 14v40a14 14 0 0 1-14 14H210l-26 22 4-22h-68a14 14 0 0 1-14-14v-40a14 14 0 0 1 14-14z" fill="#141413"/>
+  <text x="280" y="264" fill="#FAF9F5" font-size="22" text-anchor="middle">최신본이 어디 있었죠?</text>
+  </g>
+</g>
+</svg>

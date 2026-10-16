@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """발표 덱 HTML을 기계적으로 검사한다.
 
-여기 있는 검사 항목은 전부 실제로 한 번씩 터졌던 것들이다.
-추측으로 넣은 규칙은 없다. 자세한 재현 경위는 references/failure-catalog.md 참고.
+여기 있는 검사 항목은 대부분 실제로 한 번씩 터졌던 것들이다. 재현 경위는
+references/failure-catalog.md 참고. 구조도(dg-*)와 팔레트(palette) 검사는
+선·번호·색이 화면과 어긋나지 않게 하는 구조 검사다.
 
 사용:
     python3 <skill-dir>/scripts/deck_verify.py <deck.html> [--json]
@@ -31,6 +32,12 @@ FOOT_GAP_RATIO = 0.10
 # 예시의 절반가량 빈 본문을 잡되 통상적인 간격·패딩은 허용하며, 의도적 여백은 정보로 남긴다.
 EMPTY_CONTENT_RATIO = 0.35
 FONT_FLOOR_PX = CANVAS_H * FONT_FLOOR_RATIO   # 14.4px
+# 구조도 하나에 노드 9개까지. 그 이상이면 장을 나누거나 단계별로 쌓는다 (layout-budget.md).
+DG_NODE_BUDGET = 9
+# 코드 블록 하나에 12줄까지. 설명할 줄만 남긴다 (패턴 S).
+CODE_LINE_BUDGET = 12
+# 레터박스 검정·흰색은 팔레트가 아니라 무대 색이라 허용한다.
+PALETTE_NEUTRALS = {"#000", "#000000", "#fff", "#ffffff"}
 
 CHROME_CANDIDATES = [
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
@@ -182,6 +189,55 @@ def check_legend_consistency(src: str, f: Findings) -> None:
                   f"범례에 '{badge}' 가 있는데 대응하는 '{state}' 상태 카드가 없다. 범례와 카드가 어긋난다.")
 
 
+def check_palette(src: str, f: Findings) -> None:
+    """색 값은 :root 팔레트와 [data-theme] 테마에만 둔다.
+
+    패턴 CSS에 색을 직접 쓰면 테마를 바꿔도 그 자리만 옛 색으로 남는다.
+    """
+    css = "\n".join(re.findall(r"<style\b[^>]*>(.*?)</style>", strip_comments(src), re.S | re.I))
+    stray: list[str] = []
+    for selector, body in re.findall(r"([^{}]+)\{([^{}]*)\}", css):
+        if ":root" in selector or "[data-theme" in selector:
+            continue
+        for hexv in re.findall(r"#[0-9A-Fa-f]{3,8}\b", body):
+            if hexv.lower() not in PALETTE_NEUTRALS:
+                stray.append(f"{selector.strip().splitlines()[-1].strip()} {hexv}")
+    if stray:
+        f.add("warn", "palette",
+              f"팔레트 밖에 색 값이 {len(stray)}곳 있다: {', '.join(stray[:6])}{' …' if len(stray) > 6 else ''}",
+              ":root 나 [data-theme] 블록의 토큰으로 옮길 것. 한 요소만 다르면 style=\"--c:…\"")
+
+
+def check_diagram_edges(src: str, f: Findings) -> None:
+    """선이 가리키는 노드 id 가 없으면 엔진이 선을 그리지 못하고 조용히 빠진다."""
+    body = strip_comments(src)
+    ids = set(re.findall(r'\bid="([^"]+)"', body))
+    for m in re.finditer(r'<i\b[^>]*class="dg-edge[^"]*"[^>]*>', body):
+        tag = m.group()
+        for attr in ("data-from", "data-to"):
+            ref = re.search(attr + r'="([^"]*)"', tag)
+            if not ref or ref.group(1) not in ids:
+                line = body[: m.start()].count("\n") + 1
+                f.add("error", "dg-edge",
+                      f"구조도 선의 {attr}=\"{ref.group(1) if ref else ''}\" 노드가 없다. 선이 그려지지 않는다.",
+                      f"line {line}")
+
+
+def check_guide_notes(src: str, path: Path, f: Findings) -> None:
+    """갤러리 견본의 안내(.guide)를 복사해 온 채로 두면 발표 화면에 '견본' 표시가 나간다.
+
+    갤러리 덱 자신(examples/gallery)은 안내가 있는 게 정상이라 정보로만 남긴다.
+    """
+    n = len(re.findall(r'class="[^"]*\bguide\b', strip_comments(src)))
+    if not n:
+        return
+    if path.resolve().parent.name == "gallery":
+        f.add("info", "guide", f"견본 안내 {n}곳 (갤러리 덱이라 정상)")
+    else:
+        f.add("warn", "guide", f"견본 안내(.guide)가 {n}곳 남아 있다. 발표 화면에 '견본' 표시가 나간다.",
+              "푸터의 <span class=\"guide\"> 를 실제 보조 메시지로 바꿀 것")
+
+
 def check_page_numbers(src: str, f: Findings) -> None:
     slides = re.findall(r'<section class="slide[^"]*"', src)
     auto = src.count('class="page"')
@@ -216,7 +272,7 @@ f.src = '__DECK__';
 document.body.appendChild(f);
 setTimeout(() => send({error: 'timeout: 덱이 로드되지 않았다'}), 20000);
 f.onload = () => setTimeout(() => {
-  const out = {overflow: [], small: [], foot: [], empty: [], canvas: null, slides: 0};
+  const out = {overflow: [], small: [], foot: [], empty: [], dg: [], canvas: null, slides: 0};
   try {
     const d = f.contentDocument;
     const deck = d.querySelector('.deck');
@@ -276,6 +332,38 @@ f.onload = () => setTimeout(() => {
           if (fs < FLOOR) out.small.push({slide: i + 1, sel: (el.className || el.tagName) + '', px: fs});
         }
       });
+      // 구조도: 노드 겹침 · 선 라벨이 노드를 가림 · 노드 예산 · 번호와 범례 짝
+      const hit = (a, b) => Math.min(a.right, b.right) - Math.max(a.left, b.left) > 2 &&
+                            Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 2;
+      s.querySelectorAll('.dg').forEach(dg => {
+        const nodes = [...dg.querySelectorAll('.dg-node')].filter(n => n.closest('.dg') === dg && n.getClientRects().length);
+        const rs = nodes.map(n => n.getBoundingClientRect());
+        if (nodes.length > __DG_BUDGET__) out.dg.push({slide: i + 1, kind: 'budget', detail: nodes.length + '개'});
+        for (let a = 0; a < rs.length; a++) for (let b = a + 1; b < rs.length; b++)
+          if (hit(rs[a], rs[b])) out.dg.push({slide: i + 1, kind: 'overlap',
+            detail: nodes[a].textContent.trim() + ' · ' + nodes[b].textContent.trim()});
+        dg.querySelectorAll(':scope > .dg-label').forEach(l => {
+          const r = l.getBoundingClientRect();
+          const k = rs.findIndex(n => hit(n, r));
+          if (k >= 0) out.dg.push({slide: i + 1, kind: 'label', detail: l.textContent + ' → ' + nodes[k].textContent.trim()});
+        });
+      });
+      // 코드 블록: 줄 수 예산 · 가로 넘침(pre 는 줄을 접지 않아 오른쪽이 조용히 잘린다)
+      s.querySelectorAll('pre.code').forEach(pre => {
+        const lines = pre.textContent.replace(/\\n+$/, '').split('\\n').length;
+        if (lines > __CODE_BUDGET__) out.dg.push({slide: i + 1, kind: 'code-budget', detail: lines + '줄'});
+        const ov = Math.round(pre.scrollWidth - pre.clientWidth);
+        if (ov > 2) out.dg.push({slide: i + 1, kind: 'code-overflow', detail: ov + 'px'});
+      });
+      // 번호 짝: 그림·코드 안 번호 = 범례·결과 칸 번호
+      const legend = [...s.querySelectorAll('.dg-legend .dg-num, .code-out .dg-num')].map(n => n.textContent.trim());
+      if (legend.length) {
+        const marks = [...s.querySelectorAll('.dg .dg-num, .code .dg-num')].map(n => n.textContent.trim());
+        const seq = legend.every((n, k) => n === String(k + 1));
+        const same = [...marks].sort().join() === [...legend].sort().join();
+        if (!seq || !same) out.dg.push({slide: i + 1, kind: 'numbers',
+          detail: '그림 [' + marks.join(', ') + '] · 범례 [' + legend.join(', ') + ']'});
+      }
       s.className = prev;
     });
   } catch (e) { out.error = String(e); }
@@ -348,6 +436,8 @@ def run_dynamic(path: Path, f: Findings) -> dict | None:
         PROBE_PAGE.replace("__FLOOR__", str(FONT_FLOOR_PX))
                   .replace("__FOOT_GAP__", str(FOOT_GAP_RATIO))
                   .replace("__EMPTY_CONTENT__", str(EMPTY_CONTENT_RATIO))
+                  .replace("__DG_BUDGET__", str(DG_NODE_BUDGET))
+                  .replace("__CODE_BUDGET__", str(CODE_LINE_BUDGET))
                   .replace("__W__", str(CANVAS_W))
                   .replace("__H__", str(CANVAS_H))
                   .replace("__DECK__", path.name))
@@ -411,6 +501,18 @@ def run_dynamic(path: Path, f: Findings) -> dict | None:
               f"{item['slide']}장: 본문 영역의 {item['ratio']:.0%}가 비어 있다 "
               f"(위 {item['above']:.0%} · 아래 {item['below']:.0%}, 기준 {EMPTY_CONTENT_RATIO:.0%}). 의도한 여백인지 확인할 것.")
 
+    dg_msg = {
+        "overlap": ("error", "dg-overlap", "구조도 노드가 겹친다: {d}. --x/--y 칸을 확인할 것."),
+        "numbers": ("error", "dg-numbers", "번호 짝이 맞지 않는다: {d}. 그림·코드 번호와 범례·결과 번호가 같아야 하고, 범례는 1부터 차례로."),
+        "label": ("warn", "dg-label", "선 라벨이 노드를 가린다: {d}. data-label-at 이나 data-offset 으로 옮길 것."),
+        "budget": ("warn", "dg-budget", f"구조도 노드가 {{d}}다 (예산 {DG_NODE_BUDGET}). 장을 나누거나 단계별로 쌓는다."),
+        "code-overflow": ("error", "code-overflow", "코드 줄이 상자 오른쪽으로 {d} 넘쳐 잘린다. 줄을 나누거나 줄인다."),
+        "code-budget": ("warn", "code-budget", f"코드가 {{d}}이다 (예산 {CODE_LINE_BUDGET}줄). 설명할 줄만 남기고 나머지는 … 로 접는다."),
+    }
+    for item in data.get("dg", []):
+        level, check, msg = dg_msg[item["kind"]]
+        f.add(level, check, f"{item['slide']}장: " + msg.format(d=item["detail"]))
+
     seen = set()
     for sm in data.get("small", []):
         key = (sm["slide"], sm["sel"])
@@ -450,6 +552,9 @@ def main() -> int:
     check_badge_semantics(src, f)
     check_legend_consistency(src, f)
     check_page_numbers(src, f)
+    check_palette(src, f)
+    check_diagram_edges(src, f)
+    check_guide_notes(src, args.deck, f)
     if not args.no_render:
         run_dynamic(args.deck, f)
 

@@ -34,17 +34,23 @@ mkdir -p <작업폴더>/assets
 cp <skill-dir>/assets/starter/assets/* <작업폴더>/assets/
 ```
 
-**CSS와 엔진은 건드리지 않는다.** 실측으로 검증된 자산이다.
-색·간격·폰트를 손대야 할 이유가 생기면 먼저 사용자에게 이유를 말하고 확인받는다.
+**간격·폰트·패턴 CSS와 엔진은 건드리지 않는다.** 실측으로 검증된 자산이다.
+손대야 할 이유가 생기면 먼저 사용자에게 이유를 말하고 확인받는다.
+색은 예외다. 아래 [색 바꾸기](#색-바꾸기)의 세 자리에서만 바꾼다.
 
 ### 2. 패턴 선택
 
-템플릿의 패턴 A~N 중에서 고른다. 새 레이아웃을 즉흥으로 만들지 않는다.
+**본문은 제목 바로 아래 같은 위치에서 시작한다.** 장을 넘겨도 같은 종류의 요소가 같은 자리에 있어야
+청중의 시선이 튀지 않는다. 내용이 적은 장은 아래가 비는 게 정상이다 — 가운데로 끌어내리지 않는다.
+한 덩어리를 화면 가운데 두는 장(표지, 핵심 숫자 V)만 `.content.center`를 붙인다.
+
+템플릿의 패턴 A~V 중에서 고른다. 새 레이아웃을 즉흥으로 만들지 않는다.
 각 패턴 주석에 **정보 예산**이 적혀 있다. 예산을 넘기면 글자를 줄이는 게 아니라 **내용을 줄인다.**
 
 | 상황 | 패턴 |
 |---|---|
 | 표지 | A (이미지가 없으면 `.cover-content.text-only` 1열 변형) |
+| 목차 · 덩어리가 바뀔 때 진행 지도 | U |
 | 두 개념 대비 | B |
 | 장면 + 서술 | C |
 | 문제 ↔ 대응 매핑 | D |
@@ -58,6 +64,20 @@ cp <skill-dir>/assets/starter/assets/* <작업폴더>/assets/
 | 사용자 여정 | L |
 | **제품 화면 + API·데이터 콜아웃** | **M** |
 | **전폭 분석 그림 + 결론 한 줄** | **N** |
+| **두 흐름이 주고받는 구조 (갈라짐·합쳐짐·왕복)** | **O 레인 흐름** |
+| **같은 뼈대에 무엇이 더해지는가** | **P 전/후 구조도** |
+| **구조를 순서대로 짚어 가는 설명** | **Q 번호 구조도 + 범례** |
+| **문제 하나 ↔ 해결 하나, 문장이 긴 목록** | **R 가로 행 매핑** |
+| **코드를 단계별로 설명** | **S 코드 워크스루** |
+| 여러 항목을 같은 기준으로 나란히 | T 데이터 표 |
+| 발표를 대표하는 숫자 하나 | V 핵심 숫자 |
+
+**장 종류로 고르려면 [examples/gallery/index.html](../examples/gallery/index.html)을 연다.**
+표지·목차·개념 설명·코드 설명·비교·표·로드맵·결정 요청 등 발표에 자주 나오는 장 22가지를
+한 주제로 채워 두었다. 맞는 장의 `<section>`을 갤러리 `presentation.html`에서 복사해 내용만 바꾼다.
+
+요지 박자가 "A에서 B로 간다 · 여기서 갈라진다 · 다시 돌아온다"처럼 **공간 이동**이면
+카드가 아니라 구조도(O·P·Q)를 쓴다. 칩을 화살표로 한 줄 잇는 J는 직선 흐름에만 쓴다.
 
 패턴 A는 이미지 유무에 맞춰 2열 또는 1열 변형을 고른다. 이미지가 없을 때는
 `.cover-visual-wrap`을 빼고 `.cover-content`에 `text-only`를 붙인다.
@@ -69,6 +89,101 @@ cp <skill-dir>/assets/starter/assets/* <작업폴더>/assets/
 제목은 한 줄로 압축하고 이미지 안 글자도 축소 후 2% 하한을 확인한다.
 예시 데이터 그림은 실제 분석 그림으로 교체한다.
 
+### 구조도 그리기 (O · P · Q)
+
+노드는 CSS 그리드 칸에 놓고, 선은 엔진이 그린다. 좌표를 손으로 찍지 않는다.
+
+```html
+<div class="dg">
+  <div class="dg-grid" style="--cols:3">
+    <div class="dg-node" id="a" style="--x:1;--y:1">요청</div>
+    <div class="dg-node new" id="b" style="--x:2;--y:1"><span class="dg-num">1</span>판단</div>
+    <div class="dg-node" id="c" style="--x:2;--y:2">실행</div>
+  </div>
+  <i class="dg-edge" data-from="a" data-to="b"></i>
+  <i class="dg-edge" data-from="b" data-to="c" data-kind="dashed" data-label="행동" data-offset="-28"></i>
+  <i class="dg-edge" data-from="c" data-to="b" data-offset="28"></i>
+</div>
+```
+
+| 부품 | 뜻 |
+|---|---|
+| `.dg-lane.tone-a/b` + `.dg-lane-title` | 단계·시점 하나를 묶는 레인. 모서리에 이름 |
+| `.dg-node` · `.pill` · `.soft` · `.new` | 노드 · 시작/끝 · 이미 있는 것(흐림) · 새로 생긴 것(칠함) |
+| `.dg-group` + `<small>` | 노드를 감싸는 점선 묶음 |
+| `.dg-note` | 레인의 ✓ 한 문장. 선이 지나는 자리면 `.dg-grid` 안 빈 칸에 `--x:3 / 6` 으로 넣는다 |
+| `.dg-num` | 번호. 노드 안과 `.dg-legend` 에 같은 숫자를 둔다 |
+| `.dg-edge` | 선 한 개. `data-from` · `data-to` 필수 |
+
+선 속성: `data-kind` solid·dashed / `data-route` auto·straight·curve·elbow /
+`data-from-side`·`data-to-side` t·r·b·l / `data-offset` 왕복선 간격 /
+`data-arrow` end·both·none / `data-label` · `data-label-at`(0~1).
+
+선 문법은 **실선 = 주 흐름, 점선 = 되돌아감·조건·대응** 하나뿐이다. 레인을 건너는 왕복선은
+두 노드를 같은 열에 두고 `data-offset` 을 ±로 주면 곧은 두 줄로 나란히 선다.
+번호는 **SCRIPT 박자 순서**를 따른다. 발표자가 번호만 따라 말하면 되게 한다.
+예산은 [layout-budget.md](layout-budget.md#구조도-예산)를 따른다.
+
+### 코드 설명하기 (S)
+
+세 영역이 **같은 곳**을 가리키게 한다.
+
+- **단계 레일** `.walk-rail` — 전체 단계 5개 이하. 지금 단계에 `.now`를 붙이고 그 단계만 하위 2줄을 펼친다.
+  같은 레일을 코드 장마다 복사하고 `.now`만 옮기면 진행 지도가 된다. kicker에 `CODE · 3 / 5`처럼 위치를 적는다.
+- **코드** `<pre class="code"><code>` — 설명할 줄만 12줄까지, 한 줄 80자 안. 필요 없는 줄은 지우거나 `…`로 접는다.
+  `.k` 키워드 · `.s` 문자열 · `.c` 주석. 짚을 줄은 `<span class="hl">…<span class="dg-num">1</span></span>`로 감싼다.
+  강조 묶음은 1~2곳이다. 다 칠하면 아무것도 안 짚은 것이 된다.
+- **결과** `.code-out` — 강조 줄과 같은 번호로 "이 줄이 무엇을 바꾸는가"를 2~3칸에 쓴다.
+  대신 작은 구조도(`.dg`)로 "그래프의 어디인가"를 보여줄 수 있다. 둘 중 하나만 둔다.
+
+`<pre>` 안의 줄바꿈과 들여쓰기는 그대로 화면에 나온다. HTML 들여쓰기에 맞춰 `<pre>`를 들여 쓰지 않는다.
+글자를 줄여 맞추지 않는다. 넘치면 `code-overflow` 오류, 12줄을 넘으면 `code-budget` 경고가 난다.
+
+### 색 바꾸기
+
+**발표 성격에 맞는 테마를 고른다.** 기본은 clay이고, 사용자가 색이나 발표 성격을 말하지 않으면 바꾸지 않는다.
+테마별 팔레트와 같은 장이 어떻게 보이는지는 [examples/gallery/themes.html](../examples/gallery/themes.html)에서 비교한다.
+
+| 테마 | 어울리는 발표 |
+|---|---|
+| `clay` (기본, 테마 없음) | 제안서·결과 보고. report 보고서와 같은 톤 |
+| `ocean` | 기술 설명·아키텍처·데이터 리뷰 |
+| `duo` | 강의·교육·비교. 남색 갈래 A, 자홍 강조가 분명 |
+| `forest` | 운영 현황·성과 보고 |
+| `signal` | 피치·키노트·외부 발표. 흰 바탕 고대비 + 빨강 한 점 |
+
+색은 세 자리에서만 바꾼다. 패턴 CSS 안에 색 값을 쓰면 `deck_verify`가 `palette` 경고를 낸다.
+
+| 범위 | 방법 |
+|---|---|
+| 덱 전체 | `<html lang="ko" data-theme="ocean">` |
+| 덱 전체, 새 색 | `[data-theme="이름"]{…}` 블록을 하나 더해 그 이름을 건다 |
+| 한 장 | `<section class="slide" data-theme="duo">` |
+| 한 요소 | `style="--c:#2F6FB0;--c-soft:#E2ECF6"` (레인·노드·선·행 매핑 칸) |
+| 파일을 고치지 않고 미리 보기 | 주소에 `?theme=duo` |
+
+테마가 달라도 **역할은 같다.** 색 하나가 뜻 하나만 맡는다.
+
+| 역할 | 토큰 | 쓰는 곳 |
+|---|---|---|
+| 강조 — 한 장에 한 곳 | `--accent` · `-dark` · `-soft` | 결론 한 줄, `.new` 노드, 짚는 행(`.hot`), 지금 단계 |
+| 갈래 — 이쪽 / 저쪽 | `--tone-a` · `--tone-b` (+ `-soft`) | 레인 둘, 전/후 패널, 행 매핑 좌/우. 기본 a = 회색, b = 먹색 — **어떤 테마에서도 강조색이 아니다** |
+| 구현 상태 | `--status-done` · `--status-plan` · `--status-next` | 배지·`.service` 카드. **강조색과 다른 색** |
+| 코드 블록 | `--code-bg` · `--code-key` · `--code-str` · `--code-dim` | 패턴 S |
+
+**글자에는 `--accent-dark`, `--accent`는 선·면에만 쓴다.** 연한 강조색 글자는 테마에 따라 대비가 4.5:1 아래로 떨어진다.
+
+새 테마 점검 — 팔레트 장(`examples/gallery/palette.html?theme=이름`)이 대비를 계산해 보여준다.
+
+| 짝 | 기준 |
+|---|---|
+| 바탕 위 `--accent-dark` 글자 · `--accent-soft` 위 `--accent-dark` 글자 · `--accent-dark` 위 흰 글자 | 4.5:1 |
+| 먹색 바탕 위 `--accent-on-dark` (표지 kicker·코드 키워드) | 4.5:1 |
+| `--accent-soft` 위 보조 글자 — `--muted` 대신 `--body`를 쓴다 | 4.5:1 |
+| 바탕 위 `--accent` 선·면 · `--status-next` 점선 | 3:1 |
+| 코드 바탕 위 `--code-key` | 4.5:1 |
+| `--accent`와 `--status-plan` | 색상(hue)이 달라야 한다 |
+
 ### 3. 이미지가 필요하면
 
 상황 일러스트나 제품 화면 캡처가 들어가는 장은 [assets.md](assets.md) 를 읽고 진행한다.
@@ -79,10 +194,12 @@ cp <skill-dir>/assets/starter/assets/* <작업폴더>/assets/
 배지는 **구현 상태 하나의 축**에만 쓴다.
 
 ```
-badge          회색 = 현재 확인됨   ↔  .service.confirmed
-badge plan     클레이 = 제안          ↔  .service.proposed
-badge next     빈원 = 예정          ↔  .service.backlog
+badge          --status-done 먹색   = 현재 확인됨  ↔  .service.confirmed
+badge plan     --status-plan        = 제안        ↔  .service.proposed
+badge next     빈 원(--status-next) = 예정        ↔  .service.backlog
 ```
+
+"제안" 색은 강조색과 다르다. 강조(주황 등)는 "여기를 봐라" 한 곳에만 남긴다.
 
 범례 색과 카드 색은 반드시 같은 뜻이어야 한다.
 역할·단계 표시는 `.role-tag`, `.phase` 처럼 **다른 토큰**을 쓴다.
@@ -105,6 +222,8 @@ python3 <skill-dir>/scripts/deck_verify.py <작업폴더>/presentation.html
 - 대본 문장을 그대로 옮긴 텍스트 덤프 슬라이드가 없는가
 - 한 장이 두 질문에 답하고 있지 않은가
 - 균등 나열이 우선순위를 지워버리지 않았는가
+- 구조도의 선이 노드·문장을 가로지르지 않는가 (스크린숏이나 PDF로 직접 본다)
+- 갤러리에서 복사한 장의 견본 안내(`<span class="guide">`)를 실제 문구로 바꿨는가
 - `제안`을 `확인됨`처럼 보이게 쓴 곳이 없는가
 
 ### 6. 보고

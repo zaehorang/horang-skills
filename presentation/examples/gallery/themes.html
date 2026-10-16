@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>색 테마</title>
+  <style>
+    :root{--ink:#141413;--body:#2B2A27;--muted:#6B6A64;--paper:#FAF9F5;--line:#DEDCD3;--card:#F0EEE6;--accent-dark:#A84A28;--accent-soft:#F5E3DA}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--paper);color:var(--body);font-family:Pretendard,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;line-height:1.5}
+    .wrap{max-width:1240px;margin:0 auto;padding-inline:24px}
+    header.top{position:sticky;top:0;z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+    .bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px;padding-block:14px}
+    .bar h1{margin:0;font-size:22px;letter-spacing:-.03em;color:var(--ink)}
+    .bar h1 span{color:var(--accent-dark)}
+    nav{display:flex;flex-wrap:wrap;gap:6px}
+    nav a{padding:5px 11px;border:1px solid var(--line);border-radius:999px;color:var(--body);font-size:14px;font-weight:700;text-decoration:none}
+    nav a:hover{border-color:var(--accent-dark)}
+    .back{margin-left:auto;font-size:14px;font-weight:700;color:var(--accent-dark)}
+    .intro{padding:26px 0 0;max-width:780px}
+    .intro p{margin:0 0 8px;color:var(--muted)}
+    .intro b{color:var(--ink)}
+    code{font-family:ui-monospace,Menlo,monospace;font-size:.9em;background:var(--card);padding:.1em .35em;border-radius:4px}
+    section.theme{padding:30px 0 10px;border-bottom:1px solid var(--line);scroll-margin-top:70px}
+    .theme-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin-bottom:6px}
+    .theme-head h2{margin:0;font-size:26px;letter-spacing:-.04em;color:var(--ink)}
+    .theme-head .use{font-weight:800;color:var(--body)}
+    .fit{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:4px 24px;margin:6px 0 16px;font-size:14px}
+    .fit p{margin:0}
+    .fit b{color:var(--ink)}
+    .compare{padding:26px 0 8px;border-bottom:1px solid var(--line)}
+    .compare h2{margin:0 0 4px;font-size:22px;letter-spacing:-.03em;color:var(--ink)}
+    .compare > p{margin:0 0 12px;color:var(--muted);font-size:14px}
+    .cmp-grid{display:grid;grid-template-columns:auto repeat(5,minmax(0,1fr));gap:10px;align-items:center}
+    .cmp-grid .col{font-size:14px;font-weight:900;color:var(--ink);text-align:center}
+    .cmp-grid .row{font-size:13px;font-weight:800;color:var(--muted);max-width:4.5em;word-break:keep-all}
+    .shots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+    .shot{position:relative;display:block;aspect-ratio:16/9;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#000}
+    .shot:hover{outline:2px solid var(--accent-dark)}
+    .shot iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}
+    .shot span{position:absolute;left:8px;bottom:8px;padding:2px 8px;border-radius:4px;background:rgba(20,20,19,.75);color:#fff;font-size:12px;font-weight:700}
+    footer.end{padding:30px 0 48px;color:var(--muted);font-size:14px}
+    @media (max-width:760px){.shots{grid-template-columns:1fr}.cmp-grid{overflow-x:auto;grid-template-columns:auto repeat(5,180px)}header.top{position:static}}
+  </style>
+</head>
+<body>
+  <header class="top"><div class="wrap bar">
+    <h1>색 <span>테마</span></h1>
+    <nav id="nav"></nav>
+    <a class="back" href="index.html">← 장 갤러리</a>
+  </div></header>
+  <main class="wrap">
+    <div class="intro">
+      <p>발표 성격에 맞춰 고르는 <b>테마 5개</b>다. 기본은 clay이고, 덱의 <code>&lt;html lang="ko"&gt;</code>를
+         <code>&lt;html lang="ko" data-theme="ocean"&gt;</code>처럼 바꾸면 덱 전체가 바뀐다. 한 장에만 걸 수도 있다.</p>
+      <p>테마마다 역할은 같다. <b>강조</b>는 한 장에 한 곳, <b>갈래 A/B</b>는 이쪽·저쪽, <b>구현 상태</b>는 확인됨·제안·예정.
+         강조색은 갈래·"제안" 색과 일부러 다르게 두었다. 맨 위 격자에서 같은 장을 테마끼리 견주고, 테마별 칸의 첫 그림은 팔레트다. 누르면 크게 열린다.</p>
+    </div>
+    <section class="compare" id="compare">
+      <h2>같은 장을 테마 5개로</h2>
+      <p>가로로 견줘 보고 고른다. 누르면 그 테마로 크게 열린다. 17장 차트는 인라인 SVG라 테마를 따른다(그림 파일은 따르지 않는다).</p>
+      <div class="cmp-grid" id="cmp"></div>
+    </section>
+    <div id="themes"></div>
+  </main>
+  <footer class="end wrap">정의 위치: <code>assets/starter/presentation.html</code>의 <code>[data-theme="…"]</code> 블록 · 새 테마 만드는 법: <code>references/build.md</code> "색 바꾸기"</footer>
+  <script>
+    const THEMES = [
+      ['', 'clay', '기본 · 제안·결과 보고', '보고서와 같은 따뜻한 편집물 톤. report 스킬로 만든 보고서와 함께 발표할 때 색이 이어진다.',
+       '제안서, 결과 보고, 내부 리뷰', '아주 기술적인 아키텍처 설명은 ocean이 더 차분하다'],
+      ['ocean', 'ocean', '기술 설명 · 아키텍처 · 데이터', '차분한 파랑. 구조도·표·코드가 많은 덱에서 강조가 튀지 않고 신뢰감이 있다.',
+       '시스템 설계 리뷰, 데이터 분석 공유, 기술 세미나', '감정에 호소해야 하는 피치는 signal'],
+      ['duo', 'duo', '강의 · 교육 · 비교', '남색 갈래 A와 먹색 갈래 B로 "이쪽/저쪽"이 갈리고, 짚는 곳은 자홍 한 곳으로 또렷하다.',
+       '강의 자료, 개념 비교, 전후 대비가 많은 교육 덱', '비교가 거의 없는 덱은 남색이 남는다 — clay·ocean이 더 조용하다'],
+      ['forest', 'forest', '운영 현황 · 성과 보고', '안정적인 초록. 숫자와 진척을 차분하게 보여주고, 긍정적인 결과 보고에 어울린다.',
+       '분기 운영 보고, 프로젝트 진척, 지속 과제 공유', '위험·경고가 핵심인 보고는 clay나 signal'],
+      ['signal', 'signal', '피치 · 키노트 · 외부 발표', '흰 바탕 고대비에 빨강 한 점. 빨강 강조가 강해서 하나만 써도 강하게 각인된다.',
+       '외부 발표, 투자·사업 피치, 행사 키노트', '빨강을 여러 곳에 쓰면 경고처럼 읽힌다 — 강조는 꼭 한 곳'],
+    ];
+    const SAMPLES = [[7, '코드 설명'], [22, '결정 요청']];
+    const COMPARE = [[1, '표지'], [5, '구조 설명'], [17, '분석 그림'], [18, '구성과 상태']];
+    const q = (t, extra) => `?embed${t ? '&theme=' + t : ''}${extra || ''}`;
+    const nav = document.getElementById('nav'), root = document.getElementById('themes');
+    const shot = (t, name, n, label) => `<a class="shot" href="presentation.html${t ? '?theme=' + t : ''}#${n}" target="_blank" rel="noopener"><iframe loading="lazy" tabindex="-1" title="${name} · ${label}" src="presentation.html${q(t)}#${n}"></iframe><span>${n} · ${label}</span></a>`;
+    const cmp = document.getElementById('cmp');
+    cmp.insertAdjacentHTML('beforeend', '<span></span>' + THEMES.map(th => `<span class="col">${th[1]}</span>`).join(''));
+    for (const [n, label] of COMPARE)
+      cmp.insertAdjacentHTML('beforeend', `<span class="row">${label}</span>` + THEMES.map(th => shot(th[0], th[1], n, label)).join(''));
+    nav.insertAdjacentHTML('beforeend', '<a href="#compare">나란히 보기</a>');
+    for (const [t, name, use, desc, good, avoid] of THEMES) {
+      const id = 'theme-' + name;
+      nav.insertAdjacentHTML('beforeend', `<a href="#${id}">${name}</a>`);
+      const shots = [`<a class="shot" href="palette.html${t ? '?theme=' + t : ''}" target="_blank" rel="noopener"><iframe loading="lazy" tabindex="-1" title="${name} 팔레트" src="palette.html${q(t)}"></iframe><span>팔레트</span></a>`]
+        .concat(SAMPLES.map(([n, label]) => shot(t, name, n, label))).join('');
+      root.insertAdjacentHTML('beforeend', `<section class="theme" id="${id}">
+        <div class="theme-head"><h2>${name}</h2><span class="use">${use}</span><code>${t ? `data-theme="${t}"` : '테마 없음(기본)'}</code></div>
+        <p>${desc}</p>
+        <div class="fit"><p><b>어울리는 발표</b> · ${good}</p><p><b>피할 때</b> · ${avoid}</p></div>
+        <div class="shots">${shots}</div></section>`);
+    }
+  </script>
+</body>
+</html>

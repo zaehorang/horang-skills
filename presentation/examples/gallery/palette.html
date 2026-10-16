@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>색 팔레트</title>
+  <style>
+    /* ── 색 ──────────────────────────────────────────────────
+       세 층으로 나눈다. 색을 바꿀 때는 1층이나 3층만 고친다.
+       패턴 CSS 안에 색 값을 직접 쓰지 않는다 (deck_verify 가 경고한다).
+
+       1. 팔레트   아래 :root 의 원색. 여기 값만 바꾸면 덱 전체가 바뀐다.
+       2. 의미 토큰 --gray · --pending · --tone-a · --tone-b. "무슨 뜻인가"의 이름이며 팔레트를 가리킨다.
+       3. 테마     <html data-theme="ocean"> 처럼 팔레트를 통째로 바꾸는 프리셋.
+                  <section class="slide" data-theme="duo"> 처럼 한 장에만 걸 수도 있다.
+       한 요소만 다르게 칠할 때는 style="--c:#2F6FB0;--c-soft:#E2ECF6" (레인·노드·선·행 매핑).
+
+       뜻: 강조색은 그 장에서 "지금 짚는 곳" 하나에만 쓴다 — 결론 한 줄, 새로 생긴 것, 짚는 행, 지금 단계.
+       번호 원·라벨·갈래는 강조색이 아니다(먹색·회색). 회색은 이미 있는 것, 점선은 아직 아닌 것. */
+    :root{
+      --ink:#141413; --body:#2B2A27; --muted:#6B6A64; --paper:#FAF9F5; --line:#DEDCD3;
+      --card:#F0EEE6;
+      --accent:#D97757; --accent-dark:#A84A28; --accent-soft:#F5E3DA;
+      --status-plan:#4F6F80;   /* "제안" 상태. 강조색과 다른 색이어야 한다 */
+      --code-dim:#A3A198;
+      --shadow:0 14px 34px rgba(20,20,19,.08);
+
+      /* 타이포 스케일 — 1280x720 고정 캔버스 기준 절대값.
+         괄호 안은 슬라이드 높이(720) 대비 비율. 발표 가독성은 화면 해상도가
+         아니라 이 비율이 결정한다. 절대 하한 2.0%(=14.4px) 아래로 내리지 않는다.
+         캔버스가 고정이므로 어떤 화면에서도 줄바꿈까지 동일하다. */
+      --fs-h1:    72px;   /* 10.0% */
+      --fs-h2:    50px;   /*  6.9% */
+      --fs-h3:    25px;   /*  3.5% */
+      --fs-lead:  24px;   /*  3.3% */
+      --fs-body:  20px;   /*  2.8% */
+      --fs-label: 16px;   /*  2.2% */
+
+      --canvas-w: 1280px;
+      --canvas-h: 720px;
+      --pad:      54px;
+    }
+    /* 2층 · 의미 토큰. 테마를 건 요소에서도 다시 계산되도록 [data-theme] 에도 선언한다. */
+    :root,[data-theme]{
+      /* --pending(= --line)은 선·면 전용이다. 뜻을 가진 글자·화살표·기호는 --muted 를 쓴다 (바탕 대비 1.3:1 이라 안 보인다) */
+      --gray:var(--muted); --gray-soft:var(--card); --pending:var(--line);
+      /* 구현 상태 3분류 — 강조색(--accent)과 섞지 않는다. 확인됨 = 먹색, 제안 = --status-plan, 예정 = 점선 */
+      --status-done:var(--ink); --status-next:var(--muted);
+      /* 구조도·행 매핑의 두 갈래(레인 둘, 전/후, 좌/우). 기본은 a = 회색, b = 먹색 — 둘 다 강조색이 아니다.
+         강조색은 갈래와 따로 "짚는 곳" 하나(.new 노드·결론 한 줄)에만 쓴다. 어떤 테마도 갈래를 강조색으로 두지 않는다. */
+      --tone-a:var(--muted);  --tone-a-soft:var(--card);
+      --tone-b:var(--ink);    --tone-b-soft:var(--card);
+      /* 코드 블록(패턴 S). 어두운 바탕에 밝은 글자, 키워드는 강조색, 주석은 흐리게. */
+      /* 어두운 바탕(표지 .dark · 코드 블록) 위 강조 글자. 강조색이 어두운 테마는 밝은 값을 따로 준다 */
+      --accent-on-dark:var(--accent);
+      --code-bg:var(--ink); --code-fg:var(--paper); --code-key:var(--accent-on-dark); --code-str:var(--accent-soft);
+    }
+    /* 3층 · 테마 프리셋 — 발표 성격에 맞춰 고른다. 기본(테마 없음)은 clay.
+       clay   제안·보고 — 보고서와 같은 따뜻한 편집물 톤
+       ocean  기술·아키텍처·데이터 설명 — 차분한 파랑
+       duo    강의·교육·비교 — 남색 갈래 A + 자홍 강조
+       forest 운영·성과 보고 — 안정적인 초록
+       signal 피치·키노트 — 흰 바탕 고대비 + 빨강 한 점
+       새 테마는 같은 형식으로 한 블록을 더한다. 강조 셋(--accent·-dark·-soft)과 --status-plan 을 함께 정한다.
+       점검: 바탕 위 -dark 글자 ≥ 4.5:1 · -soft 위 -dark 글자 ≥ 4.5:1 · -dark 위 흰 글자 ≥ 4.5:1 · 바탕 위 --accent 선·면 ≥ 3:1
+             · 먹색 바탕 위 --accent-on-dark ≥ 4.5:1 (표지 kicker·코드 키워드) · -soft 위 보조 글자는 --muted 대신 --body.
+       글자에는 --accent-dark 를, --accent 는 선·면에만 쓴다. */
+    [data-theme="clay"]{}
+    [data-theme="ocean"]{--paper:#F7F9FB; --card:#EBF0F5; --line:#D5DEE7; --muted:#5F6B78; --body:#24303D; --ink:#0F1A26;
+                         --accent:#2F6FB0; --accent-dark:#1F4F86; --accent-soft:#E2ECF6; --status-plan:#8A6A2E; --accent-on-dark:#7FB2E5}
+    [data-theme="duo"]{--accent:#B23A7A; --accent-dark:#8C2860; --accent-soft:#F6E1EC; --status-plan:#2E7D6B; --accent-on-dark:#E58BB8;
+                       --tone-a:#1F4F86; --tone-a-soft:#E2ECF6}
+    [data-theme="forest"]{--paper:#F8F9F5; --card:#EDF0E8; --line:#D8DED0; --muted:#636B5E; --body:#262B23; --ink:#141A12;
+                          --accent:#3F7A4A; --accent-dark:#2C5A35; --accent-soft:#E3EEE4; --status-plan:#7A5C8A; --accent-on-dark:#8FC79A}
+    [data-theme="signal"]{--paper:#FFFFFF; --card:#F2F2F2; --line:#D9D9D9; --muted:#5C5C5C; --body:#1F1F1F; --ink:#0A0A0A; --accent-on-dark:#FF6B63;
+                          --accent:#E5322D; --accent-dark:#B71F1B; --accent-soft:#FCE4E3; --status-plan:#2B59C3; --code-dim:#9A9A9A}
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;background:#000;color:var(--body);font-family:Pretendard,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;overflow:hidden}
+    button{font:inherit}
+
+    /* ── 무대: 화면을 채우고 캔버스를 가운데 둔다. 남는 부분은 검정 레터박스 ── */
+    /* 칸을 화면 크기로 고정해야 창이 1280px보다 좁아도 캔버스가 가운데에서 축소된다.
+       auto 칸이면 칸이 1280px로 늘어나 축소된 캔버스가 오른쪽 밖으로 밀린다. */
+    .stage{position:fixed;inset:0;display:grid;grid-template:minmax(0,1fr) / minmax(0,1fr);place-items:center;background:#000;overflow:hidden}
+
+    /* ── 고정 캔버스 ──────────────────────────────────────
+       1280x720에 절대 px로 그리고, 화면 크기에 맞춰 통째로 scale한다.
+       고정 규격 발표 화면 방식. 해상도가 달라도 줄바꿈이 변하지 않는다. */
+    .deck{width:var(--canvas-w);height:var(--canvas-h);position:relative;flex:none;transform-origin:center center}
+    .slide{position:absolute;inset:0;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr auto;grid-template-areas:"head" "content" "foot";gap:16px;
+           padding:var(--pad);background:var(--paper);opacity:0;pointer-events:none;
+           transform:translateX(5%);transition:.42s ease;overflow:hidden}
+    .slide.active{opacity:1;pointer-events:auto;transform:none}
+    .slide.past{transform:translateX(-5%)}
+    .slide.dark{background:var(--ink);color:var(--paper)}
+    .slide:not(.dark)::before{content:"";position:absolute;top:0;left:var(--pad);width:54px;height:6px;background:var(--accent)}
+    .slide-head,.content,.foot{position:relative;z-index:1}
+    .slide:not(:has(> .slide-head)){grid-template-rows:1fr auto;grid-template-areas:"content" "foot"}
+    .slide-head{grid-area:head;z-index:2;display:flex;justify-content:space-between;gap:24px;align-items:flex-start}
+    .slide-head > div{min-width:0}
+    .slide-head > .badge{flex-shrink:0}
+    /* 본문은 제목 바로 아래 같은 위치에서 시작한다. 장을 넘겨도 내용이 위아래로 튀지 않게.
+       예외(표지·핵심 숫자처럼 한 덩어리를 가운데 둘 장)만 .content.center 를 붙인다. */
+    .content{grid-area:content;min-width:0;min-height:0;display:flex;align-items:flex-start;padding-top:8px}
+    .content.center,.slide.dark .content{align-items:center;padding-top:0}
+
+    /* ── 타이포 ──────────────────────────────────────────── */
+    h1,h2,h3,p{margin-top:0}
+    h1,h2,h3{color:var(--ink);word-break:keep-all;overflow-wrap:normal;text-wrap:balance}
+    .dark h1,.dark h2,.dark h3{color:var(--paper)}
+    h1{font-size:var(--fs-h1);line-height:1.06;letter-spacing:-.06em;margin-bottom:.28em}
+    h2{font-size:var(--fs-h2);line-height:1.15;letter-spacing:-.055em;margin-bottom:0;max-width:20em}
+    h3{font-size:var(--fs-h3);line-height:1.22;letter-spacing:-.035em;margin-bottom:.32em}
+    p,li{font-size:var(--fs-body);line-height:1.5}
+    .kicker{margin:0 0 .7em;color:var(--accent-dark);font-size:var(--fs-label);font-weight:900;letter-spacing:.15em;text-transform:uppercase}
+    .dark .kicker{color:var(--accent-on-dark)}
+    .lead{font-size:var(--fs-lead);line-height:1.45;color:var(--muted);max-width:26em;word-break:keep-all}
+    .dark .lead{color:var(--line)}
+    .accent{color:var(--accent)}
+    .dark .accent{color:var(--accent-on-dark)}
+    .final-line{font-size:var(--fs-lead);font-weight:900;color:var(--accent-dark);word-break:keep-all}
+
+    /* ── 견본 안내: 갤러리 견본에만 있는 설명. 복사한 덱에 남으면 deck_verify 가 경고한다 ── */
+    .guide{display:inline-flex;align-items:center;gap:.4em;padding:.1em .55em;border:1px dashed var(--muted);border-radius:4px;
+           color:var(--muted);font-size:var(--fs-label);font-weight:700;letter-spacing:0;text-transform:none}
+    .guide::before{content:"견본";font-weight:900;color:var(--body)}
+    .dark .guide{border-color:var(--line);color:var(--line)}
+    .dark .guide::before{color:var(--paper)}
+
+    /* ── 상태 배지: 오직 "구현 상태" 하나의 축에만 사용한다 ──
+       done  먹색           = 현재 확인됨 (.service.confirmed 와 짝)
+       plan  --status-plan  = 제안       (.service.proposed 와 짝) — 강조색과 다른 색
+       next  빈 원          = 예정       (.service.backlog 점선과 짝) */
+    .badge{display:inline-flex;align-items:center;gap:.5em;border:1px solid var(--line);padding:.45em .8em;background:var(--paper);font-size:var(--fs-label);font-weight:800;white-space:nowrap}
+    .badge::before{content:"";width:.6em;height:.6em;border-radius:50%;background:var(--status-done);flex:none}
+    .badge.plan::before{background:var(--status-plan)}
+    .badge.next::before{background:var(--paper);border:2px solid var(--status-next)}
+    .legend{display:flex;gap:14px;flex-wrap:wrap}
+    .legend .badge{background:transparent}
+
+    /* ── 1 표지 ─────────────────────────────────────────── */
+    .cover-content{width:100%;display:grid;grid-template-columns:1fr .86fr;gap:clamp(36px,5vw,86px);align-items:center}
+    .cover-content.text-only{grid-template-columns:1fr}
+    .cover-content.text-only .cover-copy{max-width:1000px}
+    .cover-content.text-only h1{max-width:1000px}
+    .cover-copy{max-width:840px}
+    .cover-copy h1{max-width:780px}
+    .cover-copy .lead{color:var(--paper);font-weight:800;max-width:680px}
+    .bridge-question{margin:0;padding:.7em .9em;border-left:4px solid var(--accent);background:rgba(255,255,255,.1);
+                     font-size:var(--fs-body);font-weight:850;color:var(--paper);max-width:22em;word-break:keep-all}
+    .cover-visual-wrap{position:relative;padding:0 14px 14px 0}
+    .cover-visual-wrap::after{content:"";position:absolute;right:0;bottom:0;width:56%;height:7px;background:var(--accent)}
+    .cover-visual{width:100%;aspect-ratio:1.3;object-fit:cover;object-position:center;
+                  border:1px solid rgba(255,255,255,.22);box-shadow:0 24px 70px rgba(0,0,0,.3);filter:saturate(.72) contrast(1.06)}
+
+    /* ── 2 조직 맥락 ─────────────────────────────────────── */
+    .thesis-grid{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:22px}
+    .thesis-card{padding:1.1em 1.2em;border-radius:3px;background:var(--paper);border:1px solid var(--line)}
+    .thesis-card.fading{background:var(--gray-soft)}
+    .thesis-card.keeping{background:linear-gradient(135deg,var(--accent-soft),var(--paper));border-color:var(--accent)}
+    .thesis-card ul{padding-left:22px;margin-bottom:0}
+    .trend{display:inline-block;padding:.2em 0;color:var(--muted);font-size:var(--fs-label);font-weight:900}
+    .keeping .trend{color:var(--accent-dark)}
+    .thesis-card ul + p{margin-top:1em}
+
+    /* ── 3 문제 ─────────────────────────────────────────── */
+    .split{width:100%;display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(28px,5vw,90px);align-items:start}
+    .photo-card{position:relative;width:100%;height:400px;border-radius:3px;overflow:hidden;box-shadow:var(--shadow);background:var(--card)}
+    .photo-card img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.06)}
+    .photo-overlay{position:absolute;inset:auto 0 0;padding:1em 1.1em;background:linear-gradient(transparent,rgba(18,18,18,.92));color:var(--paper)}
+    .big-quote{font-size:var(--fs-h2);font-weight:900;line-height:1.08;letter-spacing:-.04em}
+    .speech{margin:.8em 0;padding:.7em .8em;border-radius:2px;background:var(--card);border-left:4px solid var(--muted);
+            font-weight:800;font-size:var(--fs-body);word-break:keep-all}
+
+    /* ── 4 이해관계자: 1순위 작성자를 크게, 나머지 4명은 위성 ── */
+    .impact-layout{width:100%;display:grid;grid-template-columns:1.25fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:14px}
+    .impact-card{padding:.85em .95em;border-radius:3px;background:var(--paper);border:1px solid var(--line);
+                 display:flex;flex-direction:column;justify-content:space-between;gap:.6em;min-height:0}
+    .impact-card.primary{grid-row:1 / span 2;padding:1.2em;border:2px solid var(--accent);background:linear-gradient(135deg,var(--accent-soft),var(--paper))}
+    .impact-card .avatar{width:1.9em;height:1.9em;border-radius:50%;display:grid;place-items:center;background:var(--card);font-size:var(--fs-h3)}
+    .impact-card.primary .avatar{font-size:calc(var(--fs-h3) * 1.2);background:var(--paper)}
+    .impact-card.primary h3{font-size:calc(var(--fs-h3) * 1.25)}
+    .impact-card .before{color:var(--muted);font-weight:700;margin-bottom:0}
+    .impact-card .after{color:var(--ink);font-weight:800;margin-bottom:0}
+    .impact-card.primary{justify-content:flex-start;gap:1.4em}
+    .impact-card.primary .after{color:var(--accent-dark);font-weight:900}
+    .priority-note{margin:.7em 0 0;padding-top:.7em;border-top:1px solid var(--line);font-weight:850;color:var(--ink);word-break:keep-all}
+
+    /* ── 5 문제→기능 매트릭스: 가로 1회 + 세로 1회로 읽힌다 ── */
+    .matrix{width:100%;display:grid;gap:9px}
+    .matrix-caption{margin:0;font-size:var(--fs-label);font-weight:900;letter-spacing:.02em;color:var(--muted)}
+    .matrix-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+    .mcell{padding:.75em .8em;border-radius:3px;border:1px solid var(--line);font-size:var(--fs-body)}
+    .mcell .no{display:block;font-size:var(--fs-label);font-weight:900;color:var(--muted);margin-bottom:.3em}
+    .mcell strong{display:block;font-size:var(--fs-h3);letter-spacing:-.03em;margin-bottom:.25em}
+    .mcell p{margin:0;font-size:1em;color:var(--muted);word-break:keep-all;line-height:1.4}
+    .matrix-row.problems .mcell{background:var(--gray-soft);border-color:var(--line)}
+    .matrix-row.features .mcell{background:var(--paper)}
+    .matrix-row.features .mcell p{color:var(--ink)}
+    .mcell.hot{border:2px solid var(--accent);background:linear-gradient(135deg,var(--accent-soft),var(--paper))}
+    .mcell.hot .no{color:var(--accent-dark)}
+    .mcell .newly{display:inline-block;margin-top:.5em;padding:.25em .5em;background:var(--accent-dark);color:var(--paper);font-size:var(--fs-label);font-weight:900;letter-spacing:.02em}
+    .matrix-arrows{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;text-align:center;color:var(--muted);font-weight:900;font-size:var(--fs-h3)}
+    .matrix-outcome{margin:.3em 0 0;padding:.6em .8em;border-left:5px solid var(--ink);background:var(--card);
+                    font-size:var(--fs-lead);font-weight:900;word-break:keep-all}
+
+    /* ── 6 AI 큐레이션 ──────────────────────────────────── */
+    .ai-flow-grid{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:22px}
+    .flow-card{padding:1.1em 1.2em;border-radius:3px;background:var(--paper);border:1px solid var(--line)}
+    .flow-card .mode{display:block;color:var(--muted);font-size:var(--fs-label);font-weight:900;letter-spacing:.02em;margin-bottom:.4em}
+    .flow-steps{display:flex;flex-wrap:wrap;align-items:center;gap:.4em;margin:.9em 0 1.2em}
+    .flow-steps span{padding:.4em .55em;border-radius:2px;background:var(--card);font-size:var(--fs-label);font-weight:850}
+    .flow-steps span + span::before{content:"\2192";color:var(--muted);font-weight:900;margin-right:.5em}
+
+    /* ── 7 사람의 판단: 역할 라벨은 상태 배지와 다른 토큰 ─── */
+    .before-after{width:100%;display:grid;grid-template-columns:1fr 90px 1fr;gap:20px;align-items:center}
+    .scene{padding:1.2em;border-radius:3px;background:var(--paper);border:1px solid var(--line);
+           display:flex;flex-direction:column;justify-content:space-between;gap:.8em}
+    .scene.key{background:linear-gradient(135deg,var(--accent-soft),var(--paper));border-color:var(--accent)}
+    .scene ul{padding-left:22px}
+    .arrow{font-size:var(--fs-h2);color:var(--muted);text-align:center}
+    .role-tag{display:inline-block;padding:.4em .8em;font-size:var(--fs-label);font-weight:900;letter-spacing:.02em;color:var(--paper)}
+    .role-tag.ai{background:var(--muted)}
+    .role-tag.human{background:var(--ink)}
+
+    /* ── 8 스프린트: 단계 라벨도 상태 배지와 분리 ────────── */
+    .roadmap{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;position:relative}
+    .roadmap::before{content:"";position:absolute;top:26px;left:50px;right:calc((100% - 40px) / 3 - 50px);height:2px;background:var(--line);z-index:0}
+    .sprint{position:relative;z-index:1;padding-top:66px}
+    .station{position:absolute;top:0;left:10px;width:1.7em;height:1.7em;border-radius:50%;display:grid;place-items:center;
+             background:var(--card);color:var(--muted);font-weight:900;border:8px solid var(--paper);box-shadow:inset 0 0 0 2px var(--line);font-size:var(--fs-h3)}
+    /* 원은 카드 상태를 따른다 — .sprint-card 에 .done / .now 를 옮기면 원도 함께 바뀐다 */
+    .sprint:has(> .sprint-card.done) .station{background:var(--gray);color:var(--paper);box-shadow:none}
+    .sprint:has(> .sprint-card.now) .station{background:var(--accent-dark);color:var(--paper);box-shadow:none}
+    .sprint-card{height:100%;padding:1em 1.1em;border-radius:3px;background:var(--paper);border:1px solid var(--line)}
+    .sprint-card.now{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+    .sprint-card ul{padding-left:20px;margin-bottom:0}
+    .phase{display:block;font-size:var(--fs-label);font-weight:900;letter-spacing:.02em;color:var(--muted);margin-bottom:.4em}
+    .sprint-card.now .phase{color:var(--accent-dark)}
+
+    /* ── 9 아키텍처 ─────────────────────────────────────── */
+    .architecture{width:100%;display:grid;grid-template-rows:auto auto;gap:28px}
+    .journey{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+    .journey span{position:relative;padding:.35em .6em;border-radius:3px;background:var(--card);color:var(--ink);text-align:center;font-weight:800;font-size:var(--fs-body)}
+    .journey span + span::before{content:"\2192";position:absolute;left:-12px;top:50%;transform:translate(-50%,-50%);color:var(--muted);font-weight:900}
+    .service-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+    .service{padding:.85em .9em;border-radius:3px;background:var(--paper);border:2px solid var(--line)}
+    .service.confirmed{border-color:var(--status-done)}
+    .service.proposed{border-color:var(--status-plan)}
+    .service.backlog{border-style:dashed;border-color:var(--status-next);background:var(--paper)}
+    .service small{display:block;margin-bottom:.5em;color:var(--muted);font-weight:800;font-size:var(--fs-label)}
+    .service strong{display:block;font-size:var(--fs-h3);margin-bottom:.3em;letter-spacing:-.03em;word-break:keep-all}
+    .service p{font-size:var(--fs-body);margin:0 0 .5em;color:var(--muted);line-height:1.4;word-break:keep-all}
+    .service .chip{display:inline-flex;align-items:center;gap:.45em;font-size:var(--fs-label);font-weight:900;color:var(--muted)}
+    .service .chip::before{content:"";width:.55em;height:.55em;border-radius:50%;background:var(--status-done);flex:none}
+    .service.proposed .chip::before{background:var(--status-plan)}
+    .service.backlog .chip::before{background:var(--paper);border:2px solid var(--status-next)}
+
+    /* ── 10 API ─────────────────────────────────────────── */
+    .api-layout{width:100%;display:grid;grid-template-columns:.8fr 1.2fr;gap:26px;align-items:stretch}
+    .action-flow{display:grid;grid-auto-rows:1fr;gap:8px}
+    .action{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:.7em;padding:.6em .8em;border-radius:3px;background:var(--paper);border:1px solid var(--line)}
+    .action b{width:1.7em;height:1.7em;display:grid;place-items:center;border-radius:50%;background:var(--ink);color:var(--paper);font-size:var(--fs-body)}
+    .action p{margin:0;font-weight:800}
+    .action small{color:var(--muted);font-size:var(--fs-label)}
+    /* 행을 왼쪽 행동 카드와 같은 간격의 카드로 둔다 — 두 열의 행이 높이·위치까지 맞는다 */
+    .api-table{display:grid;grid-auto-rows:1fr;gap:8px}
+    .api-row:has(> .dg-num){grid-template-columns:auto 4.5em 1.25fr 1fr}
+    .api-row{display:grid;grid-template-columns:4.5em 1.25fr 1fr;gap:.7em;padding:.55em .8em;border:1px solid var(--line);border-radius:3px;background:var(--paper);align-items:center;font-size:var(--fs-body)}
+    .method{font-family:ui-monospace,monospace;font-weight:900;color:var(--ink)}
+    .api-row.hot{background:var(--accent-soft);border-color:var(--accent)}
+    .api-row.hot .method{color:var(--accent-dark)}
+    .api-row.hot small,.mcell.hot p{color:var(--body)}   /* -soft 바탕 위 --muted 는 4.5:1 아래 */
+    .path{font-family:ui-monospace,monospace;font-size:.92em;overflow-wrap:anywhere}
+    .api-row small{color:var(--muted);font-size:var(--fs-label)}
+
+    /* ── 11 동작 화면 ───────────────────────────────────── */
+    .screens{width:100%;display:grid;grid-template-columns:repeat(5,1fr);gap:14px;align-items:start}
+    .screen{position:relative;margin:0}
+    .screen::after{content:"\2192";position:absolute;right:-.55em;top:0;margin-top:calc(37.5% - .5em);font-size:var(--fs-h3);color:var(--muted);z-index:3}
+    .screen:last-child::after{display:none}
+    .frame{aspect-ratio:4/3;border-radius:2px;border:1px solid var(--line);background:var(--paper);overflow:hidden;box-shadow:0 12px 24px rgba(20,20,19,.08)}
+    .browserbar{height:25px;background:var(--card);display:flex;align-items:center;gap:4px;padding:0 9px}
+    .browserbar i{width:6px;height:6px;border-radius:50%;background:var(--muted)}
+    .wire{padding:15px}
+    .wire .line{height:8px;border-radius:8px;background:var(--line);margin-bottom:9px}
+    .wire .line.title{background:var(--muted);width:46%}
+    .wire .line.accent{background:var(--accent)}
+    .wire .block{height:36px;border-radius:10px;background:var(--card);margin:10px 0}
+    .wire .block.accent{background:var(--accent-soft);box-shadow:inset 0 0 0 2px var(--accent)}
+    .wire .button{width:50%;height:22px;border-radius:7px;background:var(--line)}
+    .wire .button.accent{background:var(--accent)}
+    .screen figcaption{margin-top:.6em;font-size:var(--fs-label);line-height:1.4;word-break:keep-all}
+    .screen figcaption strong{display:flex;align-items:center;gap:.4em;margin-bottom:.2em}
+    .screen figcaption > span{display:block;color:var(--muted)}
+
+    /* ── 11b 제품 화면 + 콜아웃 (패턴 M) ────────────────── */
+    .shot-split{width:100%;display:grid;grid-template-columns:1.35fr 1fr;gap:26px;align-items:start}
+    .shot{position:relative;margin:0;height:330px;border-radius:3px;border:1px solid var(--line);background:var(--paper);
+          overflow:hidden;box-shadow:0 14px 28px rgba(20,20,19,.10)}
+    .shot img{display:block;width:100%;height:100%;object-fit:cover;object-position:top left}
+    .pin{position:absolute;width:1.6em;height:1.6em;border-radius:50%;background:var(--ink);color:var(--paper);
+         font-size:var(--fs-body);font-weight:900;display:flex;align-items:center;justify-content:center;
+         box-shadow:0 3px 10px rgba(0,0,0,.28);z-index:2}
+    .shot-caption{margin-top:.5em;font-size:var(--fs-label);color:var(--muted);word-break:keep-all}
+    .callouts{display:flex;flex-direction:column;gap:.75em}
+    .callout{display:grid;grid-template-columns:1.6em 1fr;gap:14px;align-items:start}
+    .callout .pin{position:static;box-shadow:none}
+    .callout strong{display:block;font-size:var(--fs-body);font-weight:900;word-break:keep-all}
+    .callout p{margin:.1em 0 0;font-size:var(--fs-label);color:var(--muted);line-height:1.45;word-break:keep-all}
+    .callout code{font-family:ui-monospace,monospace;font-size:.95em;color:var(--accent-dark);font-weight:800}
+
+    /* ── 패턴 N: 전폭 분석 그림 + 결론 한 줄 ───────────────── */
+    .figure-content{width:100%;display:grid;grid-template-rows:minmax(0,1fr) auto auto;gap:10px;align-items:stretch}
+    .analysis-figure{margin:0;min-height:0;display:flex;align-items:flex-start;justify-content:flex-start}
+    .analysis-figure img{display:block;width:100%;height:100%;min-height:0;object-fit:contain;filter:none}
+    .analysis-figure > svg{display:block;width:100%;height:auto;max-height:100%}   /* 인라인 SVG — fill 을 토큰으로 주면 테마를 따른다 */
+    .figure-content .final-line{margin:0}
+    .figure-source{margin:0;font-size:var(--fs-label);line-height:1.4;color:var(--muted);word-break:keep-all}
+
+    /* ── 구조도 (패턴 O · P · Q) ───────────────────────────
+       노드는 CSS 그리드 칸(--x, --y)에 놓고, 선은 엔진이 <i class="dg-edge"> 를 읽어 SVG로 그린다.
+       색은 tone-a · tone-b · --c 로만 정한다. 실선 = 주 흐름, 점선 = 되돌아감·조건·대응. */
+    .tone-a{--c:var(--tone-a);--c-soft:var(--tone-a-soft)}
+    .tone-b{--c:var(--tone-b);--c-soft:var(--tone-b-soft)}
+    .dg{position:relative;width:100%;display:grid;gap:18px;font-size:var(--fs-body)}
+    .dg-lane{position:relative;padding:14px 18px;border:1.5px solid var(--c,var(--line));border-radius:10px;background:var(--paper)}
+    .dg-lane-title{display:block;margin:0 0 8px;font-size:var(--fs-label);font-weight:900;letter-spacing:.02em;color:var(--c,var(--muted))}
+    .dg-grid{display:grid;grid-template-columns:repeat(var(--cols,4),minmax(0,1fr));column-gap:56px;row-gap:22px;align-items:center;justify-items:center}
+    .dg-node{grid-column:var(--x,auto);grid-row:var(--y,auto);position:relative;z-index:1;min-width:6.5em;padding:.5em .9em;
+             border:2px solid var(--ink);border-radius:9px;background:var(--paper);color:var(--ink);
+             font-size:var(--fs-body);font-weight:800;line-height:1.25;text-align:center;word-break:keep-all}
+    .dg-node small{display:block;font-size:var(--fs-label);font-weight:600;color:var(--muted)}
+    .dg-node.pill{border-radius:999px}
+    .dg-node.soft{border-color:var(--line);color:var(--muted)}                                  /* 이미 있는 것 · 흐린 쪽 */
+    .dg-node.new{border-color:var(--accent);background:var(--accent-soft)} /* 짚는 곳 — 레인 색과 상관없이 강조색 */
+    .dg-group{grid-column:var(--x,auto);grid-row:var(--y,auto);position:relative;z-index:1;padding:.4em .6em .6em;
+              border:1.5px dashed var(--c,var(--line));border-radius:10px;background:var(--paper);text-align:center}
+    .dg-group > small{display:block;margin-bottom:.3em;font-size:var(--fs-label);font-weight:800;color:var(--c,var(--muted))}
+    .dg-note{margin:10px 0 0;font-size:var(--fs-body);line-height:1.45;color:var(--body);word-break:keep-all}
+    .dg-note::before{content:"\2713\00a0";color:var(--c,var(--accent));font-weight:900}
+    .dg-note b{color:var(--ink)}
+    .dg-grid > .dg-note{grid-column:var(--x,auto);grid-row:var(--y,auto);justify-self:start;margin:0}  /* 빈 칸에 넣어 선과 안 겹치게 */
+    .dg-edge{display:none;color:var(--c,var(--muted))}
+    .dg-edges{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:0}
+    .dg-label{position:absolute;z-index:2;transform:translate(-50%,-50%);padding:0 .35em;background:var(--paper);
+              font-size:var(--fs-label);font-weight:800;line-height:1.3;white-space:nowrap}
+    .dg-num{display:inline-grid;place-items:center;flex:none;width:1.6em;height:1.6em;border-radius:50%;
+            background:var(--c,var(--ink));color:var(--paper);font-size:var(--fs-label);font-weight:900;line-height:1}
+    /* 번호는 순서일 뿐이라 먹색. 짚는 행·지금 단계 안의 번호만 강조색 */
+    .api-row.hot .dg-num,.walk-rail .now .dg-num{background:var(--accent-dark)}
+    .dg-node .dg-num{position:absolute;top:-.8em;left:-.8em}
+
+    /* 패턴 P · 전/후: 같은 뼈대를 두 번 그리고 오른쪽의 새것만 칠한다 */
+    .dg-compare{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:stretch}
+    /* 두 패널은 같은 뼈대 — 같은 열 수·같은 행 높이로 두면 공통 노드가 같은 자리에 선다 */
+    .dg-panel .dg-grid{grid-auto-rows:64px;justify-items:start}
+    .dg-panel{display:flex;flex-direction:column;gap:14px;padding:14px 18px 18px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper)}
+    .dg-panel-title{margin:0;font-size:var(--fs-h3);font-weight:900;letter-spacing:-.03em;color:var(--c,var(--ink))}
+    .dg-panel-title::before{content:"";display:inline-block;width:.32em;height:.32em;margin:0 .45em .18em 0;background:var(--c,var(--ink))}
+    .dg-panel .dg{flex:1;align-content:center}
+    .dg-compare + .final-line{margin:16px 0 0}
+
+    /* 패턴 Q · 번호 구조도 + 범례: 그림의 번호 = 범례 번호 = 대본 박자 순서 */
+    .dg-legend-split{width:100%;display:grid;grid-template-columns:1.35fr 1fr;gap:40px;align-items:start}
+    .dg-legend{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:18px}
+    .dg-legend li{display:grid;grid-template-columns:auto 1fr;gap:.7em;align-items:start}
+    .dg-legend strong{display:block;font-size:var(--fs-body);font-weight:900;color:var(--ink);word-break:keep-all}
+    .dg-legend p{margin:.15em 0 0;font-size:var(--fs-label);line-height:1.45;color:var(--muted);word-break:keep-all}
+
+    /* ── 패턴 R · 가로 행 매핑: 왼쪽 문제 → 오른쪽 해결, 행마다 한 쌍 ── */
+    .rowmap{width:100%;display:grid;grid-template-columns:1fr 110px 1fr;column-gap:14px;row-gap:10px;align-items:center}
+    .rowmap-head{margin:0 0 4px;text-align:left;font-size:var(--fs-h3);font-weight:900;letter-spacing:-.03em;color:var(--c,var(--ink))}
+    .rowmap-from{margin:0;font-size:var(--fs-body);line-height:1.35;color:var(--body);word-break:keep-all}
+    .rowmap-from b{color:var(--c,var(--tone-a))}
+    .rowmap-link{position:relative;height:2px;border-top:2px dashed var(--muted)}
+    .rowmap-link::after{content:"";position:absolute;right:-2px;top:-7px;border:6px solid transparent;border-left:9px solid var(--muted);border-right:0}
+    .rowmap-to{margin:0;padding:.45em .8em;border:1.5px solid var(--c,var(--tone-b));border-left-width:5px;border-radius:6px;background:var(--paper);
+               font-size:var(--fs-body);line-height:1.35;word-break:keep-all}
+    .rowmap-to b{color:var(--c,var(--tone-b))}
+
+    /* ── 패턴 S · 코드 워크스루: 단계 레일 · 코드 · 결과가 같은 곳을 가리킨다 ──
+       레일은 지금 단계(.now)만 칠하고 펼친다. 코드는 설명할 줄만 12줄까지.
+       강조 줄(.hl)의 번호 = 결과(.code-out)의 번호 = 대본 박자 순서. */
+    .walk{width:100%;display:grid;grid-template-columns:280px minmax(0,1fr);gap:28px;align-items:stretch}
+    .walk-rail{margin:0;padding:16px 18px;list-style:none;counter-reset:step;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);
+               display:flex;flex-direction:column;gap:12px}
+    .walk-rail > li{counter-increment:step;font-size:var(--fs-body);font-weight:700;line-height:1.35;color:var(--muted);word-break:keep-all}
+    .walk-rail > li::before{content:counter(step) ". ";font-weight:900}
+    .walk-rail > li.now{color:var(--accent-dark);font-weight:900}
+    .walk-rail ul{margin:.35em 0 0;padding-left:1.1em;color:var(--ink)}
+    .walk-rail ul li{font-size:var(--fs-label);font-weight:700;line-height:1.4}
+    .walk-main{min-width:0;display:flex;flex-direction:column;gap:16px}
+    .code{margin:0;padding:14px 0;border-radius:8px;background:var(--code-bg);color:var(--code-fg);overflow:hidden;
+          font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:var(--fs-label);line-height:1.5;white-space:pre}
+    .code code{display:block;padding:0 18px;font:inherit}
+    .code .k{color:var(--code-key);font-weight:700}
+    .code .s{color:var(--code-str)}
+    .code .c{color:var(--code-dim)}
+    .code .hl{display:block;position:relative;margin:2px -18px;padding:2px 52px 2px 13px;border-left:5px solid var(--accent);background:rgba(255,255,255,.09)}
+    .code .hl .dg-num{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-family:Pretendard,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+    .code-out{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:14px}
+    .code-out > div{display:grid;grid-template-columns:auto 1fr;gap:.6em;align-items:start;padding:.7em .9em;border:1.5px solid var(--line);border-radius:8px;background:var(--paper)}
+    .code-out strong{display:block;font-size:var(--fs-body);font-weight:900;color:var(--ink);word-break:keep-all}
+    .code-out code{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:.95em;color:var(--ink)}
+    .code-out p{margin:.15em 0 0;font-size:var(--fs-label);line-height:1.45;color:var(--muted);word-break:keep-all}
+
+    /* ── 패턴 T · 데이터 표: 한 행만 짚는다 ─────────────────── */
+    .table-wrap{width:100%;display:flex;flex-direction:column;gap:14px}
+    .data-table{width:100%;border-collapse:collapse;font-size:var(--fs-body);line-height:1.35}
+    .data-table th{padding:10px 16px;border-bottom:2px solid var(--ink);text-align:left;font-size:var(--fs-label);font-weight:900;letter-spacing:.02em;color:var(--muted)}
+    .data-table td{padding:11px 16px;border-bottom:1px solid var(--line);color:var(--body);word-break:keep-all}
+    .data-table td:first-child{font-weight:800;color:var(--ink)}
+    .data-table .num{text-align:right;font-variant-numeric:tabular-nums}
+    .data-table .num + :not(.num){padding-left:44px}   /* px 고정 — th·td 글자 크기가 달라도 왼쪽 선이 맞는다 */
+    .data-table tr.hot td{background:var(--accent-soft);font-weight:900;color:var(--ink)}
+    .data-table tr.hot td:first-child{box-shadow:inset 5px 0 0 var(--accent)}
+    .table-wrap .final-line,.table-wrap .figure-source{margin:0}
+
+    /* ── 패턴 U · 목차 · 진행 지도: 지금 장만 칠한다 ───────────── */
+    .agenda{width:100%;margin:0;padding:0;list-style:none;border-top:2px solid var(--ink)}
+    .agenda li{display:grid;grid-template-columns:84px 1fr auto;align-items:center;gap:20px;padding:14px 16px;border-bottom:1px solid var(--line)}
+    .agenda .no{font-size:var(--fs-h3);font-weight:900;color:var(--muted);font-variant-numeric:tabular-nums}
+    .agenda strong{display:block;font-size:var(--fs-h3);letter-spacing:-.03em;color:var(--ink);word-break:keep-all}
+    .agenda p{margin:.15em 0 0;font-size:var(--fs-label);color:var(--muted);word-break:keep-all}
+    .agenda .time{font-size:var(--fs-label);font-weight:800;color:var(--muted)}
+    .agenda li.done strong{color:var(--muted)}
+    .agenda li.now{background:linear-gradient(90deg,var(--accent-soft),var(--paper));box-shadow:inset 5px 0 0 var(--accent)}
+    .agenda li.now .no,.agenda li.now .time{color:var(--accent-dark)}
+
+    /* ── 패턴 V · 핵심 숫자 한 장: 숫자 하나 + 비교 기준 + 출처 ─── */
+    .stat-hero{width:100%;display:grid;grid-template-columns:1.1fr 1fr;gap:56px;align-items:center}
+    .stat-num{display:block;font-size:calc(var(--fs-h1) * 2.2);font-weight:900;line-height:1;letter-spacing:-.05em;color:var(--accent-dark);font-variant-numeric:tabular-nums}
+    .stat-num small{font-size:.4em;letter-spacing:0}
+    .stat-label{margin:.5em 0 0;font-size:var(--fs-h3);font-weight:800;color:var(--ink);word-break:keep-all}
+    .stat-side{display:flex;flex-direction:column;gap:16px}
+    .stat-side .lead{margin:0}
+    .stat-compare{display:grid;gap:10px}
+    .stat-compare div{display:grid;grid-template-columns:1fr auto;align-items:baseline;padding:.5em .8em;border:1px solid var(--line);border-radius:6px;background:var(--paper)}
+    .stat-compare span{font-size:var(--fs-body);color:var(--muted);word-break:keep-all}
+    .stat-compare b{font-size:var(--fs-h3);font-variant-numeric:tabular-nums;color:var(--muted)}
+    .stat-compare .hot{border-color:var(--accent)}
+    .stat-compare .hot span{color:var(--ink);font-weight:800}
+    .stat-compare .hot b{color:var(--accent-dark)}
+    .stat-side .figure-source{margin:0}
+
+    /* ── 12 검증 ────────────────────────────────────────── */
+    .metric-list{width:100%;display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+    .metric{padding:1em 1.1em;border-radius:3px;background:var(--paper);border:1px solid var(--line)}
+    .metric small{color:var(--muted);font-weight:900;letter-spacing:.02em;font-size:var(--fs-label)}
+    .metric p{color:var(--muted);margin-bottom:0;word-break:keep-all}
+    .decision{padding:.9em 1.2em;border-left:6px solid var(--accent);background:var(--accent-soft)}
+    .decision small{display:block;margin-bottom:.35em;font-size:var(--fs-label);font-weight:900;letter-spacing:.02em;color:var(--accent-dark)}
+    .decision ol{margin:0;padding-left:0;list-style-position:inside;display:grid;gap:.2em}
+    .decision li{font-size:var(--fs-h3);font-weight:900;line-height:1.35;color:var(--ink);word-break:keep-all}
+    .decision + .metric-list{margin-top:18px}
+    .decision + .metric-list .metric h3{font-size:var(--fs-body)}
+
+    /* ── 푸터·컨트롤 ────────────────────────────────────── */
+    .foot{display:flex;grid-area:foot;justify-content:space-between;align-items:center;color:var(--muted);font-size:var(--fs-label);gap:1.5em}
+    .dark .foot{color:var(--line)}
+    .controls{position:fixed;right:24px;bottom:20px;z-index:30;display:flex;gap:8px;opacity:0;transition:opacity .25s;pointer-events:none}
+    .show-controls .controls,.controls:focus-within{opacity:1;pointer-events:auto}
+    .controls button{width:42px;height:42px;border:0;border-radius:2px;background:rgba(255,255,255,.92);color:var(--ink);cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.2);font-size:18px}
+    .controls button:hover{background:var(--accent-dark);color:var(--paper)}
+    .progress{position:fixed;z-index:40;bottom:0;left:0;height:4px;background:var(--accent);transition:.3s;width:10%}
+
+    /* 모바일 반응형 없음 — 발표용 덱은 16:9 화면과 인쇄만 대상으로 한다.
+       캔버스가 고정이라 레이아웃이 화면에 따라 변하지 않는다. */
+    @media print{
+      /* 1280x720px = 96dpi 기준 13.333x7.5in = 960x540pt. 화면 캔버스와 완전히 동일하다. */
+      @page{size:1280px 720px;margin:0}
+      html,body{overflow:visible;background:var(--paper);height:auto}
+      *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      .stage{position:static;display:block;background:var(--paper);overflow:visible}
+      /* JS가 넣은 인라인 transform을 !important로 눌러야 한다. */
+      .deck{width:auto;height:auto;transform:none!important}
+      .slide{position:relative;display:grid!important;opacity:1!important;transform:none!important;
+             page-break-after:always;break-after:page;width:var(--canvas-w);height:var(--canvas-h);overflow:hidden}
+      .slide:last-child{page-break-after:auto;break-after:auto}
+      .controls,.progress{display:none}
+    }
+    /* ?embed — 갤러리·미리보기 iframe 안에서는 조작 버튼과 진행 막대를 숨긴다 */
+    .embed .controls,.embed .progress{display:none}
+    @media(prefers-reduced-motion:reduce){.slide,.progress{transition:none}}
+  </style>
+  <style>
+    /* 팔레트 장 전용 — 테마 토큰을 그대로 칠해서 보여준다. 색 값을 직접 쓰지 않는다. */
+    .pal{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:18px 28px}
+    .pal-group h3{margin:0 0 8px;font-size:var(--fs-label);font-weight:900;letter-spacing:.02em;color:var(--muted)}
+    .pal-row{display:flex;gap:10px}
+    .sw{flex:1;min-width:0}
+    .sw i{display:block;height:46px;border-radius:6px;border:1px solid var(--line)}
+    .sw b{display:block;margin-top:5px;font-size:var(--fs-label);font-weight:800;color:var(--ink);word-break:keep-all;line-height:1.25}
+    .sw code{display:block;font-family:ui-monospace,Menlo,monospace;font-size:var(--fs-label);color:var(--muted)}
+    .pal-demo{grid-column:1 / -1;display:flex;align-items:center;gap:22px;padding-top:12px;border-top:1px solid var(--line)}
+    .pal-demo .final-line{margin:0;font-size:var(--fs-body);white-space:nowrap}
+    .pal-badges{display:flex;gap:10px}
+    .pal-contrast{margin:0 0 0 auto;word-break:keep-all;font-size:var(--fs-label);color:var(--muted)}
+    .pal-contrast b{color:var(--ink)}
+    .pal-lane{white-space:nowrap;padding:.25em .8em;border:1.5px solid var(--c);border-radius:6px;color:var(--c);font-size:var(--fs-label);font-weight:900}
+  </style>
+</head>
+<body>
+  <div class="stage">
+  <main class="deck" aria-label="발표자료">
+
+    <section class="slide active" data-title="색 팔레트">
+      <header class="slide-head"><div><p class="kicker">PALETTE</p><h2 id="pal-title">색 팔레트</h2></div></header>
+      <div class="content">
+        <div class="pal">
+          <div class="pal-group"><h3>바탕</h3><div class="pal-row"><div class="sw"><i style="background:var(--paper)"></i><b>종이</b><code data-var="--paper"></code></div><div class="sw"><i style="background:var(--card)"></i><b>카드</b><code data-var="--card"></code></div><div class="sw"><i style="background:var(--line)"></i><b>선</b><code data-var="--line"></code></div></div></div><div class="pal-group"><h3>글자</h3><div class="pal-row"><div class="sw"><i style="background:var(--ink)"></i><b>제목</b><code data-var="--ink"></code></div><div class="sw"><i style="background:var(--body)"></i><b>본문</b><code data-var="--body"></code></div><div class="sw"><i style="background:var(--muted)"></i><b>보조</b><code data-var="--muted"></code></div></div></div><div class="pal-group"><h3>강조 · 한 장에 한 곳</h3><div class="pal-row"><div class="sw"><i style="background:var(--accent)"></i><b>강조</b><code data-var="--accent"></code></div><div class="sw"><i style="background:var(--accent-dark)"></i><b>강조 글자</b><code data-var="--accent-dark"></code></div><div class="sw"><i style="background:var(--accent-soft)"></i><b>강조 바탕</b><code data-var="--accent-soft"></code></div></div></div><div class="pal-group"><h3>갈래 · 이쪽 / 저쪽</h3><div class="pal-row"><div class="sw"><i style="background:var(--tone-a)"></i><b>갈래 A</b><code data-var="--tone-a"></code></div><div class="sw"><i style="background:var(--tone-a-soft)"></i><b>A 바탕</b><code data-var="--tone-a-soft"></code></div><div class="sw"><i style="background:var(--tone-b)"></i><b>갈래 B</b><code data-var="--tone-b"></code></div><div class="sw"><i style="background:var(--tone-b-soft)"></i><b>B 바탕</b><code data-var="--tone-b-soft"></code></div></div></div><div class="pal-group"><h3>구현 상태</h3><div class="pal-row"><div class="sw"><i style="background:var(--status-done)"></i><b>확인됨</b><code data-var="--status-done"></code></div><div class="sw"><i style="background:var(--status-plan)"></i><b>제안</b><code data-var="--status-plan"></code></div><div class="sw"><i style="background:var(--status-next)"></i><b>예정</b><code data-var="--status-next"></code></div></div></div><div class="pal-group"><h3>코드 블록</h3><div class="pal-row"><div class="sw"><i style="background:var(--code-bg)"></i><b>바탕</b><code data-var="--code-bg"></code></div><div class="sw"><i style="background:var(--code-fg)"></i><b>글자</b><code data-var="--code-fg"></code></div><div class="sw"><i style="background:var(--code-key)"></i><b>키워드</b><code data-var="--code-key"></code></div><div class="sw"><i style="background:var(--code-str)"></i><b>문자열</b><code data-var="--code-str"></code></div></div></div>
+          <div class="pal-demo">
+            <div class="pal-badges"><span class="badge">현재 확인됨</span><span class="badge plan">제안</span><span class="badge next">예정</span></div>
+            <span class="pal-lane tone-a">갈래 A</span><span class="pal-lane tone-b">갈래 B</span>
+            <p class="final-line">강조는 결론 한 줄에만.</p>
+            <p class="pal-contrast" id="pal-contrast"></p>
+          </div>
+        </div>
+      </div>
+      <footer class="foot"><span id="pal-use"></span><span class="page"></span></footer>
+    </section>
+  </main>
+  </div>
+  <div class="controls" aria-label="슬라이드 제어"><button id="prev" aria-label="이전">←</button><button id="next" aria-label="다음">→</button></div>
+  <div id="progress" class="progress"></div>
+
+  <script>
+    /* ── 엔진 ── 여기는 건드리지 않는다. 내용은 위 마크업에서만 바꾼다. ── */
+
+    /* 화면에 맞춰 캔버스를 통째로 확대·축소한다. 16:9가 아니면 검정 여백이 남는다. */
+    /* ?embed — 미리보기 iframe 용, ?theme=이름 — 파일을 고치지 않고 테마를 바꿔 본다 */
+    const params=new URLSearchParams(location.search);
+    if(params.has('embed')) document.documentElement.classList.add('embed');
+    if(params.get('theme')) document.documentElement.dataset.theme=params.get('theme');
+    const deck=document.querySelector('.deck');
+    function fit(){ deck.style.transform=`scale(${Math.min(innerWidth/1280, innerHeight/720)})`; }
+    addEventListener('resize',fit); fit();
+
+    const slides=[...document.querySelectorAll('.slide')]; let index=0;
+    function show(next){
+      index=Math.max(0,Math.min(slides.length-1,next));
+      slides.forEach((s,i)=>{s.classList.toggle('active',i===index);s.classList.toggle('past',i<index)});
+      document.querySelector('#progress').style.width=`${(index+1)/slides.length*100}%`;
+      history.replaceState(null,'',`#${index+1}`);
+    }
+    document.querySelector('#prev').onclick=()=>show(index-1);
+    document.querySelector('#next').onclick=()=>show(index+1);
+    /* 마우스를 움직이면 조작 버튼을 잠깐 보여준다. 평소엔 숨겨 쪽 번호를 가리지 않는다. */
+    let controlsTimer;
+    addEventListener('mousemove',()=>{
+      document.documentElement.classList.add('show-controls');
+      clearTimeout(controlsTimer);
+      controlsTimer=setTimeout(()=>document.documentElement.classList.remove('show-controls'),1800);
+    });
+    /* ?embed(갤러리 미리보기·크게 보기) 안에서는 키를 받지 않는다. 장 넘김은 바깥 페이지가 맡는다. */
+    if(!params.has('embed')) addEventListener('keydown',e=>{
+      if(['ArrowRight',' ','PageDown'].includes(e.key)){e.preventDefault();show(index+1)}
+      if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();show(index-1)}
+      if(e.key==='Home')show(0); if(e.key==='End')show(slides.length-1);
+    });
+    const initial=Number(location.hash.slice(1));
+    show(Number.isFinite(initial)&&initial>0?initial-1:0);
+
+    /* 페이지 번호를 자동으로 채운다. 슬라이드를 넣고 빼도 어긋나지 않는다. */
+    slides.forEach((s,i)=>{
+      const n=s.querySelector('.foot .page');
+      if(n) n.textContent=`${String(i+1).padStart(2,'0')} / ${slides.length}`;
+    });
+
+    /* 구조도 선을 그린다. .dg 안의 <i class="dg-edge"> 한 개가 선 한 개다.
+         data-from / data-to   잇는 두 노드의 id (같은 .dg 안)
+         data-kind             solid(기본) | dashed
+         data-route            auto(기본: 같은 줄이면 직선, 아니면 곡선) | straight | curve | elbow
+         data-from-side / data-to-side   t r b l — 생략하면 두 노드 위치로 정한다
+         data-offset           왕복선을 비켜 놓는 간격(px, 음수 가능)
+         data-arrow            end(기본) | both | none
+         data-label · data-label-at   선 위 글자와 그 위치(0~1, 기본 0.5)
+         data-label-dx · data-label-dy  글자를 선에서 옆으로 비킨다(px). 왕복선 사이에 끼면 바깥으로 뺀다
+       잇지 못한 선은 .dg-broken 이 붙고 deck_verify 가 오류로 알린다. */
+    const SVGNS='http://www.w3.org/2000/svg';
+    function drawDiagrams(){
+      document.querySelectorAll('.dg').forEach(dg=>{
+        dg.querySelectorAll(':scope > .dg-edges, :scope > .dg-label').forEach(n=>n.remove());
+        if(!dg.offsetWidth) return;
+        const box=dg.getBoundingClientRect(), k=box.width/dg.offsetWidth;
+        const rel=el=>{const r=el.getBoundingClientRect();return{l:(r.left-box.left)/k,t:(r.top-box.top)/k,w:r.width/k,h:r.height/k}};
+        const svg=document.createElementNS(SVGNS,'svg'); svg.classList.add('dg-edges'); dg.appendChild(svg);
+        const at=(r,side,off)=>({
+          t:{x:r.l+r.w/2+off,y:r.t,dx:0,dy:-1}, b:{x:r.l+r.w/2+off,y:r.t+r.h,dx:0,dy:1},
+          l:{x:r.l,y:r.t+r.h/2+off,dx:-1,dy:0}, r:{x:r.l+r.w,y:r.t+r.h/2+off,dx:1,dy:0}})[side];
+        dg.querySelectorAll('.dg-edge').forEach(e=>{
+          e.classList.remove('dg-broken');
+          const pick=id=>id&&dg.querySelector('#'+CSS.escape(id));
+          const A=pick(e.dataset.from), B=pick(e.dataset.to);
+          if(!A||!B){e.classList.add('dg-broken');return}
+          const a=rel(A), b=rel(B);
+          const gx=Math.max(b.l-(a.l+a.w), a.l-(b.l+b.w)), gy=Math.max(b.t-(a.t+a.h), a.t-(b.t+b.h));
+          const horiz=gx>=gy, cx=(b.l+b.w/2)-(a.l+a.w/2), cy=(b.t+b.h/2)-(a.t+a.h/2);
+          const s1=e.dataset.fromSide||(horiz?(cx>=0?'r':'l'):(cy>=0?'b':'t'));
+          const s2=e.dataset.toSide||(horiz?(cx>=0?'l':'r'):(cy>=0?'t':'b'));
+          const off=parseFloat(e.dataset.offset)||0, p=at(a,s1,off), q=at(b,s2,off);
+          let route=e.dataset.route||'auto';
+          if(route==='auto') route=(Math.abs(p.x-q.x)<3||Math.abs(p.y-q.y)<3)&&p.dx===-q.dx&&p.dy===-q.dy?'straight':'curve';
+          let d=`M${p.x},${p.y}`;
+          if(route==='straight') d+=` L${q.x},${q.y}`;
+          else if(route==='elbow'){
+            if(p.dx&&q.dx){const m=(p.x+q.x)/2; d+=` H${m} V${q.y} H${q.x}`}
+            else if(p.dy&&q.dy){const m=(p.y+q.y)/2; d+=` V${m} H${q.x} V${q.y}`}
+            else d+=p.dx?` H${q.x} V${q.y}`:` V${q.y} H${q.x}`;
+          } else {
+            const t=Math.max(28,Math.hypot(q.x-p.x,q.y-p.y)*.4);
+            d+=` C${p.x+p.dx*t},${p.y+p.dy*t} ${q.x+q.dx*t},${q.y+q.dy*t} ${q.x},${q.y}`;
+          }
+          const color=getComputedStyle(e).color, g=document.createElementNS(SVGNS,'g');
+          const path=document.createElementNS(SVGNS,'path');
+          path.setAttribute('d',d); path.setAttribute('fill','none'); path.setAttribute('stroke',color);
+          path.setAttribute('stroke-width','2'); if(e.dataset.kind==='dashed') path.setAttribute('stroke-dasharray','6 5');
+          g.appendChild(path); svg.appendChild(g);
+          const len=path.getTotalLength();
+          const head=(tip,back)=>{
+            const P=path.getPointAtLength(tip), Q=path.getPointAtLength(back);
+            const ux=P.x-Q.x, uy=P.y-Q.y, n=Math.hypot(ux,uy)||1, x=ux/n, y=uy/n;
+            const tri=document.createElementNS(SVGNS,'path');
+            tri.setAttribute('d',`M${P.x},${P.y} L${P.x-x*10-y*5},${P.y-y*10+x*5} L${P.x-x*10+y*5},${P.y-y*10-x*5}Z`);
+            tri.setAttribute('fill',color); g.appendChild(tri);
+          };
+          const arrow=e.dataset.arrow||'end';
+          if(arrow!=='none') head(len,Math.max(0,len-10));
+          if(arrow==='both') head(0,Math.min(len,10));
+          if(e.dataset.label){
+            const m=path.getPointAtLength(len*(parseFloat(e.dataset.labelAt)||.5));
+            const tag=document.createElement('span'); tag.className='dg-label'; tag.textContent=e.dataset.label;
+            tag.style.left=`${m.x+(parseFloat(e.dataset.labelDx)||0)}px`; tag.style.top=`${m.y+(parseFloat(e.dataset.labelDy)||0)}px`; tag.style.color=color; dg.appendChild(tag);
+          }
+        });
+      });
+    }
+    drawDiagrams();
+    if(document.fonts) document.fonts.ready.then(drawDiagrams);
+  </script>
+  <script>
+    /* 이 장은 ?theme= 로 테마를 받아 그 팔레트를 보여준다. 값은 실제 CSS 토큰에서 읽는다. */
+    const THEMES={'':['clay (기본)','제안·결과 보고 — 보고서와 같은 따뜻한 편집물 톤'],clay:['clay (기본)','제안·결과 보고 — 보고서와 같은 따뜻한 편집물 톤'],
+      ocean:['ocean','기술 설명·아키텍처·데이터 리뷰 — 차분한 파랑'],duo:['duo','강의·교육·비교 — 남색 갈래와 자홍 강조가 분명'],
+      forest:['forest','운영 현황·성과 보고 — 안정적인 초록'],signal:['signal','피치·키노트·외부 발표 — 흰 바탕 고대비 + 빨강 한 점']};
+    const key=new URLSearchParams(location.search).get('theme')||'';
+    const [name,use]=THEMES[key]||[key,''];
+    document.getElementById('pal-title').textContent=`${name} 팔레트`;
+    document.getElementById('pal-use').textContent=use;
+    const hex=c=>{const m=c.match(/\d+(\.\d+)?/g);return m?'#'+m.slice(0,3).map(v=>(+v).toString(16).padStart(2,'0')).join('').toUpperCase():c};
+    document.querySelectorAll('.sw').forEach(s=>{s.querySelector('code').textContent=hex(getComputedStyle(s.querySelector('i')).backgroundColor)});
+    /* 대비: 글자 기준 4.5, 선·면 기준 3 */
+    const rgb=v=>{const d=document.createElement('i');d.style.color=`var(${v})`;document.body.appendChild(d);const c=getComputedStyle(d).color.match(/\d+/g).slice(0,3).map(Number);d.remove();return c};
+    const lum=c=>{const [r,g,b]=c.map(x=>{x/=255;return x<=.03928?x/12.92:((x+.055)/1.055)**2.4});return .2126*r+.7152*g+.0722*b};
+    const cr=(a,b)=>{const A=lum(rgb(a)),B=lum(rgb(b));return ((Math.max(A,B)+.05)/(Math.min(A,B)+.05)).toFixed(1)};
+    document.getElementById('pal-contrast').innerHTML=`대비 · 강조 글자 <b>${cr('--accent-dark','--paper')}</b> · 보조 글자 <b>${cr('--muted','--paper')}</b> · 강조 선 <b>${cr('--accent','--paper')}</b> · 예정 선 <b>${cr('--status-next','--paper')}</b> · 제안 <b>${cr('--status-plan','--paper')}</b> · 어두운 바탕 강조 <b>${cr('--accent-on-dark','--ink')}</b>`;
+  </script>
+</body>
+</html>

@@ -149,6 +149,59 @@ CASES = [
          expect={"dead-css"},
          edits=[("    .foot{display:flex;", "    .zzz-never-used{color:red}\n    .foot{display:flex;")]),
 
+    Case("palette",
+         "패턴 CSS에 색을 직접 쓰면 테마를 바꿔도 그 자리만 옛 색으로 남는다",
+         expect={"palette"},
+         edits=[("    .foot{display:flex;", "    .stray-color{color:#2F6FB0}\n    .foot{display:flex;")]),
+
+    Case("palette/theme-block",
+         "테마 블록과 인라인 --c 지정은 팔레트 경고 대상이 아니다",
+         absent={"palette"},
+         edits=[("    *{box-sizing:border-box}", '    [data-theme="forest"]{--accent:#3F7A4A}\n    *{box-sizing:border-box}'),
+                ('<div class="dg-lane tone-b">', '<div class="dg-lane tone-b" style="--c:#2F6FB0">')]),
+
+    Case("dg-edge",
+         "선이 없는 노드를 가리키면 그려지지 않고 조용히 빠진다",
+         expect={"dg-edge"},
+         edits=[('data-from="o-run" data-to="o-out"', 'data-from="o-run" data-to="o-nope"')]),
+
+    Case("dg-overlap",
+         "두 노드를 같은 칸에 두면 겹쳐서 읽히지 않는다",
+         expect={"dg-overlap"},
+         edits=[('id="o-run" style="--x:4;--y:1"', 'id="o-run" style="--x:3;--y:1"')],
+         render=True),
+
+    Case("dg-numbers",
+         "그림 번호와 범례 번호가 어긋나면 순서대로 짚을 수 없다",
+         expect={"dg-numbers"},
+         edits=[('<li><span class="dg-num">3</span>', '<li><span class="dg-num">4</span>')],
+         render=True),
+
+    Case("code-overflow",
+         "pre 는 줄을 접지 않아 긴 줄이 상자 오른쪽에서 조용히 잘린다",
+         expect={"code-overflow"},
+         edits=[('result = run(state[<span class="s">"input"</span>])',
+                 'result = run(state[<span class="s">"input"</span>], ' + "option_value, " * 12 + ')')],
+         render=True),
+
+    Case("code-budget",
+         "코드가 12줄을 넘으면 설명할 줄이 묻힌다",
+         expect={"code-budget"},
+         edits=[('<span class="k">def</span> handle(state):', '<span class="k">def</span> handle(state):' + "\n    pass" * 9),
+                ('<div class="code-out">', '<div class="code-out" style="display:none">')],
+         render=True),
+
+    Case("dg-numbers/code",
+         "코드 강조 번호와 결과 칸 번호가 어긋나면 어느 줄 얘기인지 놓친다",
+         expect={"dg-numbers"},
+         edits=[('<div><span class="dg-num">2</span><div><strong>', '<div><span class="dg-num">3</span><div><strong>')],
+         render=True),
+
+    Case("guide",
+         "갤러리 견본의 안내를 복사해 온 채로 두면 발표 화면에 '견본' 표시가 나간다",
+         expect={"guide"},
+         edits=[('<footer class="foot"><span>보조 메시지</span>', '<footer class="foot"><span class="guide">패턴 B · 요령</span>')]),
+
     Case("canvas",
          "고정 캔버스가 1280x720 에서 벗어나면 PDF 규격이 깨진다",
          expect={"canvas"},
@@ -179,6 +232,9 @@ def run_case(case: Case, src: str, workdir: Path, use_render: bool) -> tuple[boo
     dv.check_badge_semantics(text, f)
     dv.check_legend_consistency(text, f)
     dv.check_page_numbers(text, f)
+    dv.check_palette(text, f)
+    dv.check_diagram_edges(text, f)
+    dv.check_guide_notes(text, deck, f)
     if case.render and use_render:
         render_data = dv.run_dynamic(deck, f)
 
@@ -194,7 +250,9 @@ def run_case(case: Case, src: str, workdir: Path, use_render: bool) -> tuple[boo
     fired = {i["check"] for i in f.items if i["level"] in ("error", "warn", "info")}
     errors = {i["check"] for i in f.items if i["level"] == "error"}
 
-    expected_levels = {"template-css": "info", "empty-content": "info", "foot-position": "warn", "dead-css": "warn"}
+    expected_levels = {"template-css": "info", "empty-content": "info", "foot-position": "warn", "dead-css": "warn",
+                       "palette": "warn", "dg-edge": "error", "dg-overlap": "error", "dg-numbers": "error",
+                       "code-overflow": "error", "code-budget": "warn", "guide": "warn"}
     for item in f.items:
         if item["check"] in expected_levels and item["level"] != expected_levels[item["check"]]:
             return False, f"검사 심각도가 다르다: {item}"
@@ -262,6 +320,30 @@ def test_numbers(workdir: Path) -> None:
     assert numbers('2024년도 2025년 2026 2023년대', ignore_years=True) == ['2023']
 
 
+def test_gallery_sync() -> None:
+    """갤러리 견본(presentation.html·palette.html)의 CSS·엔진이 스타터와 같아야 한다.
+
+    색 토큰·테마를 스타터에서만 고치고 갤러리에 안 옮기면 견본과 실제 덱의 색이 어긋난다.
+    """
+    gal = ROOT / "examples/gallery"
+    if not gal.exists():
+        return
+    src = TEMPLATE.read_text(encoding="utf-8")
+    cut = lambda s: s[: s.index('<main class="deck"')]
+    start_tail = lambda s: s[s.index("  </main>"):]
+    head = cut(src).replace("<title>발표 제목</title>", "")
+    for name in ("presentation.html", "palette.html"):
+        other = (gal / name).read_text(encoding="utf-8")
+        h = cut(other)
+        h = h[: h.index("<title>")] + h[h.index("</title>") + len("</title>"):]
+        if "팔레트 장 전용" in h:
+            h = h[: h.index("  <style>\n    /* 팔레트 장 전용")] + h[h.index("</head>"):]
+        assert h == head, f"{name} 의 <head> 가 스타터와 다르다 — 스타터 CSS 를 갤러리에 다시 옮길 것"
+        tail = start_tail(other)
+        if name == "presentation.html":
+            assert tail == start_tail(src), f"{name} 의 엔진 스크립트가 스타터와 다르다"
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="deck_verify 자체 테스트")
     ap.add_argument("--fast", action="store_true", help="렌더 케이스를 건너뛴다 (크롬 미사용)")
@@ -278,6 +360,14 @@ def main() -> int:
         workdir = Path(tmp)
         if ASSETS.exists():
             shutil.copytree(ASSETS, workdir / "assets")
+
+        try:
+            test_gallery_sync()
+            print("  ✓  gallery-sync             갤러리 견본의 CSS·엔진이 스타터와 같다")
+            passed += 1
+        except AssertionError as exc:
+            print(f"  ✗  gallery-sync             {exc}")
+            failed += 1
 
         try:
             test_numbers(workdir)

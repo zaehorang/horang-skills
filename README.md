@@ -56,6 +56,8 @@
 
 읽히는 문서가 필요하면 `report`, 따로 슬라이드를 띄워 말해야 하면 `presentation`을 쓴다.
 
+`presentation`에는 발표에 자주 나오는 장 22가지와 색 테마 5개를 한 주제로 채운 견본 갤러리가 있다 — [`presentation/examples/gallery/index.html`](./presentation/examples/gallery/index.html)을 브라우저로 열면 장 종류별로 미리 보고 테마를 바꿔 볼 수 있다.
+
 ---
 
 ## 🛠 개발하기

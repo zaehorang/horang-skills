@@ -35,7 +35,9 @@
     button{font:inherit}
 
     /* ── 무대: 화면을 채우고 캔버스를 가운데 둔다. 남는 부분은 검정 레터박스 ── */
-    .stage{position:fixed;inset:0;display:grid;place-items:center;background:#000;overflow:hidden}
+    /* 칸을 화면 크기로 고정해야 창이 1280px보다 좁아도 캔버스가 가운데에서 축소된다.
+       auto 칸이면 칸이 1280px로 늘어나 축소된 캔버스가 오른쪽 밖으로 밀린다. */
+    .stage{position:fixed;inset:0;display:grid;grid-template:minmax(0,1fr) / minmax(0,1fr);place-items:center;background:#000;overflow:hidden}
 
     /* ── 고정 캔버스 ──────────────────────────────────────
        1280x720에 절대 px로 그리고, 화면 크기에 맞춰 통째로 scale한다.
