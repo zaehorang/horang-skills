@@ -5,84 +5,91 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>색 테마</title>
   <style>
-    :root{--ink:#141413;--body:#2B2A27;--muted:#6B6A64;--paper:#FAF9F5;--line:#DEDCD3;--card:#F0EEE6;--accent-dark:#A84A28;--accent-soft:#F5E3DA}
+    :root{--ink:#141413;--body:#2B2A27;--muted:#6B6A64;--paper:#FAF9F5;--line:#DEDCD3;--card:#F0EEE6;--accent:#D97757;--accent-dark:#A84A28;--accent-soft:#F5E3DA}
     *{box-sizing:border-box}
     body{margin:0;background:var(--paper);color:var(--body);font-family:Pretendard,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;line-height:1.5}
     .wrap{max-width:1240px;margin:0 auto;padding-inline:24px}
     header.top{position:sticky;top:0;z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
-    .bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px;padding-block:14px}
+    .bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding-block:14px}
     .bar h1{margin:0;font-size:22px;letter-spacing:-.03em;color:var(--ink)}
     .bar h1 span{color:var(--accent-dark)}
-    nav{display:flex;flex-wrap:wrap;gap:6px}
-    nav a{padding:5px 11px;border:1px solid var(--line);border-radius:999px;color:var(--body);font-size:14px;font-weight:700;text-decoration:none}
-    nav a:hover{border-color:var(--accent-dark)}
-    .back{font-size:14px;font-weight:700;color:var(--accent-dark)}
-    .toggle{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:14px;color:var(--muted)}
-    .toggle button{padding:5px 11px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--body);font:inherit;font-size:14px;font-weight:700;cursor:pointer}
-    .toggle button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
-    .paper-grid{display:grid;grid-template-columns:auto repeat(2,minmax(0,1fr));gap:10px 14px;align-items:center;max-width:980px}
-    .paper-grid .col{font-size:14px;font-weight:900;color:var(--ink);text-align:center}
-    .paper-grid .row{font-size:14px;font-weight:900;color:var(--ink)}
-    .intro{padding:26px 0 0;max-width:780px}
-    .intro p{margin:0 0 8px;color:var(--muted)}
-    .intro b{color:var(--ink)}
+    .back{margin-left:auto;font-size:14px;font-weight:800;color:var(--accent-dark)}
+    .opts{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;padding-bottom:14px}
+    .group{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:14px;color:var(--muted)}
+    .group > span{margin-right:2px;font-weight:700}
+    .group button{flex:none;white-space:nowrap;padding:5px 12px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--body);font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+    .group button:hover{border-color:var(--accent)}
+    .group button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+    .info{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:8px 32px;padding:24px 0 18px;align-items:start}
+    .info h2{margin:0;font-size:30px;letter-spacing:-.04em;color:var(--ink)}
+    .info .use{margin:2px 0 8px;font-weight:800;color:var(--body)}
+    .info p{margin:0 0 6px}
+    .info dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:14px}
+    .info dt{font-weight:900;color:var(--ink)}
+    .info dd{margin:0}
     code{font-family:ui-monospace,Menlo,monospace;font-size:.9em;background:var(--card);padding:.1em .35em;border-radius:4px}
-    section.theme{padding:30px 0 10px;border-bottom:1px solid var(--line);scroll-margin-top:70px}
-    .theme-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin-bottom:6px}
-    .theme-head h2{margin:0;font-size:26px;letter-spacing:-.04em;color:var(--ink)}
-    .theme-head .use{font-weight:800;color:var(--body)}
-    .fit{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:4px 24px;margin:6px 0 16px;font-size:14px}
-    .fit p{margin:0}
-    .fit b{color:var(--ink)}
-    .compare{padding:26px 0 8px;border-bottom:1px solid var(--line);scroll-margin-top:70px}
-    .compare h2{margin:0 0 4px;font-size:22px;letter-spacing:-.03em;color:var(--ink)}
-    .compare > p{margin:0 0 12px;color:var(--muted);font-size:14px}
-    .cmp-grid{display:grid;grid-template-columns:auto repeat(5,minmax(0,1fr));gap:10px;align-items:center}
-    .cmp-grid .col{font-size:14px;font-weight:900;color:var(--ink);text-align:center}
-    .cmp-grid .row{font-size:13px;font-weight:800;color:var(--muted);max-width:4.5em;word-break:keep-all}
-    .shots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
-    .shot{position:relative;display:block;aspect-ratio:16/9;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#000}
-    .shot:hover{outline:2px solid var(--accent-dark)}
+    .hint{margin:0 0 14px;font-size:14px;color:var(--muted)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:18px;padding-bottom:40px}
+    .grid.pairs{grid-template-columns:auto repeat(2,minmax(0,1fr));align-items:center;max-width:1000px}
+    .grid.pairs .col{font-size:14px;font-weight:900;color:var(--ink);text-align:center}
+    .grid.pairs .row{font-size:14px;font-weight:800;color:var(--ink);max-width:6em;word-break:keep-all}
+    .shot{display:block;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;color:inherit;text-decoration:none;cursor:pointer}
+    .shot:hover{border-color:var(--accent)}
+    .shot .frame{position:relative;aspect-ratio:16/9;background:#000}
     .shot iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}
-    .shot span{position:absolute;right:8px;top:8px;padding:2px 8px;border-radius:4px;background:rgba(20,20,19,.75);color:#fff;font-size:12px;font-weight:700}
-    footer.end{padding:30px 0 48px;color:var(--muted);font-size:14px}
-    @media (max-width:760px){.shots{grid-template-columns:1fr}.cmp-grid{overflow-x:auto;grid-template-columns:auto repeat(5,180px)}.paper-grid{overflow-x:auto;grid-template-columns:auto repeat(2,220px)}header.top{position:static}}
+    .shot b{display:block;padding:8px 12px;font-size:14px;color:var(--ink)}
+    .grid.pairs .shot b{display:none}
+    footer.end{padding:0 0 40px;color:var(--muted);font-size:14px}
+    /* 크게 보기 — 새 탭으로 넘어가지 않고 이 페이지 위에 띄운다 */
+    .viewer{position:fixed;inset:0;z-index:20;display:none;flex-direction:column;background:var(--ink)}
+    .viewer.open{display:flex}
+    .viewer-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:12px 18px;color:var(--paper)}
+    .viewer-bar strong{margin-right:auto;font-size:17px;letter-spacing:-.02em}
+    .viewer-bar a,.viewer-bar button{padding:6px 12px;border:1px solid rgba(255,255,255,.3);border-radius:999px;background:transparent;color:var(--paper);font:inherit;font-size:14px;font-weight:700;text-decoration:none;cursor:pointer}
+    .viewer-bar a:hover,.viewer-bar button:hover{border-color:var(--accent);color:#fff}
+    .viewer-bar .close{font-size:18px;line-height:1;padding:6px 11px}
+    .viewer-stage{flex:1;min-height:0;display:grid;place-items:center;padding:0 18px 18px}
+    .viewer-frame{width:min(100%, calc((100vh - 84px) * 16 / 9));aspect-ratio:16/9;border:0;background:#000;border-radius:6px;pointer-events:none}
+    body.viewing{overflow:hidden}
+    @media (max-width:760px){header.top{position:static}.info{grid-template-columns:1fr}.back{margin-left:0}.viewer-bar strong{flex-basis:100%}}
   </style>
 </head>
 <body>
-  <header class="top"><div class="wrap bar">
-    <h1>색 <span>테마</span></h1>
-    <nav id="nav"></nav>
-    <div class="toggle" id="paper-toggle" role="group" aria-label="바탕">바탕 <button data-paper="" aria-pressed="true">미색</button><button data-paper="white" aria-pressed="false">흰색</button></div>
-    <a class="back" href="index.html">← 장 갤러리</a>
-  </div></header>
-  <main class="wrap">
-    <div class="intro">
-      <p>발표 성격에 맞춰 고르는 <b>테마 5개</b>다. 기본은 clay이고, 덱의 <code>&lt;html lang="ko"&gt;</code>를
-         <code>&lt;html lang="ko" data-theme="ocean"&gt;</code>처럼 바꾸면 덱 전체가 바뀐다. 한 장에만 걸 수도 있다.</p>
-      <p>테마마다 역할은 같다. <b>강조</b>는 한 장에 한 곳, <b>갈래 A/B</b>는 이쪽·저쪽, <b>구현 상태</b>는 확인됨·제안·예정.
-         강조색은 갈래·"제안" 색과 일부러 다르게 두었다. 맨 위 격자에서 같은 장을 테마끼리 견주고, 테마별 칸의 첫 그림은 팔레트다. 누르면 크게 열린다.</p>
+  <header class="top"><div class="wrap">
+    <div class="bar">
+      <h1>색 <span>테마</span></h1>
+      <a class="back" href="index.html">← 장 갤러리로</a>
     </div>
-    <section class="compare" id="compare">
-      <h2>같은 장을 테마 5개로</h2>
-      <p>가로로 견줘 보고 고른다. 누르면 그 테마로 크게 열린다. 위쪽 '바탕' 버튼으로 이 격자와 아래 테마별 칸을 흰 바탕으로 바꿔 볼 수 있다. 17장 차트는 인라인 SVG라 테마를 따른다(그림 파일은 따르지 않는다).</p>
-      <div class="cmp-grid" id="cmp"></div>
-    </section>
-    <section class="compare" id="paper">
-      <h2>미색 바탕 vs 흰 바탕</h2>
-      <p>모든 테마에 <code>data-paper="white"</code>를 겹쳐 쓰면 바탕만 흰색이 된다(카드·선·강조는 그대로). 장을 골라 테마별로 좌우를 견준다.
-         signal은 원래 흰 바탕이라 두 칸이 같고, ocean·forest는 바탕이 원래 거의 흰색이라 차이가 작다 — 흰 바탕 옵션은 clay·duo에서 차이가 크다.</p>
-      <p><b>고르는 기준</b> · 흰 배경의 제품 캡처·차트가 많거나 인쇄·밝은 프로젝터로 보여 줄 때는 흰색, report 보고서(미색)와 이어서 보여 줄 때는 미색.</p>
-      <div class="toggle" id="paper-slide" role="group" aria-label="비교할 장" style="margin:0 0 12px">장
-        <button data-n="5" aria-pressed="true">구조 설명</button><button data-n="18" aria-pressed="false">구성과 상태</button>
-        <button data-n="22" aria-pressed="false">결정 요청</button><button data-n="7" aria-pressed="false">코드 설명</button>
-        <button data-n="16" aria-pressed="false">데이터 표</button></div>
-      <div class="paper-grid" id="paper-grid"></div>
-    </section>
-    <div id="themes"></div>
+    <div class="opts">
+      <div class="group" id="pick-theme" role="group" aria-label="테마"><span>테마</span></div>
+      <div class="group" id="pick-paper" role="group" aria-label="바탕"><span>바탕</span>
+        <button data-paper="" aria-pressed="true">미색</button>
+        <button data-paper="white" aria-pressed="false">흰색</button>
+        <button data-paper="both" aria-pressed="false">나란히</button>
+      </div>
+    </div>
+  </div></header>
+
+  <main class="wrap">
+    <section class="info" id="info" aria-live="polite"></section>
+    <p class="hint" id="hint"></p>
+    <div class="grid" id="grid"></div>
   </main>
-  <footer class="end wrap">정의 위치: <code>assets/starter/presentation.html</code>의 <code>[data-theme="…"]</code> 블록 · 새 테마 만드는 법: <code>references/build.md</code> "색 바꾸기"</footer>
+  <footer class="end wrap">정의 위치: <code>assets/starter/presentation.html</code>의 <code>[data-theme]</code>·<code>[data-paper]</code> 블록 · 새 테마 만드는 법: <code>references/build.md</code> "색 바꾸기"</footer>
+
+  <div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-labelledby="viewer-title">
+    <div class="viewer-bar">
+      <strong id="viewer-title"></strong>
+      <button id="viewer-prev" aria-label="이전">← 이전</button>
+      <button id="viewer-next" aria-label="다음">다음 →</button>
+      <a id="viewer-tab" target="_blank" rel="noopener">새 탭으로</a>
+      <button class="close" id="viewer-close" aria-label="닫기">×</button>
+    </div>
+    <div class="viewer-stage" id="viewer-stage"><iframe class="viewer-frame" id="viewer-frame" title="크게 보기" tabindex="-1"></iframe></div>
+  </div>
+
   <script>
+    /* [값, 이름, 용도, 설명, 어울리는 발표, 피할 때] — 테마를 더하면 여기와 스타터 CSS 에 한 줄씩 */
     const THEMES = [
       ['', 'clay', '기본 · 제안·결과 보고', '보고서와 같은 따뜻한 편집물 톤. report 스킬로 만든 보고서와 함께 발표할 때 색이 이어진다.',
        '제안서, 결과 보고, 내부 리뷰', '아주 기술적인 아키텍처 설명은 ocean이 더 차분하다'],
@@ -95,43 +102,94 @@
       ['signal', 'signal', '피치 · 키노트 · 외부 발표', '흰 바탕 고대비에 빨강 한 점. 빨강 강조가 강해서 하나만 써도 강하게 각인된다.',
        '외부 발표, 투자·사업 피치, 행사 키노트', '빨강을 여러 곳에 쓰면 경고처럼 읽힌다 — 강조는 꼭 한 곳'],
     ];
-    const SAMPLES = [[7, '코드 설명'], [22, '결정 요청']];
-    const COMPARE = [[1, '표지'], [5, '구조 설명'], [17, '분석 그림'], [18, '구성과 상태']];
-    let paper = '';
-    try { paper = localStorage.getItem('gallery-paper') || ''; } catch (e) {}
-    /* 덱에 테마·바탕을 주소 옵션으로 넘긴다 */
-    const qs = (t, p, embed) => { const o = [embed && 'embed', t && 'theme=' + t, p && 'paper=' + p].filter(Boolean).join('&'); return o ? '?' + o : ''; };
-    const shot = (t, name, n, label, p = paper) => `<a class="shot" aria-label="${name}${p ? ' 흰 바탕' : ''} · ${n} ${label}" href="presentation.html${qs(t, p)}#${n}" target="_blank" rel="noopener"><iframe loading="lazy" tabindex="-1" title="${name} · ${label}" src="presentation.html${qs(t, p, true)}#${n}"></iframe><span>${n} · ${label}</span></a>`;
-    const nav = document.getElementById('nav'), root = document.getElementById('themes'), cmp = document.getElementById('cmp');
-    nav.insertAdjacentHTML('beforeend', '<a href="#compare">나란히 보기</a><a href="#paper">흰 바탕 비교</a>');
-    THEMES.forEach(th => nav.insertAdjacentHTML('beforeend', `<a href="#theme-${th[1]}">${th[1]}</a>`));
+    /* 테마마다 보여 줄 장 — [파일, 장 번호, 이름]. 팔레트 + 색 역할이 드러나는 장 6개 */
+    const SAMPLES = [['palette.html', 0, '팔레트'], ['presentation.html', 1, '표지'], ['presentation.html', 5, '구조 설명'],
+      ['presentation.html', 7, '코드 설명'], ['presentation.html', 17, '분석 그림'], ['presentation.html', 18, '구성과 상태'], ['presentation.html', 22, '결정 요청']];
 
+    const read = k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
+    const save = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+    let theme = read('gallery-theme'), paper = read('themes-paper') || read('gallery-paper');
+    if (!THEMES.some(t => t[0] === theme)) theme = '';
+
+    /* 덱에는 테마·바탕을 주소 옵션으로 넘긴다 — 덱 파일은 고치지 않는다 */
+    const qs = (p, embed) => { const o = [embed && 'embed', theme && 'theme=' + theme, p && 'paper=' + p].filter(Boolean).join('&'); return o ? '?' + o : ''; };
+    const url = (file, n, p, embed) => file + qs(p, embed) + (n ? '#' + n : '');
+
+    const pickTheme = document.getElementById('pick-theme');
+    pickTheme.insertAdjacentHTML('beforeend', THEMES.map(t => `<button data-theme="${t[0]}">${t[1]}${t[0] ? '' : '(기본)'}</button>`).join(''));
+
+    let items = [];   // 지금 화면의 카드 순서 = 크게 보기의 이전/다음 순서
     function render() {
-      cmp.innerHTML = '<span></span>' + THEMES.map(th => `<span class="col">${th[1]}</span>`).join('') +
-        COMPARE.map(([n, label]) => `<span class="row">${label}</span>` + THEMES.map(th => shot(th[0], th[1], n, label)).join('')).join('');
-      root.innerHTML = THEMES.map(([t, name, use, desc, good, avoid]) => {
-        const shots = [`<a class="shot" href="palette.html${qs(t, paper)}" target="_blank" rel="noopener"><iframe loading="lazy" tabindex="-1" title="${name} 팔레트" src="palette.html${qs(t, paper, true)}"></iframe><span>팔레트</span></a>`]
-          .concat(SAMPLES.map(([n, label]) => shot(t, name, n, label))).join('');
-        return `<section class="theme" id="theme-${name}">
-          <div class="theme-head"><h2>${name}</h2><span class="use">${use}</span><code>${t ? `data-theme="${t}"` : '테마 없음(기본)'}</code></div>
-          <p>${desc}</p>
-          <div class="fit"><p><b>어울리는 발표</b> · ${good}</p><p><b>피할 때</b> · ${avoid}</p></div>
-          <div class="shots">${shots}</div></section>`;
-      }).join('');
-      document.querySelectorAll('#paper-toggle button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.paper === paper)));
+      const [t, name, use, desc, good, avoid] = THEMES.find(x => x[0] === theme);
+      const attr = [t && `data-theme="${t}"`, paper === 'white' && 'data-paper="white"'].filter(Boolean).join(' ');
+      document.getElementById('info').innerHTML = `
+        <div><h2>${name}</h2><p class="use">${use}</p><p>${desc}</p></div>
+        <dl><dt>어울리는 발표</dt><dd>${good}</dd><dt>피할 때</dt><dd>${avoid}</dd>
+            <dt>덱에 쓰기</dt><dd><code>&lt;html lang="ko"${attr ? ' ' + attr : ''}&gt;</code></dd></dl>`;
+      document.getElementById('hint').textContent = paper === 'both'
+        ? '왼쪽 미색 · 오른쪽 흰색. 흰 배경 캡처·인쇄·밝은 프로젝터에는 흰색, report 보고서와 이어 보여 줄 때는 미색. ocean·forest는 원래 바탕이 거의 흰색이라 차이가 작다.'
+        : '카드를 누르면 크게 열린다. ← → 로 넘기고 Esc나 × 로 닫는다.';
+      const grid = document.getElementById('grid');
+      const card = (it, k) => `<a class="shot" data-k="${k}" href="${url(it.file, it.n, it.p)}" aria-label="${name}${it.p ? ' 흰 바탕' : ''} · ${it.label}">
+          <div class="frame"><iframe loading="lazy" tabindex="-1" title="${it.label}" src="${url(it.file, it.n, it.p, true)}"></iframe></div><b>${it.label}</b></a>`;
+      if (paper === 'both') {
+        items = SAMPLES.flatMap(([file, n, label]) => [{file, n, label, p: ''}, {file, n, label, p: 'white'}]);
+        grid.className = 'grid pairs';
+        grid.innerHTML = '<span></span><span class="col">미색</span><span class="col">흰색</span>' +
+          SAMPLES.map(([, , label], i) => `<span class="row">${label}</span>` + card(items[2 * i], 2 * i) + card(items[2 * i + 1], 2 * i + 1)).join('');
+      } else {
+        items = SAMPLES.map(([file, n, label]) => ({file, n, label, p: paper}));
+        grid.className = 'grid';
+        grid.innerHTML = items.map(card).join('');
+      }
+      pickTheme.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.theme === theme)));
+      document.querySelectorAll('#pick-paper button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.paper === paper)));
     }
-    let paperSlide = [5, '구조 설명'];
-    function renderPaper() {
-      const [n, label] = paperSlide;
-      document.getElementById('paper-grid').innerHTML = '<span></span><span class="col">미색 (기본)</span><span class="col">흰색 · data-paper="white"</span>' +
-        THEMES.map(th => `<span class="row">${th[1]}</span>` + shot(th[0], th[1], n, label, '') + shot(th[0], th[1], n, label, 'white')).join('');
-      document.querySelectorAll('#paper-slide button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.n === n)));
-    }
-    document.querySelectorAll('#paper-toggle button').forEach(b => b.onclick = () => {
-      paper = b.dataset.paper; try { localStorage.setItem('gallery-paper', paper); } catch (e) {} render();
+    pickTheme.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; theme = b.dataset.theme; save('gallery-theme', theme); render(); });
+    document.getElementById('pick-paper').addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      paper = b.dataset.paper; save('themes-paper', paper); if (paper !== 'both') save('gallery-paper', paper); render();
     });
-    document.querySelectorAll('#paper-slide button').forEach(b => b.onclick = () => { paperSlide = [+b.dataset.n, b.textContent]; renderPaper(); });
-    render(); renderPaper();
+
+    const viewer = document.getElementById('viewer'), frame = document.getElementById('viewer-frame');
+    let current = 0;
+    function openAt(k) {
+      current = (k + items.length) % items.length;
+      const it = items[current], name = THEMES.find(x => x[0] === theme)[1];
+      document.getElementById('viewer-title').textContent = `${name}${it.p ? ' · 흰 바탕' : ''} · ${it.label}`;
+      document.getElementById('viewer-tab').href = url(it.file, it.n, it.p);
+      frame.src = url(it.file, it.n, it.p, true);
+      viewer.classList.add('open'); document.body.classList.add('viewing');
+      document.querySelectorAll('header.top, main, footer.end').forEach(el => el.inert = true);
+      document.getElementById('viewer-close').focus();
+    }
+    function closeViewer() {
+      viewer.classList.remove('open'); document.body.classList.remove('viewing');
+      document.querySelectorAll('header.top, main, footer.end').forEach(el => el.inert = false);
+      frame.src = 'about:blank';
+      const seen = document.querySelector(`.shot[data-k="${current}"]`); if (seen) seen.focus();
+    }
+    document.getElementById('grid').addEventListener('click', e => {
+      const a = e.target.closest('.shot');
+      if (!a || e.metaKey || e.ctrlKey || e.shiftKey || matchMedia('(max-width:640px)').matches) return;   // 수정키·휴대폰 폭은 새 탭
+      e.preventDefault(); openAt(+a.dataset.k);
+    });
+    document.getElementById('viewer-close').onclick = closeViewer;
+    document.getElementById('viewer-prev').onclick = () => openAt(current - 1);
+    document.getElementById('viewer-next').onclick = () => openAt(current + 1);
+    document.getElementById('viewer-stage').addEventListener('click', e => { if (e.target.id === 'viewer-stage') closeViewer(); });
+    addEventListener('keydown', e => {
+      if (!viewer.classList.contains('open')) return;
+      if (e.key === 'Escape') closeViewer();
+      if (e.key === 'ArrowRight') { e.preventDefault(); openAt(current + 1); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); openAt(current - 1); }
+      if (e.key === 'Tab') {
+        const f = [...viewer.querySelectorAll('button, a[href]')], i = f.indexOf(document.activeElement);
+        if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+        else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+      }
+    });
+    render();
   </script>
 </body>
 </html>

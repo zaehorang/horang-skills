@@ -142,7 +142,7 @@ cp <skill-dir>/assets/starter/assets/* <작업폴더>/assets/
 ### 색 바꾸기
 
 **발표 성격에 맞는 테마를 고른다.** 기본은 clay이고, 사용자가 색이나 발표 성격을 말하지 않으면 바꾸지 않는다.
-테마별 팔레트와 같은 장이 어떻게 보이는지, 미색·흰 바탕이 어떻게 다른지는 [examples/gallery/themes.html](../examples/gallery/themes.html)에서 비교한다.
+테마별 팔레트와 대표 장이 어떻게 보이는지, 미색·흰 바탕이 어떻게 다른지는 [examples/gallery/themes.html](../examples/gallery/themes.html)에서 테마를 하나씩 골라 본다.
 바탕은 기본 미색이다. 흰 배경의 제품 캡처·차트가 많거나 인쇄·밝은 프로젝터로 보여 줄 때는 `data-paper="white"`, report 보고서(미색)와 이어서 보여 줄 때는 미색을 쓴다.
 ocean·forest는 바탕이 원래 거의 흰색이라 옵션 차이가 작고, clay·duo에서 차이가 크다.
 
