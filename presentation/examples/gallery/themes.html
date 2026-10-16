@@ -5,11 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>색 테마</title>
   <style>
-    :root{--ink:#141413;--body:#2B2A27;--muted:#57554F;--paper:#FFFFFF;--line:#D6D3CA;--card:#F1F0EB;--accent:#D97757;--accent-dark:#9A4022;--accent-soft:#F5E3DA}
+    :root{--ink:#141413;--body:#2B2A27;--muted:#57554F;--paper:#FFFFFF;--line:#D6D3CA;--card:#F1F0EB;
+          --accent:#D97757;--accent-dark:#9A4022;--accent-light:#E38F72;--accent-soft:#F5E3DA;
+          --sw-clay:#D97757;--sw-ocean:#2F6FB0;--sw-duo:#B23A7A;--sw-forest:#3F7A4A;--sw-signal:#E5322D;
+          --stage:#0E0E0D;--on-stage:#FAF9F5;--on-stage-muted:#B9B7AE;--stage-line:rgba(255,255,255,.3)}
+    /* 페이지 크롬도 고른 테마·모드를 따른다(index.html 과 같은 값). "나란히"는 라이트 페이지에 둔다 */
+    [data-theme="ocean"]{--accent:#2F6FB0;--accent-dark:#1F4F86;--accent-light:#7FB2E5;--accent-soft:#E2ECF6}
+    [data-theme="duo"]{--accent:#B23A7A;--accent-dark:#8C2860;--accent-light:#E58BB8;--accent-soft:#F6E1EC}
+    [data-theme="forest"]{--accent:#3F7A4A;--accent-dark:#2C5A35;--accent-light:#8FC79A;--accent-soft:#E3EEE4}
+    [data-theme="signal"]{--accent:#E5322D;--accent-dark:#B71F1B;--accent-light:#FF6B63;--accent-soft:#FCE4E3}
+    [data-mode="dark"]{--ink:#EEEBE4;--body:#DCD9D0;--muted:#B3B0A6;--paper:#1B1A18;--line:#4A4843;--card:#2A2926;
+                       --accent-dark:var(--accent-light);--accent-soft:color-mix(in srgb,var(--accent) 26%,var(--paper))}
     *{box-sizing:border-box}
     body{margin:0;background:var(--paper);color:var(--body);font-family:Pretendard,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;line-height:1.5}
     .wrap{max-width:1240px;margin:0 auto;padding-inline:24px}
-    header.top{position:sticky;top:0;z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+    :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+    header.top{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--paper) 94%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
     .bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding-block:14px}
     .bar h1{margin:0;font-size:22px;letter-spacing:-.03em;color:var(--ink)}
     .bar h1 span{color:var(--accent-dark)}
@@ -17,9 +28,12 @@
     .opts{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;padding-bottom:14px}
     .group{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:14px;color:var(--muted)}
     .group > span{margin-right:2px;font-weight:700}
-    .group button{flex:none;white-space:nowrap;padding:5px 12px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--body);font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+    .group button{display:inline-flex;align-items:center;gap:.45em;flex:none;white-space:nowrap;padding:5px 11px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--body);font:inherit;font-size:14px;font-weight:700;cursor:pointer}
     .group button:hover{border-color:var(--accent)}
     .group button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+    .group .sw{width:.7em;height:.7em;border-radius:50%;background:var(--sw);flex:none;outline:1px solid rgba(0,0,0,.08)}   /* 테마의 강조색 한 점 */
+    .group button[aria-pressed="true"] .sw{outline-color:rgba(255,255,255,.35)}
+    .group .sr{font-weight:400;opacity:.75}
     .info{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:8px 32px;padding:24px 0 18px;align-items:start}
     .info h2{margin:0;font-size:30px;letter-spacing:-.04em;color:var(--ink)}
     .info .use{margin:2px 0 8px;font-weight:800;color:var(--body)}
@@ -33,19 +47,20 @@
     .grid.pairs{grid-template-columns:auto repeat(2,minmax(0,1fr));align-items:center;max-width:1000px}
     .grid.pairs .col{font-size:14px;font-weight:900;color:var(--ink);text-align:center}
     .grid.pairs .row{font-size:14px;font-weight:800;color:var(--ink);max-width:6em;word-break:keep-all}
-    .shot{display:block;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;color:inherit;text-decoration:none;cursor:pointer}
+    .shot{display:block;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--paper);color:inherit;text-decoration:none;cursor:pointer}
     .shot:hover{border-color:var(--accent)}
-    .shot .frame{position:relative;aspect-ratio:16/9;background:#000}
+    .shot .frame{position:relative;aspect-ratio:16/9;background:var(--card)}
     .shot iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}
     .shot b{display:block;padding:8px 12px;font-size:14px;color:var(--ink)}
     .grid.pairs .shot b{display:none}
     footer.end{padding:0 0 40px;color:var(--muted);font-size:14px}
     /* 크게 보기 — 새 탭으로 넘어가지 않고 이 페이지 위에 띄운다 */
-    .viewer{position:fixed;inset:0;z-index:20;display:none;flex-direction:column;background:var(--ink)}
+    .viewer{position:fixed;inset:0;z-index:20;display:none;flex-direction:column;background:var(--stage);color:var(--on-stage)}
     .viewer.open{display:flex}
-    .viewer-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:12px 18px;color:var(--paper)}
+    .viewer-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:12px 18px}
     .viewer-bar strong{margin-right:auto;font-size:17px;letter-spacing:-.02em}
-    .viewer-bar a,.viewer-bar button{padding:6px 12px;border:1px solid rgba(255,255,255,.3);border-radius:999px;background:transparent;color:var(--paper);font:inherit;font-size:14px;font-weight:700;text-decoration:none;cursor:pointer}
+    .viewer-count{font-family:ui-monospace,Menlo,monospace;font-size:14px;color:var(--on-stage-muted);margin-right:6px}
+    .viewer-bar a,.viewer-bar button{padding:6px 12px;border:1px solid var(--stage-line);border-radius:999px;background:transparent;color:var(--on-stage);font:inherit;font-size:14px;font-weight:700;text-decoration:none;cursor:pointer;white-space:nowrap}
     .viewer-bar a:hover,.viewer-bar button:hover{border-color:var(--accent);color:#fff}
     .viewer-bar .close{font-size:18px;line-height:1;padding:6px 11px}
     .viewer-stage{flex:1;min-height:0;display:grid;place-items:center;padding:0 18px 18px}
@@ -80,6 +95,7 @@
   <div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-labelledby="viewer-title">
     <div class="viewer-bar">
       <strong id="viewer-title"></strong>
+      <span class="viewer-count" id="viewer-count" aria-live="polite"></span>
       <button id="viewer-prev" aria-label="이전">← 이전</button>
       <button id="viewer-next" aria-label="다음">다음 →</button>
       <a id="viewer-tab" target="_blank" rel="noopener">새 탭으로</a>
@@ -116,7 +132,7 @@
     const url = (file, n, p, embed) => file + qs(p, embed) + (n ? '#' + n : '');
 
     const pickTheme = document.getElementById('pick-theme');
-    pickTheme.insertAdjacentHTML('beforeend', THEMES.map(t => `<button data-theme="${t[0]}">${t[1]}${t[0] ? '' : '(기본)'}</button>`).join(''));
+    pickTheme.insertAdjacentHTML('beforeend', THEMES.map(t => `<button data-theme="${t[0]}"><i class="sw" style="--sw:var(--sw-${t[1]})"></i>${t[1]}${t[0] ? '' : '<span class="sr">(기본)</span>'}</button>`).join(''));
 
     let items = [];   // 지금 화면의 카드 순서 = 크게 보기의 이전/다음 순서
     function render() {
@@ -142,6 +158,8 @@
         grid.className = 'grid';
         grid.innerHTML = items.map(card).join('');
       }
+      if (theme) document.documentElement.dataset.theme = theme; else delete document.documentElement.dataset.theme;
+      if (paper === 'dark') document.documentElement.dataset.mode = 'dark'; else delete document.documentElement.dataset.mode;
       pickTheme.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.theme === theme)));
       document.querySelectorAll('#pick-paper button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === paper)));
     }
@@ -157,6 +175,7 @@
       current = (k + items.length) % items.length;
       const it = items[current], name = THEMES.find(x => x[0] === theme)[1];
       document.getElementById('viewer-title').textContent = `${name}${it.p ? ' · 다크' : ''} · ${it.label}`;
+      document.getElementById('viewer-count').textContent = `${current + 1} / ${items.length}`;
       document.getElementById('viewer-tab').href = url(it.file, it.n, it.p);
       frame.src = url(it.file, it.n, it.p, true);
       viewer.classList.add('open'); document.body.classList.add('viewing');
