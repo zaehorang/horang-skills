@@ -583,7 +583,7 @@ def run_dynamic(path: Path, f: Findings) -> dict | None:
         if item["below"] >= EMPTY_BELOW_WARN and item["above"] < 0.1:   # 가운데 정렬은 몰린 게 아니다
             f.add("warn", "empty-below",
                   f"{item['slide']}장: 본문 아래 {item['below']:.0%}가 비어 위에 몰려 보인다 (기준 {EMPTY_BELOW_WARN:.0%}).",
-                  "<div class=\"content roomy\"> 로 글자·행을 키우거나, 다른 장과 합치거나, 그림을 더한다 (build.md '빈 공간')")
+                  "<div class=\"content roomy\"> (넘치면 roomy-sm) 로 글자·행을 키우거나, 다른 장과 합치거나, 그림을 더한다. 카드 틀만 늘리지 않는다 (build.md '빈 공간')")
             continue
         f.add("info", "empty-content",
               f"{item['slide']}장: 본문 영역의 {item['ratio']:.0%}가 비어 있다 "
