@@ -36,6 +36,7 @@ python3 <skill-dir>/scripts/deck_verify.py <deck.html>
 | `code-overflow` | 코드 줄이 상자 오른쪽으로 넘쳐 잘림 (`<pre>`는 줄을 접지 않는다) |
 | `code-budget` | 코드 블록 12줄 초과 — 경고 |
 | `guide` | 갤러리 견본 안내(`.guide`)가 남아 있음 — 경고 (갤러리 덱 자신은 정보) |
+| `text-contrast` | 렌더된 글자색과 그 뒤 배경의 대비가 3:1 미만. 한 장에만 모드·테마를 걸 때 상속이 깨지는 사고를 잡는다 (그라데이션·그림 위 글자는 건너뜀) |
 | `dg-label` | 선 라벨이 노드를 가림 — 경고 |
 | `dg-budget` | 구조도 하나에 노드 9개 초과 — 경고 |
 

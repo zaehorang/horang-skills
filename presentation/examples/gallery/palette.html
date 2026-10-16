@@ -6,23 +6,26 @@
   <title>색 팔레트</title>
   <style>
     /* ── 색 ──────────────────────────────────────────────────
-       세 층으로 나눈다. 색을 바꿀 때는 1층이나 3층만 고친다.
+       네 층으로 나눈다. 색을 바꿀 때는 1층·3층·4층만 고친다.
        패턴 CSS 안에 색 값을 직접 쓰지 않는다 (deck_verify 가 경고한다).
 
-       1. 팔레트   아래 :root 의 원색. 여기 값만 바꾸면 덱 전체가 바뀐다.
-       2. 의미 토큰 --gray · --pending · --tone-a · --tone-b. "무슨 뜻인가"의 이름이며 팔레트를 가리킨다.
-       3. 테마     <html data-theme="ocean"> 처럼 팔레트를 통째로 바꾸는 프리셋.
-                  <section class="slide" data-theme="duo"> 처럼 한 장에만 걸 수도 있다.
+       1. 팔레트   아래 :root 의 원색. 라이트 모드 기준이고 바탕은 흰색이다.
+       2. 의미 토큰 --gray · --tone-a · --status-plan · --surface-dark … "무슨 뜻인가"의 이름이며 팔레트를 가리킨다.
+       3. 테마     <html data-theme="ocean"> 처럼 강조색·중립색을 바꾸는 프리셋. 한 장에만 걸 수도 있다.
+       4. 모드     <html data-mode="dark"> 다크 모드. 어느 테마와도 겹쳐 쓴다. 없으면 라이트.
        한 요소만 다르게 칠할 때는 style="--c:#2F6FB0;--c-soft:#E2ECF6" (레인·노드·선·행 매핑).
 
        뜻: 강조색은 그 장에서 "지금 짚는 곳" 하나에만 쓴다 — 결론 한 줄, 새로 생긴 것, 짚는 행, 지금 단계.
        번호 원·라벨·갈래는 강조색이 아니다(먹색·회색). 회색은 이미 있는 것, 점선은 아직 아닌 것. */
     :root{
-      --ink:#141413; --body:#2B2A27; --muted:#6B6A64; --paper:#FAF9F5; --line:#DEDCD3;
+      --ink:#141413; --body:#2B2A27; --muted:#6B6A64; --paper:#FFFFFF; --line:#DEDCD3;
       --card:#F0EEE6;
       --accent:#D97757; --accent-dark:#A84A28; --accent-soft:#F5E3DA;
-      --status-plan:#4F6F80;   /* "제안" 상태. 강조색과 다른 색이어야 한다 */
+      --plan:#4F6F80;          /* "제안" 상태 원색. 강조색과 다른 색이어야 한다 */
+      --accent-light:#E38F72;  /* 어두운 바탕 위 강조 글자 원색 (표지·코드·다크 모드) */
+      --on-light:#141413;      /* 늘 밝은 면(조작 버튼 등) 위 글자 — 모드와 상관없이 어둡다 */
       --code-dim:#A3A198;
+      --on-dark:#FAF9F5; --on-dark-muted:#DEDCD3;   /* 늘 어두운 면(표지·사진 위 문구·코드) 위 글자 — 모드와 상관없이 밝다 */
       --shadow:0 14px 34px rgba(20,20,19,.08);
 
       /* 타이포 스케일 — 1280x720 고정 캔버스 기준 절대값.
@@ -40,44 +43,57 @@
       --canvas-h: 720px;
       --pad:      54px;
     }
-    /* 2층 · 의미 토큰. 테마·바탕을 건 요소에서도 다시 계산되도록 [data-theme]·[data-paper] 에도 선언한다. */
-    :root,[data-theme],[data-paper]{
+    /* 2층 · 의미 토큰. 테마·모드를 건 요소에서도 다시 계산되도록 [data-theme]·[data-mode] 에도 선언한다. */
+    :root,[data-theme],[data-mode]{
       /* --pending(= --line)은 선·면 전용이다. 뜻을 가진 글자·화살표·기호는 --muted 를 쓴다 (바탕 대비 1.3:1 이라 안 보인다) */
       --gray:var(--muted); --gray-soft:var(--card); --pending:var(--line);
       /* 구현 상태 3분류 — 강조색(--accent)과 섞지 않는다. 확인됨 = 먹색, 제안 = --status-plan, 예정 = 점선 */
-      --status-done:var(--ink); --status-next:var(--muted);
+      --status-done:var(--ink); --status-plan:var(--plan); --status-next:var(--muted);
       /* 구조도·행 매핑의 두 갈래(레인 둘, 전/후, 좌/우). 기본은 a = 회색, b = 먹색 — 둘 다 강조색이 아니다.
-         강조색은 갈래와 따로 "짚는 곳" 하나(.new 노드·결론 한 줄)에만 쓴다. 어떤 테마도 갈래를 강조색으로 두지 않는다. */
-      --tone-a:var(--muted);  --tone-a-soft:var(--card);
+         강조색은 갈래와 따로 "짚는 곳" 하나(.new 노드·결론 한 줄)에만 쓴다. 어떤 테마도 갈래를 강조색으로 두지 않는다.
+         테마가 갈래 A 색을 정하려면 --tone-a-base 를 준다. */
+      --tone-a:var(--tone-a-base, var(--muted)); --tone-a-soft:var(--tone-a-soft-base, var(--card));
       --tone-b:var(--ink);    --tone-b-soft:var(--card);
-      /* 코드 블록(패턴 S). 어두운 바탕에 밝은 글자, 키워드는 강조색, 주석은 흐리게. */
-      /* 어두운 바탕(표지 .dark · 코드 블록) 위 강조 글자. 강조색이 어두운 테마는 밝은 값을 따로 준다 */
-      --accent-on-dark:var(--accent);
-      --code-bg:var(--ink); --code-fg:var(--paper); --code-key:var(--accent-on-dark); --code-str:var(--accent-soft);
+      /* 늘 어두운 면: 표지(.dark)·코드 블록. 그 위 강조 글자는 --accent-on-dark (강조색이 어두운 테마는 밝은 값을 준다) */
+      --surface-dark:var(--ink);
+      --accent-on-dark:var(--accent-light, var(--accent));
+      --code-bg:var(--surface-dark); --code-fg:var(--on-dark); --code-key:var(--accent-on-dark); --code-str:var(--accent-soft);
     }
     /* 3층 · 테마 프리셋 — 발표 성격에 맞춰 고른다. 기본(테마 없음)은 clay.
-       clay   제안·보고 — 보고서와 같은 따뜻한 편집물 톤
+       clay   제안·보고 — 따뜻한 편집물 톤
        ocean  기술·아키텍처·데이터 설명 — 차분한 파랑
        duo    강의·교육·비교 — 남색 갈래 A + 자홍 강조
        forest 운영·성과 보고 — 안정적인 초록
-       signal 피치·키노트 — 흰 바탕 고대비 + 빨강 한 점
-       새 테마는 같은 형식으로 한 블록을 더한다. 강조 셋(--accent·-dark·-soft)과 --status-plan 을 함께 정한다.
-       점검: 바탕 위 -dark 글자 ≥ 4.5:1 · -soft 위 -dark 글자 ≥ 4.5:1 · -dark 위 흰 글자 ≥ 4.5:1 · 바탕 위 --accent 선·면 ≥ 3:1
+       signal 피치·키노트 — 고대비 + 빨강 한 점
+       새 테마는 같은 형식으로 한 블록을 더한다. 강조 셋(--accent·-dark·-soft)·--plan·--accent-light 를 함께 정한다.
+       점검(라이트): 바탕 위 -dark 글자 ≥ 4.5:1 · -soft 위 -dark 글자 ≥ 4.5:1 · -dark 위 흰 글자 ≥ 4.5:1 · 바탕 위 --accent 선·면 ≥ 3:1
              · 먹색 바탕 위 --accent-on-dark ≥ 4.5:1 (표지 kicker·코드 키워드) · -soft 위 보조 글자는 --muted 대신 --body.
+       점검(다크): 다크 바탕 위 강조 글자 ≥ 4.5:1 · 강조 바탕 위 강조 글자 ≥ 4.5:1 · --accent 선·면 ≥ 3:1. 팔레트 장(?mode=dark)이 계산해 보여준다.
        글자에는 --accent-dark 를, --accent 는 선·면에만 쓴다. */
     [data-theme="clay"]{}
-    [data-theme="ocean"]{--paper:#F7F9FB; --card:#EBF0F5; --line:#D5DEE7; --muted:#5F6B78; --body:#24303D; --ink:#0F1A26;
-                         --accent:#2F6FB0; --accent-dark:#1F4F86; --accent-soft:#E2ECF6; --status-plan:#8A6A2E; --accent-on-dark:#7FB2E5}
-    [data-theme="duo"]{--accent:#B23A7A; --accent-dark:#8C2860; --accent-soft:#F6E1EC; --status-plan:#2E7D6B; --accent-on-dark:#E58BB8;
-                       --tone-a:#1F4F86; --tone-a-soft:#E2ECF6}
-    [data-theme="forest"]{--paper:#F8F9F5; --card:#EDF0E8; --line:#D8DED0; --muted:#636B5E; --body:#262B23; --ink:#141A12;
-                          --accent:#3F7A4A; --accent-dark:#2C5A35; --accent-soft:#E3EEE4; --status-plan:#7A5C8A; --accent-on-dark:#8FC79A}
-    [data-theme="signal"]{--paper:#FFFFFF; --card:#F2F2F2; --line:#D9D9D9; --muted:#5C5C5C; --body:#1F1F1F; --ink:#0A0A0A; --accent-on-dark:#FF6B63;
-                          --accent:#E5322D; --accent-dark:#B71F1B; --accent-soft:#FCE4E3; --status-plan:#2B59C3; --code-dim:#9A9A9A}
-    /* 바탕 옵션 — 어느 테마와도 겹쳐 쓴다. <html data-theme="ocean" data-paper="white">
-       테마 블록보다 뒤에 두어야 이긴다. 카드·선 색은 테마 값을 그대로 쓴다(흰 바탕에서 더 잘 구분된다).
-       흰 바탕이면 미색 배경이 박힌 그림 파일이 상자처럼 떠 보인다 — 배경 투명판을 쓴다. */
-    [data-paper="white"],[data-paper="white"] [data-theme]{--paper:#FFFFFF}   /* 한 장에 테마를 걸어도 흰 바탕 유지 */
+    [data-theme="ocean"]{--card:#EBF0F5; --line:#D5DEE7; --muted:#5F6B78; --body:#24303D; --ink:#0F1A26;
+                         --accent:#2F6FB0; --accent-dark:#1F4F86; --accent-soft:#E2ECF6; --plan:#8A6A2E; --accent-light:#7FB2E5}
+    [data-theme="duo"]{--accent:#B23A7A; --accent-dark:#8C2860; --accent-soft:#F6E1EC; --plan:#2E7D6B; --accent-light:#E58BB8;
+                       --tone-a-base:#1F4F86; --tone-a-soft-base:#E2ECF6; --tone-a-base-dark:#7492B4}
+    [data-theme="forest"]{--card:#EDF0E8; --line:#D8DED0; --muted:#636B5E; --body:#262B23; --ink:#141A12;
+                          --accent:#3F7A4A; --accent-dark:#2C5A35; --accent-soft:#E3EEE4; --plan:#7A5C8A; --accent-light:#8FC79A}
+    [data-theme="signal"]{--card:#F2F2F2; --line:#D9D9D9; --muted:#5C5C5C; --body:#1F1F1F; --ink:#0A0A0A; --accent-light:#FF6B63;
+                          --accent:#E5322D; --accent-dark:#B71F1B; --accent-soft:#FCE4E3; --plan:#2B59C3; --code-dim:#9A9A9A}
+    /* 4층 · 다크 모드 — 테마 블록보다 뒤에 두어야 이긴다. 강조색 자체는 테마 값을 쓰고,
+       바탕 위에서 읽혀야 하는 값(강조 글자·연한 면·제안·갈래 A)은 그 값에서 다시 만든다.
+       그림 파일(차트 PNG 등)은 다크 바탕에서 글자가 사라지므로 밝은 판 위에 올린다(.analysis-figure img). */
+    [data-mode="dark"],[data-mode="dark"] [data-theme]{
+      --paper:#161615; --card:#24231F; --line:#3B3A35; --muted:#A8A69D; --body:#E6E4DC; --ink:#F4F2EC;
+      --on-dark-muted:#B9B7AE;
+      --surface-dark:#0A0A09;
+      --accent-dark:var(--accent-on-dark);
+      --accent-soft:color-mix(in srgb, var(--accent) 26%, var(--paper));
+      --status-plan:color-mix(in srgb, var(--plan) 62%, #FFFFFF);
+      --tone-a:var(--tone-a-base-dark, var(--muted));   /* 기본은 회색 그대로 — 갈래 B(밝은 먹색)와 구분된다 */
+      --tone-a-soft:color-mix(in srgb, var(--tone-a) 16%, var(--paper));
+      --code-str:color-mix(in srgb, var(--accent-on-dark) 45%, #FFFFFF);
+      --shadow:0 14px 34px rgba(0,0,0,.4);
+    }
     *{box-sizing:border-box}
     html,body{margin:0;height:100%;background:#000;color:var(--body);font-family:Pretendard,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;overflow:hidden}
     button{font:inherit}
@@ -93,10 +109,11 @@
     .deck{width:var(--canvas-w);height:var(--canvas-h);position:relative;flex:none;transform-origin:center center}
     .slide{position:absolute;inset:0;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr auto;grid-template-areas:"head" "content" "foot";gap:16px;
            padding:var(--pad);background:var(--paper);opacity:0;pointer-events:none;
+           color:var(--body);   /* 장마다 글자색을 다시 잡는다 — 한 장에만 data-mode 를 걸어도 본문이 따라온다 */
            transform:translateX(5%);transition:.42s ease;overflow:hidden}
     .slide.active{opacity:1;pointer-events:auto;transform:none}
     .slide.past{transform:translateX(-5%)}
-    .slide.dark{background:var(--ink);color:var(--paper)}
+    .slide.dark{background:var(--surface-dark);color:var(--on-dark)}
     .slide:not(.dark)::before{content:"";position:absolute;top:0;left:var(--pad);width:54px;height:6px;background:var(--accent)}
     .slide-head,.content,.foot{position:relative;z-index:1}
     .slide:not(:has(> .slide-head)){grid-template-rows:1fr auto;grid-template-areas:"content" "foot"}
@@ -111,7 +128,7 @@
     /* ── 타이포 ──────────────────────────────────────────── */
     h1,h2,h3,p{margin-top:0}
     h1,h2,h3{color:var(--ink);word-break:keep-all;overflow-wrap:normal;text-wrap:balance}
-    .dark h1,.dark h2,.dark h3{color:var(--paper)}
+    .dark h1,.dark h2,.dark h3{color:var(--on-dark)}
     h1{font-size:var(--fs-h1);line-height:1.06;letter-spacing:-.06em;margin-bottom:.28em}
     h2{font-size:var(--fs-h2);line-height:1.15;letter-spacing:-.055em;margin-bottom:0;max-width:20em}
     h3{font-size:var(--fs-h3);line-height:1.22;letter-spacing:-.035em;margin-bottom:.32em}
@@ -119,17 +136,18 @@
     .kicker{margin:0 0 .7em;color:var(--accent-dark);font-size:var(--fs-label);font-weight:900;letter-spacing:.15em;text-transform:uppercase}
     .dark .kicker{color:var(--accent-on-dark)}
     .lead{font-size:var(--fs-lead);line-height:1.45;color:var(--muted);max-width:26em;word-break:keep-all}
-    .dark .lead{color:var(--line)}
+    .dark .lead{color:var(--on-dark-muted)}
     .accent{color:var(--accent)}
     .dark .accent{color:var(--accent-on-dark)}
+    .slide:not(.dark) .accent{color:var(--accent-dark)}   /* 밝은 장에서는 글자용 진한 강조 */
     .final-line{font-size:var(--fs-lead);font-weight:900;color:var(--accent-dark);word-break:keep-all}
 
     /* ── 견본 안내: 갤러리 견본에만 있는 설명. 복사한 덱에 남으면 deck_verify 가 경고한다 ── */
     .guide{display:inline-flex;align-items:center;gap:.4em;padding:.1em .55em;border:1px dashed var(--muted);border-radius:4px;
            color:var(--muted);font-size:var(--fs-label);font-weight:700;letter-spacing:0;text-transform:none}
     .guide::before{content:"견본";font-weight:900;color:var(--body)}
-    .dark .guide{border-color:var(--line);color:var(--line)}
-    .dark .guide::before{color:var(--paper)}
+    .dark .guide{border-color:var(--on-dark-muted);color:var(--on-dark-muted)}
+    .dark .guide::before{color:var(--on-dark)}
 
     /* ── 상태 배지: 오직 "구현 상태" 하나의 축에만 사용한다 ──
        done  먹색           = 현재 확인됨 (.service.confirmed 와 짝)
@@ -149,9 +167,9 @@
     .cover-content.text-only h1{max-width:1000px}
     .cover-copy{max-width:840px}
     .cover-copy h1{max-width:780px}
-    .cover-copy .lead{color:var(--paper);font-weight:800;max-width:680px}
+    .cover-copy .lead{color:var(--on-dark);font-weight:800;max-width:680px}
     .bridge-question{margin:0;padding:.7em .9em;border-left:4px solid var(--accent);background:rgba(255,255,255,.1);
-                     font-size:var(--fs-body);font-weight:850;color:var(--paper);max-width:22em;word-break:keep-all}
+                     font-size:var(--fs-body);font-weight:850;color:var(--on-dark);max-width:22em;word-break:keep-all}
     .cover-visual-wrap{position:relative;padding:0 14px 14px 0}
     .cover-visual-wrap::after{content:"";position:absolute;right:0;bottom:0;width:56%;height:7px;background:var(--accent)}
     .cover-visual{width:100%;aspect-ratio:1.3;object-fit:cover;object-position:center;
@@ -171,7 +189,7 @@
     .split{width:100%;display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(28px,5vw,90px);align-items:start}
     .photo-card{position:relative;width:100%;height:400px;border-radius:3px;overflow:hidden;box-shadow:var(--shadow);background:var(--card)}
     .photo-card img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.06)}
-    .photo-overlay{position:absolute;inset:auto 0 0;padding:1em 1.1em;background:linear-gradient(transparent,rgba(18,18,18,.92));color:var(--paper)}
+    .photo-overlay{position:absolute;inset:auto 0 0;padding:1em 1.1em;background:linear-gradient(transparent,rgba(18,18,18,.92));color:var(--on-dark)}
     .big-quote{font-size:var(--fs-h2);font-weight:900;line-height:1.08;letter-spacing:-.04em}
     .speech{margin:.8em 0;padding:.7em .8em;border-radius:2px;background:var(--card);border-left:4px solid var(--muted);
             font-weight:800;font-size:var(--fs-body);word-break:keep-all}
@@ -309,6 +327,7 @@
     .shot-caption{margin-top:.5em;font-size:var(--fs-label);color:var(--muted);word-break:keep-all}
     .callouts{display:flex;flex-direction:column;gap:.75em}
     .callout{display:grid;grid-template-columns:1.6em 1fr;gap:14px;align-items:start}
+    .shot .pin{background:var(--on-light);color:var(--on-dark)}   /* 캡처는 늘 밝은 그림 — 모드와 상관없이 어두운 핀 */
     .callout .pin{position:static;box-shadow:none}
     .callout strong{display:block;font-size:var(--fs-body);font-weight:900;word-break:keep-all}
     .callout p{margin:.1em 0 0;font-size:var(--fs-label);color:var(--muted);line-height:1.45;word-break:keep-all}
@@ -318,6 +337,7 @@
     .figure-content{width:100%;display:grid;grid-template-rows:minmax(0,1fr) auto auto;gap:10px;align-items:stretch}
     .analysis-figure{margin:0;min-height:0;display:flex;align-items:flex-start;justify-content:flex-start}
     .analysis-figure img{display:block;width:100%;height:100%;min-height:0;object-fit:contain;filter:none}
+    [data-mode="dark"] .analysis-figure img{background:#FFFFFF;border-radius:6px;padding:12px}   /* 그림 파일은 밝은 판 위에 */
     .analysis-figure > svg{display:block;width:100%;height:auto;max-height:100%}   /* 인라인 SVG — fill 을 토큰으로 주면 테마를 따른다 */
     .figure-content .final-line{margin:0}
     .figure-source{margin:0;font-size:var(--fs-label);line-height:1.4;color:var(--muted);word-break:keep-all}
@@ -462,10 +482,10 @@
 
     /* ── 푸터·컨트롤 ────────────────────────────────────── */
     .foot{display:flex;grid-area:foot;justify-content:space-between;align-items:center;color:var(--muted);font-size:var(--fs-label);gap:1.5em}
-    .dark .foot{color:var(--line)}
+    .dark .foot{color:var(--on-dark-muted)}
     .controls{position:fixed;right:24px;bottom:20px;z-index:30;display:flex;gap:8px;opacity:0;transition:opacity .25s;pointer-events:none}
     .show-controls .controls,.controls:focus-within{opacity:1;pointer-events:auto}
-    .controls button{width:42px;height:42px;border:0;border-radius:2px;background:rgba(255,255,255,.92);color:var(--ink);cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.2);font-size:18px}
+    .controls button{width:42px;height:42px;border:0;border-radius:2px;background:rgba(255,255,255,.92);color:var(--on-light);cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.2);font-size:18px}
     .controls button:hover{background:var(--accent-dark);color:var(--paper)}
     .progress{position:fixed;z-index:40;bottom:0;left:0;height:4px;background:var(--accent);transition:.3s;width:10%}
 
@@ -533,11 +553,11 @@
     /* ── 엔진 ── 여기는 건드리지 않는다. 내용은 위 마크업에서만 바꾼다. ── */
 
     /* 화면에 맞춰 캔버스를 통째로 확대·축소한다. 16:9가 아니면 검정 여백이 남는다. */
-    /* ?embed — 미리보기 iframe 용, ?theme=이름 · ?paper=white — 파일을 고치지 않고 테마·바탕을 바꿔 본다 */
+    /* ?embed — 미리보기 iframe 용, ?theme=이름 · ?mode=dark — 파일을 고치지 않고 테마·모드를 바꿔 본다 */
     const params=new URLSearchParams(location.search);
     if(params.has('embed')) document.documentElement.classList.add('embed');
     if(params.get('theme')) document.documentElement.dataset.theme=params.get('theme');
-    if(params.get('paper')) document.documentElement.dataset.paper=params.get('paper');
+    if(params.get('mode')) document.documentElement.dataset.mode=params.get('mode');
     const deck=document.querySelector('.deck');
     function fit(){ deck.style.transform=`scale(${Math.min(innerWidth/1280, innerHeight/720)})`; }
     addEventListener('resize',fit); fit();
@@ -648,21 +668,23 @@
   </script>
   <script>
     /* 이 장은 ?theme= 로 테마를 받아 그 팔레트를 보여준다. 값은 실제 CSS 토큰에서 읽는다. */
-    const THEMES={'':['clay (기본)','제안·결과 보고 — 보고서와 같은 따뜻한 편집물 톤'],clay:['clay (기본)','제안·결과 보고 — 보고서와 같은 따뜻한 편집물 톤'],
+    const THEMES={'':['clay (기본)','제안·결과 보고 — 따뜻한 편집물 톤'],clay:['clay (기본)','제안·결과 보고 — 따뜻한 편집물 톤'],
       ocean:['ocean','기술 설명·아키텍처·데이터 리뷰 — 차분한 파랑'],duo:['duo','강의·교육·비교 — 남색 갈래와 자홍 강조가 분명'],
-      forest:['forest','운영 현황·성과 보고 — 안정적인 초록'],signal:['signal','피치·키노트·외부 발표 — 흰 바탕 고대비 + 빨강 한 점']};
+      forest:['forest','운영 현황·성과 보고 — 안정적인 초록'],signal:['signal','피치·키노트·외부 발표 — 고대비 + 빨강 한 점']};
     const key=new URLSearchParams(location.search).get('theme')||'';
     const [name,use]=THEMES[key]||[key,''];
-    const white=new URLSearchParams(location.search).get('paper')==='white';
-    document.getElementById('pal-title').textContent=`${name} 팔레트${white?' · 흰 바탕':''}`;
+    const dark=new URLSearchParams(location.search).get('mode')==='dark';
+    document.getElementById('pal-title').textContent=`${name} 팔레트${dark?' · 다크':''}`;
     document.getElementById('pal-use').textContent=use;
-    const hex=c=>{const m=c.match(/\d+(\.\d+)?/g);return m?'#'+m.slice(0,3).map(v=>(+v).toString(16).padStart(2,'0')).join('').toUpperCase():c};
+    /* 계산된 색 → [r,g,b]. color-mix 결과는 'color(srgb 0.1 0.2 0.3)' 꼴로 나온다 */
+    const toRGB=c=>{const n=(c.match(/-?[\d.]+/g)||[]).map(Number);return c.startsWith('color(')?n.slice(0,3).map(v=>Math.round(v*255)):n.slice(0,3)};
+    const hex=c=>'#'+toRGB(c).map(v=>v.toString(16).padStart(2,'0')).join('').toUpperCase();
     document.querySelectorAll('.sw').forEach(s=>{s.querySelector('code').textContent=hex(getComputedStyle(s.querySelector('i')).backgroundColor)});
     /* 대비: 글자 기준 4.5, 선·면 기준 3 */
-    const rgb=v=>{const d=document.createElement('i');d.style.color=`var(${v})`;document.body.appendChild(d);const c=getComputedStyle(d).color.match(/\d+/g).slice(0,3).map(Number);d.remove();return c};
+    const rgb=v=>{const d=document.createElement('i');d.style.color=`var(${v})`;document.body.appendChild(d);const c=toRGB(getComputedStyle(d).color);d.remove();return c};
     const lum=c=>{const [r,g,b]=c.map(x=>{x/=255;return x<=.03928?x/12.92:((x+.055)/1.055)**2.4});return .2126*r+.7152*g+.0722*b};
     const cr=(a,b)=>{const A=lum(rgb(a)),B=lum(rgb(b));return ((Math.max(A,B)+.05)/(Math.min(A,B)+.05)).toFixed(1)};
-    document.getElementById('pal-contrast').innerHTML=`대비 · 강조 글자 <b>${cr('--accent-dark','--paper')}</b> · 보조 글자 <b>${cr('--muted','--paper')}</b> · 강조 선 <b>${cr('--accent','--paper')}</b> · 예정 선 <b>${cr('--status-next','--paper')}</b> · 제안 <b>${cr('--status-plan','--paper')}</b> · 어두운 바탕 강조 <b>${cr('--accent-on-dark','--ink')}</b>`;
+    document.getElementById('pal-contrast').innerHTML=`대비 · 강조 글자 <b>${cr('--accent-dark','--paper')}</b> · 보조 글자 <b>${cr('--muted','--paper')}</b> · 강조 선 <b>${cr('--accent','--paper')}</b> · 예정 선 <b>${cr('--status-next','--paper')}</b> · 제안 <b>${cr('--status-plan','--paper')}</b> · 강조 바탕 위 강조 글자 <b>${cr('--accent-dark','--accent-soft')}</b> · 표지 위 강조 <b>${cr('--accent-on-dark','--surface-dark')}</b>`;
   </script>
 </body>
 </html>

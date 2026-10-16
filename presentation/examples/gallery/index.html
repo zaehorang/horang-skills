@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>발표 장 갤러리</title>
   <style>
-    :root{--ink:#141413;--body:#2B2A27;--muted:#6B6A64;--paper:#FAF9F5;--line:#DEDCD3;--card:#F0EEE6;
+    :root{--ink:#141413;--body:#2B2A27;--muted:#6B6A64;--paper:#FFFFFF;--line:#DEDCD3;--card:#F0EEE6;
           --accent:#D97757;--accent-dark:#A84A28;--accent-soft:#F5E3DA}
     *{box-sizing:border-box}
     body{margin:0;background:var(--paper);color:var(--body);font-family:Pretendard,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;line-height:1.5}
@@ -55,7 +55,7 @@
     .viewer-bar a:hover,.viewer-bar button:hover{border-color:var(--accent);color:#fff}
     .viewer-bar .close{font-size:18px;line-height:1;padding:6px 11px}
     .viewer-stage{flex:1;min-height:0;display:grid;place-items:center;padding:0 18px 18px}
-    .viewer-frame{width:min(100%, calc((100vh - 120px) * 16 / 9));aspect-ratio:16/9;border:0;background:#000;border-radius:6px;pointer-events:none}
+    .viewer-frame{width:min(100%, calc((100vh - 120px) * 16 / 9));aspect-ratio:16/9;border:0;background:#000;border-radius:6px;pointer-events:none;outline:1px solid rgba(255,255,255,.18)}
     body.viewing{overflow:hidden}
     @media (max-width:860px){header.top{position:static}}
     @media (max-width:640px){
@@ -70,15 +70,15 @@
   <header class="top"><div class="wrap bar">
     <h1>발표 장 <span>갤러리</span></h1>
     <nav id="nav"></nav>
-    <div class="themes" role="group" aria-label="색 테마와 바탕">색
+    <div class="themes" role="group" aria-label="색 테마와 모드">색
       <button data-theme="" aria-pressed="true">clay(기본)</button>
       <button data-theme="ocean" aria-pressed="false">ocean</button>
       <button data-theme="duo" aria-pressed="false">duo</button>
       <button data-theme="forest" aria-pressed="false">forest</button>
       <button data-theme="signal" aria-pressed="false">signal</button>
-      <i class="br" aria-hidden="true"></i><span class="sep">바탕</span>
-      <button data-paper="" aria-pressed="true">미색</button>
-      <button data-paper="white" aria-pressed="false">흰색</button>
+      <i class="br" aria-hidden="true"></i><span class="sep">모드</span>
+      <button data-mode="" aria-pressed="true">라이트</button>
+      <button data-mode="dark" aria-pressed="false">다크</button>
       <a href="themes.html">테마 설명 →</a>
     </div>
   </div></header>
@@ -87,7 +87,7 @@
     <div class="intro">
       <p>발표에서 자주 나오는 장 <b>22가지</b>를 “사내 문서에 답하는 에이전트”라는 한 주제로 채웠다.
          카드를 누르면 그 장이 크게 열린다. ← → 로 앞뒤 장, Esc나 × 로 닫는다.
-         위쪽 버튼으로 색 테마와 바탕(미색·흰색)을 바꿔 볼 수 있다.</p>
+         위쪽 버튼으로 색 테마와 모드(라이트·다크)를 바꿔 볼 수 있다.</p>
       <p>새 덱을 만들 때는 <code>presentation.html</code>에서 같은 <code>data-title</code>의 <code>&lt;section&gt;</code>을 복사해 내용만 바꾼다.
          푸터의 점선 <b>견본</b> 표시는 안내문이라 복사한 뒤 실제 문구로 바꾼다(남아 있으면 검사기가 경고한다).</p>
       <p>패턴을 보여주려고 같은 이야기를 여러 모양으로 반복한다(예: 5·6장, 11·20장). 실제 덱에서는 한 가지만 고른다. 15~17장 수치는 레이아웃 견본용이다.</p>
@@ -143,10 +143,12 @@
         [22,'지표와 결정 요청','I','승인받을 것과 성공을 판단할 기준을 함께 내밀 때','결정 요청을 가장 크게, 지표는 목표와 기간까지'],
       ]},
     ];
-    let theme = '', paper = '';
-    try { theme = localStorage.getItem('gallery-theme') || ''; paper = localStorage.getItem('gallery-paper') || ''; } catch (e) {}
-    /* 테마·바탕은 주소 옵션으로 덱에 넘긴다 — 덱 파일은 고치지 않는다 */
-    const opts = embed => [embed && 'embed', theme && 'theme=' + theme, paper && 'paper=' + paper].filter(Boolean).join('&');
+    let theme = '', mode = '';
+    try { theme = localStorage.getItem('gallery-theme') || ''; mode = localStorage.getItem('gallery-mode') || ''; } catch (e) {}
+    if (!['', 'ocean', 'duo', 'forest', 'signal'].includes(theme)) theme = '';
+    if (mode !== 'dark') mode = '';   // 저장값이 이상하면 clay·라이트로
+    /* 테마·모드는 주소 옵션으로 덱에 넘긴다 — 덱 파일은 고치지 않는다 */
+    const opts = embed => [embed && 'embed', theme && 'theme=' + theme, mode && 'mode=' + mode].filter(Boolean).join('&');
     const src = n => `presentation.html?${opts(true)}#${n}`;
     const full = n => `presentation.html${opts(false) ? '?' + opts(false) : ''}#${n}`;
     const nav = document.getElementById('nav'), root = document.getElementById('groups');
@@ -162,11 +164,11 @@
         </a>`).join('');
       root.insertAdjacentHTML('beforeend', `<section class="group" id="${g.id}"><h2>${g.name}</h2><p>${g.desc}</p><div class="grid">${cards}</div></section>`);
     }
-    function applyTheme(t, p) {
-      theme = t ?? theme; paper = p ?? paper;
-      try { localStorage.setItem('gallery-theme', theme); localStorage.setItem('gallery-paper', paper); } catch (e) {}
+    function applyTheme(t, m) {
+      theme = t ?? theme; mode = m ?? mode;
+      try { localStorage.setItem('gallery-theme', theme); localStorage.setItem('gallery-mode', mode); } catch (e) {}
       document.querySelectorAll('.themes button[data-theme]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.theme === theme)));
-      document.querySelectorAll('.themes button[data-paper]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.paper === paper)));
+      document.querySelectorAll('.themes button[data-mode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
       document.querySelectorAll('.card').forEach(c => {
         const n = c.dataset.n;
         c.href = full(n);
@@ -174,7 +176,7 @@
       });
     }
     document.querySelectorAll('.themes button[data-theme]').forEach(b => b.onclick = () => applyTheme(b.dataset.theme, null));
-    document.querySelectorAll('.themes button[data-paper]').forEach(b => b.onclick = () => applyTheme(null, b.dataset.paper));
+    document.querySelectorAll('.themes button[data-mode]').forEach(b => b.onclick = () => applyTheme(null, b.dataset.mode));
 
     /* 크게 보기 — 새 탭으로 넘어가지 않고 갤러리 위에 띄운다 */
     const ITEMS = GROUPS.flatMap(g => g.items);
@@ -222,7 +224,7 @@
       if (e.key === 'ArrowRight') { e.preventDefault(); openAt(current + 1); }
       if (e.key === 'ArrowLeft') { e.preventDefault(); openAt(current - 1); }
     });
-    if (theme || paper) applyTheme(theme, paper);
+    if (theme || mode) applyTheme(theme, mode);
   </script>
 </body>
 </html>

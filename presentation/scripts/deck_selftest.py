@@ -75,7 +75,7 @@ CASES = [
                 ('<div class="content">', '<div class="content"><p class="test-visible">짧은 본문</p>')],
          render=True),
     Case("empty-content/card", "글자가 짧아도 큰 카드 박스는 내용에 포함한다",
-         edits=[("</style>", '.slide .content{display:flex!important;align-items:center;justify-content:center}.slide .content>*{display:none!important}.slide .content>article.test-card{display:block!important;height:80%;width:100%;background:var(--card)}</style>'),
+         edits=[("</style>", '.slide .content{display:flex!important;align-items:center;justify-content:center}.slide .content>*{display:none!important}.slide .content>article.test-card{display:block!important;height:80%;width:100%;background:var(--card);color:var(--ink)}</style>'),
                 ('<div class="content">', '<div class="content"><article class="test-card">짧은 본문</article>')],
          render=True),
     Case("asset-path/body-glob", "본문의 assets/*부터 다음 CSS 주석까지 지우지 않는다",
@@ -202,9 +202,22 @@ CASES = [
          expect={"guide"},
          edits=[('<footer class="foot"><span>보조 메시지</span>', '<footer class="foot"><span class="guide">패턴 B · 요령</span>')]),
 
-    Case("paper-white",
-         "흰 바탕 옵션을 어느 테마에 겹쳐도 레이아웃·대비 검사가 깨지지 않는다",
-         edits=[('<html lang="ko">', '<html lang="ko" data-theme="ocean" data-paper="white">')],
+    Case("mode-dark",
+         "다크 모드를 어느 테마에 겹쳐도 레이아웃 검사가 깨지지 않는다",
+         edits=[('<html lang="ko">', '<html lang="ko" data-theme="ocean" data-mode="dark">')],
+         render=True),
+
+    Case("contrast/one-dark-slide",
+         "한 장에만 다크 모드를 걸어도 그 장의 글자가 바탕과 대비를 유지한다",
+         absent={"text-contrast"},
+         edits=[('<section class="slide" data-title="역할">', '<section class="slide" data-title="역할" data-mode="dark">'),
+                ('<section class="slide" data-title="코드 워크스루">', '<section class="slide" data-title="코드 워크스루" data-mode="dark" data-theme="ocean">')],
+         render=True),
+
+    Case("contrast",
+         "바탕과 거의 같은 색의 글자는 안 읽힌다",
+         expect={"text-contrast"},
+         edits=[('<p class="lead">상황 서술 두 줄까지.</p>', '<p class="lead" style="color:var(--line)">상황 서술 두 줄까지.</p>')],
          render=True),
 
     Case("canvas",
@@ -257,7 +270,7 @@ def run_case(case: Case, src: str, workdir: Path, use_render: bool) -> tuple[boo
 
     expected_levels = {"template-css": "info", "empty-content": "info", "foot-position": "warn", "dead-css": "warn",
                        "palette": "warn", "dg-edge": "error", "dg-overlap": "error", "dg-numbers": "error",
-                       "code-overflow": "error", "code-budget": "warn", "guide": "warn"}
+                       "code-overflow": "error", "code-budget": "warn", "guide": "warn", "text-contrast": "error"}
     for item in f.items:
         if item["check"] in expected_levels and item["level"] != expected_levels[item["check"]]:
             return False, f"검사 심각도가 다르다: {item}"

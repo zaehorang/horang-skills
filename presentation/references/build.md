@@ -142,9 +142,10 @@ cp <skill-dir>/assets/starter/assets/* <작업폴더>/assets/
 ### 색 바꾸기
 
 **발표 성격에 맞는 테마를 고른다.** 기본은 clay이고, 사용자가 색이나 발표 성격을 말하지 않으면 바꾸지 않는다.
-테마별 팔레트와 대표 장이 어떻게 보이는지, 미색·흰 바탕이 어떻게 다른지는 [examples/gallery/themes.html](../examples/gallery/themes.html)에서 테마를 하나씩 골라 본다.
-바탕은 기본 미색이다. 흰 배경의 제품 캡처·차트가 많거나 인쇄·밝은 프로젝터로 보여 줄 때는 `data-paper="white"`, report 보고서(미색)와 이어서 보여 줄 때는 미색을 쓴다.
-ocean·forest는 바탕이 원래 거의 흰색이라 옵션 차이가 작고, clay·duo에서 차이가 크다.
+테마별 팔레트와 대표 장이 어떻게 보이는지, 라이트·다크가 어떻게 다른지는 [examples/gallery/themes.html](../examples/gallery/themes.html)에서 테마를 하나씩 골라 본다.
+
+**모드는 라이트(기본, 흰 바탕)와 다크 두 가지다.** 밝은 회의실·인쇄·PDF 배포는 라이트, 어두운 강당·대형 화면·개발자 행사는 다크가 눈이 편하다.
+다크는 `data-mode="dark"`를 어느 테마에나 겹쳐 쓴다. 강조색은 테마 값을 그대로 쓰고, 바탕 위에서 읽혀야 하는 값(강조 글자·연한 면·제안·갈래 A)은 다크용으로 다시 만든다.
 
 | 테마 | 어울리는 발표 |
 |---|---|
@@ -152,18 +153,18 @@ ocean·forest는 바탕이 원래 거의 흰색이라 옵션 차이가 작고, c
 | `ocean` | 기술 설명·아키텍처·데이터 리뷰 |
 | `duo` | 강의·교육·비교. 남색 갈래 A, 자홍 강조가 분명 |
 | `forest` | 운영 현황·성과 보고 |
-| `signal` | 피치·키노트·외부 발표. 흰 바탕 고대비 + 빨강 한 점 |
+| `signal` | 피치·키노트·외부 발표. 검정·빨강 고대비 |
 
 색은 세 자리에서만 바꾼다. 패턴 CSS 안에 색 값을 쓰면 `deck_verify`가 `palette` 경고를 낸다.
 
 | 범위 | 방법 |
 |---|---|
 | 덱 전체 | `<html lang="ko" data-theme="ocean">` |
-| 바탕을 흰색으로 | `<html lang="ko" data-theme="ocean" data-paper="white">` — 어느 테마와도 겹쳐 쓴다. 바꾸는 건 `--paper` 하나 |
+| 다크 모드 | `<html lang="ko" data-theme="ocean" data-mode="dark">` — 어느 테마와도 겹쳐 쓴다. 한 장에만 걸 수도 있다 |
 | 덱 전체, 새 색 | `[data-theme="이름"]{…}` 블록을 하나 더해 그 이름을 건다 |
 | 한 장 | `<section class="slide" data-theme="duo">` |
 | 한 요소 | `style="--c:#2F6FB0;--c-soft:#E2ECF6"` (레인·노드·선·행 매핑 칸) |
-| 파일을 고치지 않고 미리 보기 | 주소에 `?theme=duo` · `?paper=white` |
+| 파일을 고치지 않고 미리 보기 | 주소에 `?theme=duo` · `?mode=dark` |
 
 테마가 달라도 **역할은 같다.** 색 하나가 뜻 하나만 맡는다.
 
@@ -182,10 +183,14 @@ ocean·forest는 바탕이 원래 거의 흰색이라 옵션 차이가 작고, c
 |---|---|
 | 바탕 위 `--accent-dark` 글자 · `--accent-soft` 위 `--accent-dark` 글자 · `--accent-dark` 위 흰 글자 | 4.5:1 |
 | 먹색 바탕 위 `--accent-on-dark` (표지 kicker·코드 키워드) | 4.5:1 |
+| 다크 바탕 위 `--accent-on-dark` 글자 · `--accent` 선·면 | 4.5:1 · 3:1 |
 | `--accent-soft` 위 보조 글자 — `--muted` 대신 `--body`를 쓴다 | 4.5:1 |
 | 바탕 위 `--accent` 선·면 · `--status-next` 점선 | 3:1 |
 | 코드 바탕 위 `--code-key` | 4.5:1 |
 | `--accent`와 `--status-plan` | 색상(hue)이 달라야 한다 |
+| 다크에서 `--card` 위 `--accent` 선 | 3:1 — duo·ocean·forest는 3 안팎이라 카드 면 위 강조 선은 피하고 바탕 위에 둔다 |
+
+`deck_verify`의 `text-contrast`는 그라데이션 카드(강조 카드)와 SVG 안 글자는 건너뛴다. 새 테마를 만들면 팔레트 장의 "강조 바탕 위 강조 글자"를 라이트·다크 둘 다 확인한다.
 
 ### 3. 이미지가 필요하면
 

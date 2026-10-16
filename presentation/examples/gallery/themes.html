@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>색 테마</title>
   <style>
-    :root{--ink:#141413;--body:#2B2A27;--muted:#6B6A64;--paper:#FAF9F5;--line:#DEDCD3;--card:#F0EEE6;--accent:#D97757;--accent-dark:#A84A28;--accent-soft:#F5E3DA}
+    :root{--ink:#141413;--body:#2B2A27;--muted:#6B6A64;--paper:#FFFFFF;--line:#DEDCD3;--card:#F0EEE6;--accent:#D97757;--accent-dark:#A84A28;--accent-soft:#F5E3DA}
     *{box-sizing:border-box}
     body{margin:0;background:var(--paper);color:var(--body);font-family:Pretendard,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;line-height:1.5}
     .wrap{max-width:1240px;margin:0 auto;padding-inline:24px}
@@ -49,7 +49,7 @@
     .viewer-bar a:hover,.viewer-bar button:hover{border-color:var(--accent);color:#fff}
     .viewer-bar .close{font-size:18px;line-height:1;padding:6px 11px}
     .viewer-stage{flex:1;min-height:0;display:grid;place-items:center;padding:0 18px 18px}
-    .viewer-frame{width:min(100%, calc((100vh - 84px) * 16 / 9));aspect-ratio:16/9;border:0;background:#000;border-radius:6px;pointer-events:none}
+    .viewer-frame{width:min(100%, calc((100vh - 84px) * 16 / 9));aspect-ratio:16/9;border:0;background:#000;border-radius:6px;pointer-events:none;outline:1px solid rgba(255,255,255,.18)}
     body.viewing{overflow:hidden}
     @media (max-width:760px){header.top{position:static}.info{grid-template-columns:1fr}.back{margin-left:0}.viewer-bar strong{flex-basis:100%}}
   </style>
@@ -62,10 +62,10 @@
     </div>
     <div class="opts">
       <div class="group" id="pick-theme" role="group" aria-label="테마"><span>테마</span></div>
-      <div class="group" id="pick-paper" role="group" aria-label="바탕"><span>바탕</span>
-        <button data-paper="" aria-pressed="true">미색</button>
-        <button data-paper="white" aria-pressed="false">흰색</button>
-        <button data-paper="both" aria-pressed="false">나란히</button>
+      <div class="group" id="pick-paper" role="group" aria-label="모드"><span>모드</span>
+        <button data-mode="" aria-pressed="true">라이트</button>
+        <button data-mode="dark" aria-pressed="false">다크</button>
+        <button data-mode="both" aria-pressed="false">나란히</button>
       </div>
     </div>
   </div></header>
@@ -75,7 +75,7 @@
     <p class="hint" id="hint"></p>
     <div class="grid" id="grid"></div>
   </main>
-  <footer class="end wrap">정의 위치: <code>assets/starter/presentation.html</code>의 <code>[data-theme]</code>·<code>[data-paper]</code> 블록 · 새 테마 만드는 법: <code>references/build.md</code> "색 바꾸기"</footer>
+  <footer class="end wrap">정의 위치: <code>assets/starter/presentation.html</code>의 <code>[data-theme]</code>·<code>[data-mode]</code> 블록 · 새 테마 만드는 법: <code>references/build.md</code> "색 바꾸기"</footer>
 
   <div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-labelledby="viewer-title">
     <div class="viewer-bar">
@@ -91,7 +91,7 @@
   <script>
     /* [값, 이름, 용도, 설명, 어울리는 발표, 피할 때] — 테마를 더하면 여기와 스타터 CSS 에 한 줄씩 */
     const THEMES = [
-      ['', 'clay', '기본 · 제안·결과 보고', '보고서와 같은 따뜻한 편집물 톤. report 스킬로 만든 보고서와 함께 발표할 때 색이 이어진다.',
+      ['', 'clay', '기본 · 제안·결과 보고', '따뜻한 주황 강조와 베이지 카드의 편집물 톤. report 스킬과 같은 강조색이라 보고서와 함께 발표할 때 이어진다.',
        '제안서, 결과 보고, 내부 리뷰', '아주 기술적인 아키텍처 설명은 ocean이 더 차분하다'],
       ['ocean', 'ocean', '기술 설명 · 아키텍처 · 데이터', '차분한 파랑. 구조도·표·코드가 많은 덱에서 강조가 튀지 않고 신뢰감이 있다.',
        '시스템 설계 리뷰, 데이터 분석 공유, 기술 세미나', '감정에 호소해야 하는 피치는 signal'],
@@ -99,7 +99,7 @@
        '강의 자료, 개념 비교, 전후 대비가 많은 교육 덱', '비교가 거의 없는 덱은 남색이 남는다 — clay·ocean이 더 조용하다'],
       ['forest', 'forest', '운영 현황 · 성과 보고', '안정적인 초록. 숫자와 진척을 차분하게 보여주고, 긍정적인 결과 보고에 어울린다.',
        '분기 운영 보고, 프로젝트 진척, 지속 과제 공유', '위험·경고가 핵심인 보고는 clay나 signal'],
-      ['signal', 'signal', '피치 · 키노트 · 외부 발표', '흰 바탕 고대비에 빨강 한 점. 빨강 강조가 강해서 하나만 써도 강하게 각인된다.',
+      ['signal', 'signal', '피치 · 키노트 · 외부 발표', '회색 없이 검정·빨강 고대비. 빨강 강조가 강해서 하나만 써도 강하게 각인된다.',
        '외부 발표, 투자·사업 피치, 행사 키노트', '빨강을 여러 곳에 쓰면 경고처럼 읽힌다 — 강조는 꼭 한 곳'],
     ];
     /* 테마마다 보여 줄 장 — [파일, 장 번호, 이름]. 팔레트 + 색 역할이 드러나는 장 6개 */
@@ -108,11 +108,11 @@
 
     const read = k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
     const save = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
-    let theme = read('gallery-theme'), paper = read('themes-paper') || read('gallery-paper');
+    let theme = read('gallery-theme'), paper = read('themes-mode') === 'both' ? 'both' : (read('gallery-mode') === 'dark' ? 'dark' : '');   // 라이트·다크는 갤러리와 같은 값을 쓴다
     if (!THEMES.some(t => t[0] === theme)) theme = '';
 
-    /* 덱에는 테마·바탕을 주소 옵션으로 넘긴다 — 덱 파일은 고치지 않는다 */
-    const qs = (p, embed) => { const o = [embed && 'embed', theme && 'theme=' + theme, p && 'paper=' + p].filter(Boolean).join('&'); return o ? '?' + o : ''; };
+    /* 덱에는 테마·모드를 주소 옵션으로 넘긴다 — 덱 파일은 고치지 않는다 (paper 변수 = 모드) */
+    const qs = (p, embed) => { const o = [embed && 'embed', theme && 'theme=' + theme, p && 'mode=' + p].filter(Boolean).join('&'); return o ? '?' + o : ''; };
     const url = (file, n, p, embed) => file + qs(p, embed) + (n ? '#' + n : '');
 
     const pickTheme = document.getElementById('pick-theme');
@@ -121,21 +121,21 @@
     let items = [];   // 지금 화면의 카드 순서 = 크게 보기의 이전/다음 순서
     function render() {
       const [t, name, use, desc, good, avoid] = THEMES.find(x => x[0] === theme);
-      const attr = [t && `data-theme="${t}"`, paper === 'white' && 'data-paper="white"'].filter(Boolean).join(' ');
+      const attr = [t && `data-theme="${t}"`, paper === 'dark' && 'data-mode="dark"'].filter(Boolean).join(' ');
       document.getElementById('info').innerHTML = `
         <div><h2>${name}</h2><p class="use">${use}</p><p>${desc}</p></div>
         <dl><dt>어울리는 발표</dt><dd>${good}</dd><dt>피할 때</dt><dd>${avoid}</dd>
             <dt>덱에 쓰기</dt><dd><code>&lt;html lang="ko"${attr ? ' ' + attr : ''}&gt;</code></dd></dl>`;
       document.getElementById('hint').textContent = paper === 'both'
-        ? '왼쪽 미색 · 오른쪽 흰색. 흰 배경 캡처·인쇄·밝은 프로젝터에는 흰색, report 보고서와 이어 보여 줄 때는 미색. ocean·forest는 원래 바탕이 거의 흰색이라 차이가 작다.'
+        ? '왼쪽 라이트 · 오른쪽 다크. 밝은 회의실·인쇄·PDF 배포는 라이트, 어두운 강당·대형 화면·개발자 행사는 다크가 눈이 편하다. 카드를 누르면 크게 열린다(← → · Esc · ×).'
         : '카드를 누르면 크게 열린다. ← → 로 넘기고 Esc나 × 로 닫는다.';
       const grid = document.getElementById('grid');
-      const card = (it, k) => `<a class="shot" data-k="${k}" href="${url(it.file, it.n, it.p)}" aria-label="${name}${it.p ? ' 흰 바탕' : ''} · ${it.label}">
+      const card = (it, k) => `<a class="shot" data-k="${k}" href="${url(it.file, it.n, it.p)}" aria-label="${name} ${it.p ? '다크' : '라이트'} · ${it.label}">
           <div class="frame"><iframe loading="lazy" tabindex="-1" title="${it.label}" src="${url(it.file, it.n, it.p, true)}"></iframe></div><b>${it.label}</b></a>`;
       if (paper === 'both') {
-        items = SAMPLES.flatMap(([file, n, label]) => [{file, n, label, p: ''}, {file, n, label, p: 'white'}]);
+        items = SAMPLES.flatMap(([file, n, label]) => [{file, n, label, p: ''}, {file, n, label, p: 'dark'}]);
         grid.className = 'grid pairs';
-        grid.innerHTML = '<span></span><span class="col">미색</span><span class="col">흰색</span>' +
+        grid.innerHTML = '<span></span><span class="col">라이트</span><span class="col">다크</span>' +
           SAMPLES.map(([, , label], i) => `<span class="row">${label}</span>` + card(items[2 * i], 2 * i) + card(items[2 * i + 1], 2 * i + 1)).join('');
       } else {
         items = SAMPLES.map(([file, n, label]) => ({file, n, label, p: paper}));
@@ -143,12 +143,12 @@
         grid.innerHTML = items.map(card).join('');
       }
       pickTheme.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.theme === theme)));
-      document.querySelectorAll('#pick-paper button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.paper === paper)));
+      document.querySelectorAll('#pick-paper button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === paper)));
     }
     pickTheme.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; theme = b.dataset.theme; save('gallery-theme', theme); render(); });
     document.getElementById('pick-paper').addEventListener('click', e => {
       const b = e.target.closest('button'); if (!b) return;
-      paper = b.dataset.paper; save('themes-paper', paper); if (paper !== 'both') save('gallery-paper', paper); render();
+      paper = b.dataset.mode; save('themes-mode', paper); if (paper !== 'both') save('gallery-mode', paper); render();
     });
 
     const viewer = document.getElementById('viewer'), frame = document.getElementById('viewer-frame');
@@ -156,7 +156,7 @@
     function openAt(k) {
       current = (k + items.length) % items.length;
       const it = items[current], name = THEMES.find(x => x[0] === theme)[1];
-      document.getElementById('viewer-title').textContent = `${name}${it.p ? ' · 흰 바탕' : ''} · ${it.label}`;
+      document.getElementById('viewer-title').textContent = `${name}${it.p ? ' · 다크' : ''} · ${it.label}`;
       document.getElementById('viewer-tab').href = url(it.file, it.n, it.p);
       frame.src = url(it.file, it.n, it.p, true);
       viewer.classList.add('open'); document.body.classList.add('viewing');

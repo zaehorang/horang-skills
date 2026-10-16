@@ -36,6 +36,8 @@ FONT_FLOOR_PX = CANVAS_H * FONT_FLOOR_RATIO   # 14.4px
 DG_NODE_BUDGET = 9
 # 코드 블록 하나에 12줄까지. 설명할 줄만 남긴다 (패턴 S).
 CODE_LINE_BUDGET = 12
+# 글자와 배경 대비가 이 아래면 어떤 크기에서도 읽기 어렵다 (WCAG 큰 글자 기준)
+CONTRAST_FLOOR = 3.0
 # 레터박스 검정·흰색은 팔레트가 아니라 무대 색이라 허용한다.
 PALETTE_NEUTRALS = {"#000", "#000000", "#fff", "#ffffff"}
 
@@ -190,14 +192,14 @@ def check_legend_consistency(src: str, f: Findings) -> None:
 
 
 def check_palette(src: str, f: Findings) -> None:
-    """색 값은 :root 팔레트와 [data-theme] 테마에만 둔다.
+    """색 값은 :root 팔레트와 [data-theme] 테마·[data-mode] 모드 블록에만 둔다.
 
     패턴 CSS에 색을 직접 쓰면 테마를 바꿔도 그 자리만 옛 색으로 남는다.
     """
     css = "\n".join(re.findall(r"<style\b[^>]*>(.*?)</style>", strip_comments(src), re.S | re.I))
     stray: list[str] = []
     for selector, body in re.findall(r"([^{}]+)\{([^{}]*)\}", css):
-        if ":root" in selector or "[data-theme" in selector:
+        if ":root" in selector or "[data-theme" in selector or "[data-mode" in selector:
             continue
         for hexv in re.findall(r"#[0-9A-Fa-f]{3,8}\b", body):
             if hexv.lower() not in PALETTE_NEUTRALS:
@@ -205,7 +207,7 @@ def check_palette(src: str, f: Findings) -> None:
     if stray:
         f.add("warn", "palette",
               f"팔레트 밖에 색 값이 {len(stray)}곳 있다: {', '.join(stray[:6])}{' …' if len(stray) > 6 else ''}",
-              ":root 나 [data-theme] 블록의 토큰으로 옮길 것. 한 요소만 다르면 style=\"--c:…\"")
+              ":root · [data-theme] · [data-mode] 블록의 토큰으로 옮길 것. 한 요소만 다르면 style=\"--c:…\"")
 
 
 def check_diagram_edges(src: str, f: Findings) -> None:
@@ -272,7 +274,13 @@ f.src = '__DECK__';
 document.body.appendChild(f);
 setTimeout(() => send({error: 'timeout: 덱이 로드되지 않았다'}), 20000);
 f.onload = () => setTimeout(() => {
-  const out = {overflow: [], small: [], foot: [], empty: [], dg: [], canvas: null, slides: 0};
+  const out = {overflow: [], small: [], foot: [], empty: [], dg: [], contrast: [], canvas: null, slides: 0};
+  // 계산된 색 → {rgb, a}. color-mix 결과는 'color(srgb r g b / a)' 꼴이다
+  const parseColor = c => { const n = (c.match(/-?[\\d.]+/g) || []).map(Number);
+    return c.startsWith('color(') ? {rgb: n.slice(0, 3).map(v => v * 255), a: n.length > 3 ? n[3] : 1}
+                                  : {rgb: n.slice(0, 3), a: n.length > 3 ? n[3] : 1}; };
+  const lum = rgb => { const [r, g, b] = rgb.map(x => { x /= 255; return x <= .03928 ? x / 12.92 : ((x + .055) / 1.055) ** 2.4; });
+    return .2126 * r + .7152 * g + .0722 * b; };
   try {
     const d = f.contentDocument;
     const deck = d.querySelector('.deck');
@@ -331,6 +339,28 @@ f.onload = () => setTimeout(() => {
           const fs = parseFloat(getComputedStyle(el).fontSize);
           if (fs < FLOOR) out.small.push({slide: i + 1, sel: (el.className || el.tagName) + '', px: fs});
         }
+      });
+      // 글자 대비: 글자색과 실제로 칠해진 가장 가까운 배경을 비교한다. 그라데이션·그림 위 글자는 배경을 알 수 없어 건너뛴다
+      const seenC = new Set();
+      s.querySelectorAll('*').forEach(el => {
+        if (el.closest('svg,script,style') || !el.getClientRects().length) return;
+        if (![...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim())) return;
+        const fg = parseColor(getComputedStyle(el).color); if (fg.a < .5) return;
+        let e = el, bg = null;
+        while (e) {
+          const cs = getComputedStyle(e);
+          if (cs.backgroundImage !== 'none') { bg = null; break; }
+          const b = parseColor(cs.backgroundColor);
+          if (b.a >= .9) { bg = b.rgb; break; }
+          if (b.a > .05) { bg = null; break; }
+          if (e === s) break;
+          e = e.parentElement;
+        }
+        if (!bg) return;
+        const L1 = lum(fg.rgb), L2 = lum(bg), ratio = (Math.max(L1, L2) + .05) / (Math.min(L1, L2) + .05);
+        const key = (el.className || el.tagName) + '';
+        if (ratio < __CONTRAST__ && !seenC.has(key)) { seenC.add(key);
+          out.contrast.push({slide: i + 1, sel: key, ratio: Math.round(ratio * 100) / 100, text: el.textContent.trim().slice(0, 20)}); }
       });
       // 구조도: 노드 겹침 · 선 라벨이 노드를 가림 · 노드 예산 · 번호와 범례 짝
       const hit = (a, b) => Math.min(a.right, b.right) - Math.max(a.left, b.left) > 2 &&
@@ -438,6 +468,7 @@ def run_dynamic(path: Path, f: Findings) -> dict | None:
                   .replace("__EMPTY_CONTENT__", str(EMPTY_CONTENT_RATIO))
                   .replace("__DG_BUDGET__", str(DG_NODE_BUDGET))
                   .replace("__CODE_BUDGET__", str(CODE_LINE_BUDGET))
+                  .replace("__CONTRAST__", str(CONTRAST_FLOOR))
                   .replace("__W__", str(CANVAS_W))
                   .replace("__H__", str(CANVAS_H))
                   .replace("__DECK__", path.name))
@@ -512,6 +543,11 @@ def run_dynamic(path: Path, f: Findings) -> dict | None:
     for item in data.get("dg", []):
         level, check, msg = dg_msg[item["kind"]]
         f.add(level, check, f"{item['slide']}장: " + msg.format(d=item["detail"]))
+
+    for c in data.get("contrast", []):
+        f.add("error", "text-contrast",
+              f"{c['slide']}장 '{c['sel']}' 글자 대비가 {c['ratio']}:1 (하한 {CONTRAST_FLOOR:g}:1) — \"{c['text']}\". "
+              f"모드·테마 토큰 상속을 확인할 것.")
 
     seen = set()
     for sm in data.get("small", []):
