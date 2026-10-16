@@ -31,7 +31,7 @@ gallery/
 덱 한 파일 안은 세 덩어리다.
 
 1. **CSS** — 색 4층(팔레트 원색 → 의미 토큰 → `[data-theme]` 테마 → `[data-mode]` 다크 모드) · 타이포 스케일 · 레이아웃(본문은 제목 바로 아래 같은 위치에서 시작) · 패턴별 CSS
-2. **장** — `<section class="slide" data-title="…">` 하나가 한 장. `slide-head`(kicker + 결론형 제목) / `content`(패턴) / `foot`(보조 문구 + 쪽 번호)
+2. **장** — `<section class="slide" data-title="…">` 하나가 한 장. `slide-head`(kicker + 결론을 명사형으로 끝낸 제목) / `content`(패턴) / `foot`(보조 문구 + 쪽 번호)
 3. **엔진** — 화면 맞춤 축소, 장 넘김(키·버튼·`#번호`), 쪽 번호 자동 채움, 구조도 선 그리기
 
 각 장 푸터의 점선 **견본** 표시(`<span class="guide">`)는 안내문이다. 복사한 덱에 남아 있으면 `deck_verify`가 경고한다.

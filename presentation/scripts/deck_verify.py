@@ -36,8 +36,10 @@ FONT_FLOOR_PX = CANVAS_H * FONT_FLOOR_RATIO   # 14.4px
 DG_NODE_BUDGET = 9
 # 코드 블록 하나에 12줄까지. 설명할 줄만 남긴다 (패턴 S).
 CODE_LINE_BUDGET = 12
-# 글자와 배경 대비가 이 아래면 어떤 크기에서도 읽기 어렵다 (WCAG 큰 글자 기준)
-CONTRAST_FLOOR = 3.0
+# 글자와 배경 대비 하한 (WCAG AA). 프로젝터는 대비를 크게 깎으므로 이 아래는 뒷줄에서 안 읽힌다.
+# 보통 글자는 4.5:1, 큰 글자(24px 이상 또는 굵은 19px 이상)는 3:1.
+CONTRAST_FLOOR = 4.5
+CONTRAST_FLOOR_LARGE = 3.0
 # 레터박스 검정·흰색은 팔레트가 아니라 무대 색이라 허용한다.
 PALETTE_NEUTRALS = {"#000", "#000000", "#fff", "#ffffff"}
 
@@ -225,6 +227,31 @@ def check_diagram_edges(src: str, f: Findings) -> None:
                       f"line {line}")
 
 
+def check_text_accent(src: str, f: Findings) -> None:
+    """글자 강조(class="accent")는 한 장에 한 곳. 여러 곳을 칠하면 어디를 봐야 할지 흐려진다."""
+    for i, sec in enumerate(re.findall(r'<section class="slide[^"]*".*?</section>', strip_comments(src), re.S), 1):
+        n = len(re.findall(r'class="accent"', sec))
+        if n > 1:
+            f.add("warn", "accent-text", f"{i}장: 글자 강조가 {n}곳이다. 한 장에 한 곳, 짚는 요소와 같은 대상만 칠한다.",
+                  "build.md '글자 강조'")
+
+
+def check_title_style(src: str, f: Findings) -> None:
+    """장 제목(h2)은 결론을 명사형으로 끝낸다. "~다·~요·~까" 서술형은 대본처럼 읽힌다.
+
+    표지 제목(h1)은 질문형·문장형을 허용한다.
+    """
+    bad = []
+    for raw in re.findall(r"<h2\b[^>]*>(.*?)</h2>", strip_comments(src), re.S):
+        text = re.sub(r"<[^>]+>", "", raw).strip()
+        if re.search(r"(다|요|까)[.!?]?$", text):
+            bad.append(text)
+    if bad:
+        f.add("warn", "title-style",
+              f"서술형으로 끝나는 장 제목이 {len(bad)}개: {', '.join(bad[:3])}{' …' if len(bad) > 3 else ''}",
+              "결론은 두고 명사형으로 끝낼 것 (예: '정답률이 81%로 올랐다' → '정답률 54% → 81% 상승'). build.md '제목 쓰기'")
+
+
 def check_guide_notes(src: str, path: Path, f: Findings) -> None:
     """갤러리 견본의 안내(.guide)를 복사해 온 채로 두면 발표 화면에 '견본' 표시가 나간다.
 
@@ -359,8 +386,10 @@ f.onload = () => setTimeout(() => {
         if (!bg) return;
         const L1 = lum(fg.rgb), L2 = lum(bg), ratio = (Math.max(L1, L2) + .05) / (Math.min(L1, L2) + .05);
         const key = (el.className || el.tagName) + '';
-        if (ratio < __CONTRAST__ && !seenC.has(key)) { seenC.add(key);
-          out.contrast.push({slide: i + 1, sel: key, ratio: Math.round(ratio * 100) / 100, text: el.textContent.trim().slice(0, 20)}); }
+        const cs = getComputedStyle(el), px = parseFloat(cs.fontSize), w = parseInt(cs.fontWeight, 10);
+        const floor = (px >= 24 || (px >= 19 && w >= 700)) ? __CONTRAST_LARGE__ : __CONTRAST__;
+        if (ratio < floor && !seenC.has(key)) { seenC.add(key);
+          out.contrast.push({slide: i + 1, sel: key, ratio: Math.round(ratio * 100) / 100, floor, text: el.textContent.trim().slice(0, 20)}); }
       });
       // 구조도: 노드 겹침 · 선 라벨이 노드를 가림 · 노드 예산 · 번호와 범례 짝
       const hit = (a, b) => Math.min(a.right, b.right) - Math.max(a.left, b.left) > 2 &&
@@ -468,6 +497,7 @@ def run_dynamic(path: Path, f: Findings) -> dict | None:
                   .replace("__EMPTY_CONTENT__", str(EMPTY_CONTENT_RATIO))
                   .replace("__DG_BUDGET__", str(DG_NODE_BUDGET))
                   .replace("__CODE_BUDGET__", str(CODE_LINE_BUDGET))
+                  .replace("__CONTRAST_LARGE__", str(CONTRAST_FLOOR_LARGE))
                   .replace("__CONTRAST__", str(CONTRAST_FLOOR))
                   .replace("__W__", str(CANVAS_W))
                   .replace("__H__", str(CANVAS_H))
@@ -546,7 +576,7 @@ def run_dynamic(path: Path, f: Findings) -> dict | None:
 
     for c in data.get("contrast", []):
         f.add("error", "text-contrast",
-              f"{c['slide']}장 '{c['sel']}' 글자 대비가 {c['ratio']}:1 (하한 {CONTRAST_FLOOR:g}:1) — \"{c['text']}\". "
+              f"{c['slide']}장 '{c['sel']}' 글자 대비가 {c['ratio']}:1 (하한 {c.get('floor', CONTRAST_FLOOR):g}:1) — \"{c['text']}\". "
               f"모드·테마 토큰 상속을 확인할 것.")
 
     seen = set()
@@ -591,6 +621,8 @@ def main() -> int:
     check_palette(src, f)
     check_diagram_edges(src, f)
     check_guide_notes(src, args.deck, f)
+    check_title_style(src, f)
+    check_text_accent(src, f)
     if not args.no_render:
         run_dynamic(args.deck, f)
 

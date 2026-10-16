@@ -18,15 +18,18 @@
        뜻: 강조색은 그 장에서 "지금 짚는 곳" 하나에만 쓴다 — 결론 한 줄, 새로 생긴 것, 짚는 행, 지금 단계.
        번호 원·라벨·갈래는 강조색이 아니다(먹색·회색). 회색은 이미 있는 것, 점선은 아직 아닌 것. */
     :root{
-      --ink:#141413; --body:#2B2A27; --muted:#6B6A64; --paper:#FFFFFF; --line:#DEDCD3;
-      --card:#F0EEE6;
-      --accent:#D97757; --accent-dark:#A84A28; --accent-soft:#F5E3DA;
+      --ink:#141413; --body:#2B2A27; --muted:#57554F; --paper:#FFFFFF; --line:#D6D3CA;
+      --card:#F1F0EB;          /* 흰 바탕 위 면 — 노란 기를 덜어 칙칙하지 않게 */
+      --accent:#D97757; --accent-dark:#9A4022; --accent-soft:#F5E3DA;
+      --accent-dm:#D97757;     /* 다크 바탕 위 강조 선·면. 다크 바탕에서 어두워 보이는 테마는 밝힌 값을 준다 */
       --plan:#4F6F80;          /* "제안" 상태 원색. 강조색과 다른 색이어야 한다 */
       --accent-light:#E38F72;  /* 어두운 바탕 위 강조 글자 원색 (표지·코드·다크 모드) */
       --on-light:#141413;      /* 늘 밝은 면(조작 버튼 등) 위 글자 — 모드와 상관없이 어둡다 */
       --code-dim:#A3A198;
       --on-dark:#FAF9F5; --on-dark-muted:#DEDCD3;   /* 늘 어두운 면(표지·사진 위 문구·코드) 위 글자 — 모드와 상관없이 밝다 */
       --shadow:0 14px 34px rgba(20,20,19,.08);
+      /* 다크 모드 중립색 — 테마마다 색조를 맞춘다(clay 따뜻한 회색). 4층 다크 블록이 읽는다 */
+      --paper-dm:#1B1A18; --card-dm:#2A2926; --line-dm:#4A4843; --muted-dm:#B3B0A6; --body-dm:#DCD9D0; --ink-dm:#EEEBE4;
 
       /* 타이포 스케일 — 1280x720 고정 캔버스 기준 절대값.
          괄호 안은 슬라이드 높이(720) 대비 비율. 발표 가독성은 화면 해상도가
@@ -71,19 +74,30 @@
        점검(다크): 다크 바탕 위 강조 글자 ≥ 4.5:1 · 강조 바탕 위 강조 글자 ≥ 4.5:1 · --accent 선·면 ≥ 3:1. 팔레트 장(?mode=dark)이 계산해 보여준다.
        글자에는 --accent-dark 를, --accent 는 선·면에만 쓴다. */
     [data-theme="clay"]{}
-    [data-theme="ocean"]{--card:#EBF0F5; --line:#D5DEE7; --muted:#5F6B78; --body:#24303D; --ink:#0F1A26;
-                         --accent:#2F6FB0; --accent-dark:#1F4F86; --accent-soft:#E2ECF6; --plan:#8A6A2E; --accent-light:#7FB2E5}
-    [data-theme="duo"]{--accent:#B23A7A; --accent-dark:#8C2860; --accent-soft:#F6E1EC; --plan:#2E7D6B; --accent-light:#E58BB8;
-                       --tone-a-base:#1F4F86; --tone-a-soft-base:#E2ECF6; --tone-a-base-dark:#7492B4}
-    [data-theme="forest"]{--card:#EDF0E8; --line:#D8DED0; --muted:#636B5E; --body:#262B23; --ink:#141A12;
-                          --accent:#3F7A4A; --accent-dark:#2C5A35; --accent-soft:#E3EEE4; --plan:#7A5C8A; --accent-light:#8FC79A}
-    [data-theme="signal"]{--card:#F2F2F2; --line:#D9D9D9; --muted:#5C5C5C; --body:#1F1F1F; --ink:#0A0A0A; --accent-light:#FF6B63;
-                          --accent:#E5322D; --accent-dark:#B71F1B; --accent-soft:#FCE4E3; --plan:#2B59C3; --code-dim:#9A9A9A}
+    [data-theme="ocean"]{--card:#EDF1F6; --line:#CFD9E3; --muted:#4D5967; --body:#24303D; --ink:#0F1A26;
+                         --accent:#2F6FB0; --accent-dark:#1F4F86; --accent-soft:#E2ECF6; --plan:#8A6A2E; --accent-light:#7FB2E5;
+                         --accent-dm:#4D8BCB;
+                         --paper-dm:#151A20; --card-dm:#222A34; --line-dm:#3D4956; --muted-dm:#A9B3BE; --body-dm:#D8DEE5; --ink-dm:#ECF0F4}
+    [data-theme="duo"]{--card:#F1F0F4; --line:#D7D5DF; --muted:#545260; --body:#29272F; --ink:#16151A;
+                       --accent:#B23A7A; --accent-dark:#8C2860; --accent-soft:#F6E1EC; --plan:#2E7D6B; --accent-light:#E58BB8;
+                       --tone-a-base:#1F4F86; --tone-a-soft-base:#E2ECF6; --tone-a-base-dark:#7492B4;
+                       --accent-dm:#C9518F;
+                       --paper-dm:#19181C; --card-dm:#28262E; --line-dm:#46434E; --muted-dm:#B2AFBA; --body-dm:#DCDAE0; --ink-dm:#EEEDF1}
+    [data-theme="forest"]{--card:#EEF2EB; --line:#D0D7C8; --muted:#50584B; --body:#262B23; --ink:#141A12;
+                          --accent:#3F7A4A; --accent-dark:#2C5A35; --accent-soft:#E3EEE4; --plan:#7A5C8A; --accent-light:#8FC79A;
+                          --accent-dm:#4E9A5B;
+                          --paper-dm:#161A16; --card-dm:#242B24; --line-dm:#424B41; --muted-dm:#ACB4A7; --body-dm:#D9DED5; --ink-dm:#ECEFE9}
+    [data-theme="signal"]{--card:#F2F2F2; --line:#D2D2D2; --muted:#4F4F4F; --body:#1F1F1F; --ink:#0A0A0A; --accent-light:#FF6B63;
+                          --accent:#E5322D; --accent-dark:#B71F1B; --accent-soft:#FCE4E3; --plan:#2B59C3; --code-dim:#9A9A9A;
+                          --accent-dm:#E5322D;
+                          --paper-dm:#171717; --card-dm:#272727; --line-dm:#474747; --muted-dm:#B0B0B0; --body-dm:#DCDCDC; --ink-dm:#EDEDED}
     /* 4층 · 다크 모드 — 테마 블록보다 뒤에 두어야 이긴다. 강조색 자체는 테마 값을 쓰고,
        바탕 위에서 읽혀야 하는 값(강조 글자·연한 면·제안·갈래 A)은 그 값에서 다시 만든다.
        그림 파일(차트 PNG 등)은 다크 바탕에서 글자가 사라지므로 밝은 판 위에 올린다(.analysis-figure img). */
     [data-mode="dark"],[data-mode="dark"] [data-theme]{
-      --paper:#161615; --card:#24231F; --line:#3B3A35; --muted:#A8A69D; --body:#E6E4DC; --ink:#F4F2EC;
+      /* 중립색은 테마의 *-dm 값. 본문 10~13:1 · 제목 15:1 아래로 두어 어두운 방에서 번지지 않게 한다 */
+      --paper:var(--paper-dm); --card:var(--card-dm); --line:var(--line-dm); --muted:var(--muted-dm); --body:var(--body-dm); --ink:var(--ink-dm);
+      --accent:var(--accent-dm);
       --on-dark-muted:#B9B7AE;
       --surface-dark:#0A0A09;
       --accent-dark:var(--accent-on-dark);
@@ -135,11 +149,12 @@
     p,li{font-size:var(--fs-body);line-height:1.5}
     .kicker{margin:0 0 .7em;color:var(--accent-dark);font-size:var(--fs-label);font-weight:900;letter-spacing:.15em;text-transform:uppercase}
     .dark .kicker{color:var(--accent-on-dark)}
-    .lead{font-size:var(--fs-lead);line-height:1.45;color:var(--muted);max-width:26em;word-break:keep-all}
+    .lead{font-size:var(--fs-lead);line-height:1.45;color:var(--body);max-width:26em;word-break:keep-all}
     .dark .lead{color:var(--on-dark-muted)}
     .accent{color:var(--accent)}
     .dark .accent{color:var(--accent-on-dark)}
     .slide:not(.dark) .accent{color:var(--accent-dark)}   /* 밝은 장에서는 글자용 진한 강조 */
+    p .accent,li .accent,td .accent,small .accent{font-weight:800}   /* 본문 글자 강조는 색 + 굵기. 제목은 이미 굵어 색만 */
     .final-line{font-size:var(--fs-lead);font-weight:900;color:var(--accent-dark);word-break:keep-all}
 
     /* ── 견본 안내: 갤러리 견본에만 있는 설명. 복사한 덱에 남으면 deck_verify 가 경고한다 ── */
@@ -215,7 +230,7 @@
     .mcell{padding:.75em .8em;border-radius:3px;border:1px solid var(--line);font-size:var(--fs-body)}
     .mcell .no{display:block;font-size:var(--fs-label);font-weight:900;color:var(--muted);margin-bottom:.3em}
     .mcell strong{display:block;font-size:var(--fs-h3);letter-spacing:-.03em;margin-bottom:.25em}
-    .mcell p{margin:0;font-size:1em;color:var(--muted);word-break:keep-all;line-height:1.4}
+    .mcell p{margin:0;font-size:1em;color:var(--body);word-break:keep-all;line-height:1.4}
     .matrix-row.problems .mcell{background:var(--gray-soft);border-color:var(--line)}
     .matrix-row.features .mcell{background:var(--paper)}
     .matrix-row.features .mcell p{color:var(--ink)}
@@ -272,7 +287,7 @@
     .service.backlog{border-style:dashed;border-color:var(--status-next);background:var(--paper)}
     .service small{display:block;margin-bottom:.5em;color:var(--muted);font-weight:800;font-size:var(--fs-label)}
     .service strong{display:block;font-size:var(--fs-h3);margin-bottom:.3em;letter-spacing:-.03em;word-break:keep-all}
-    .service p{font-size:var(--fs-body);margin:0 0 .5em;color:var(--muted);line-height:1.4;word-break:keep-all}
+    .service p{font-size:var(--fs-body);margin:0 0 .5em;color:var(--body);line-height:1.4;word-break:keep-all}
     .service .chip{display:inline-flex;align-items:center;gap:.45em;font-size:var(--fs-label);font-weight:900;color:var(--muted)}
     .service .chip::before{content:"";width:.55em;height:.55em;border-radius:50%;background:var(--status-done);flex:none}
     .service.proposed .chip::before{background:var(--status-plan)}
@@ -284,7 +299,7 @@
     .action{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:.7em;padding:.6em .8em;border-radius:3px;background:var(--paper);border:1px solid var(--line)}
     .action b{width:1.7em;height:1.7em;display:grid;place-items:center;border-radius:50%;background:var(--ink);color:var(--paper);font-size:var(--fs-body)}
     .action p{margin:0;font-weight:800}
-    .action small{color:var(--muted);font-size:var(--fs-label)}
+    .action small{color:var(--body);font-size:var(--fs-label)}
     /* 행을 왼쪽 행동 카드와 같은 간격의 카드로 둔다 — 두 열의 행이 높이·위치까지 맞는다 */
     .api-table{display:grid;grid-auto-rows:1fr;gap:8px}
     .api-row:has(> .dg-num){grid-template-columns:auto 4.5em 1.25fr 1fr}
@@ -292,9 +307,8 @@
     .method{font-family:ui-monospace,monospace;font-weight:900;color:var(--ink)}
     .api-row.hot{background:var(--accent-soft);border-color:var(--accent)}
     .api-row.hot .method{color:var(--accent-dark)}
-    .api-row.hot small,.mcell.hot p{color:var(--body)}   /* -soft 바탕 위 --muted 는 4.5:1 아래 */
     .path{font-family:ui-monospace,monospace;font-size:.92em;overflow-wrap:anywhere}
-    .api-row small{color:var(--muted);font-size:var(--fs-label)}
+    .api-row small{color:var(--body);font-size:var(--fs-label)}
 
     /* ── 11 동작 화면 ───────────────────────────────────── */
     .screens{width:100%;display:grid;grid-template-columns:repeat(5,1fr);gap:14px;align-items:start}
@@ -314,7 +328,7 @@
     .wire .button.accent{background:var(--accent)}
     .screen figcaption{margin-top:.6em;font-size:var(--fs-label);line-height:1.4;word-break:keep-all}
     .screen figcaption strong{display:flex;align-items:center;gap:.4em;margin-bottom:.2em}
-    .screen figcaption > span{display:block;color:var(--muted)}
+    .screen figcaption > span{display:block;color:var(--body)}
 
     /* ── 11b 제품 화면 + 콜아웃 (패턴 M) ────────────────── */
     .shot-split{width:100%;display:grid;grid-template-columns:1.35fr 1fr;gap:26px;align-items:start}
@@ -330,7 +344,7 @@
     .shot .pin{background:var(--on-light);color:var(--on-dark)}   /* 캡처는 늘 밝은 그림 — 모드와 상관없이 어두운 핀 */
     .callout .pin{position:static;box-shadow:none}
     .callout strong{display:block;font-size:var(--fs-body);font-weight:900;word-break:keep-all}
-    .callout p{margin:.1em 0 0;font-size:var(--fs-label);color:var(--muted);line-height:1.45;word-break:keep-all}
+    .callout p{margin:.1em 0 0;font-size:var(--fs-label);color:var(--body);line-height:1.45;word-break:keep-all}
     .callout code{font-family:ui-monospace,monospace;font-size:.95em;color:var(--accent-dark);font-weight:800}
 
     /* ── 패턴 N: 전폭 분석 그림 + 결론 한 줄 ───────────────── */
@@ -390,7 +404,7 @@
     .dg-legend{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:18px}
     .dg-legend li{display:grid;grid-template-columns:auto 1fr;gap:.7em;align-items:start}
     .dg-legend strong{display:block;font-size:var(--fs-body);font-weight:900;color:var(--ink);word-break:keep-all}
-    .dg-legend p{margin:.15em 0 0;font-size:var(--fs-label);line-height:1.45;color:var(--muted);word-break:keep-all}
+    .dg-legend p{margin:.15em 0 0;font-size:var(--fs-label);line-height:1.45;color:var(--body);word-break:keep-all}
 
     /* ── 패턴 R · 가로 행 매핑: 왼쪽 문제 → 오른쪽 해결, 행마다 한 쌍 ── */
     .rowmap{width:100%;display:grid;grid-template-columns:1fr 110px 1fr;column-gap:14px;row-gap:10px;align-items:center}
@@ -427,7 +441,7 @@
     .code-out > div{display:grid;grid-template-columns:auto 1fr;gap:.6em;align-items:start;padding:.7em .9em;border:1.5px solid var(--line);border-radius:8px;background:var(--paper)}
     .code-out strong{display:block;font-size:var(--fs-body);font-weight:900;color:var(--ink);word-break:keep-all}
     .code-out code{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:.95em;color:var(--ink)}
-    .code-out p{margin:.15em 0 0;font-size:var(--fs-label);line-height:1.45;color:var(--muted);word-break:keep-all}
+    .code-out p{margin:.15em 0 0;font-size:var(--fs-label);line-height:1.45;color:var(--body);word-break:keep-all}
 
     /* ── 패턴 T · 데이터 표: 한 행만 짚는다 ─────────────────── */
     .table-wrap{width:100%;display:flex;flex-direction:column;gap:14px}
@@ -446,7 +460,7 @@
     .agenda li{display:grid;grid-template-columns:84px 1fr auto;align-items:center;gap:20px;padding:14px 16px;border-bottom:1px solid var(--line)}
     .agenda .no{font-size:var(--fs-h3);font-weight:900;color:var(--muted);font-variant-numeric:tabular-nums}
     .agenda strong{display:block;font-size:var(--fs-h3);letter-spacing:-.03em;color:var(--ink);word-break:keep-all}
-    .agenda p{margin:.15em 0 0;font-size:var(--fs-label);color:var(--muted);word-break:keep-all}
+    .agenda p{margin:.15em 0 0;font-size:var(--fs-label);color:var(--body);word-break:keep-all}
     .agenda .time{font-size:var(--fs-label);font-weight:800;color:var(--muted)}
     .agenda li.done strong{color:var(--muted)}
     .agenda li.now{background:linear-gradient(90deg,var(--accent-soft),var(--paper));box-shadow:inset 5px 0 0 var(--accent)}
@@ -461,7 +475,7 @@
     .stat-side .lead{margin:0}
     .stat-compare{display:grid;gap:10px}
     .stat-compare div{display:grid;grid-template-columns:1fr auto;align-items:baseline;padding:.5em .8em;border:1px solid var(--line);border-radius:6px;background:var(--paper)}
-    .stat-compare span{font-size:var(--fs-body);color:var(--muted);word-break:keep-all}
+    .stat-compare span{font-size:var(--fs-body);color:var(--body);word-break:keep-all}
     .stat-compare b{font-size:var(--fs-h3);font-variant-numeric:tabular-nums;color:var(--muted)}
     .stat-compare .hot{border-color:var(--accent)}
     .stat-compare .hot span{color:var(--ink);font-weight:800}
@@ -568,7 +582,7 @@
     <!-- ═══ 패턴 B · 2단 대비 ═══════════════════════════════════
          예산: 카드 2개 × 6~8줄. 가장 여유 있는 레이아웃. -->
     <section class="slide" data-title="대비">
-      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>두 항목을 나란히 두고 차이를 보여줍니다</h2></div></header>
+      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>A는 감소, B는 유지</h2></div></header>
       <div class="content">
         <div class="thesis-grid">
           <article class="thesis-card fading">
@@ -589,7 +603,7 @@
     <!-- ═══ 패턴 C · 사진 + 서술 ════════════════════════════════
          예산: 우측 = 리드 2줄 + 인용 1줄 + 항목 4개 + 결론 1줄. 초과 금지. -->
     <section class="slide" data-title="문제">
-      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>상황을 장면으로 보여줍니다</h2></div></header>
+      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>문제가 드러나는 한 장면</h2></div></header>
       <div class="content split">
         <div class="photo-card">
           <img src="assets/PHOTO.png" alt="설명">
@@ -608,7 +622,7 @@
     <!-- ═══ 패턴 D · 5열 매트릭스 ═══════════════════════════════
          예산: 셀당 1~2줄, 라벨 수준만. 강조는 .hot 하나만. -->
     <section class="slide" data-title="매핑">
-      <header class="slide-head"><div><p class="kicker">A → B</p><h2>문제와 대응을 한 줄씩 잇습니다</h2></div></header>
+      <header class="slide-head"><div><p class="kicker">A → B</p><h2>문제마다 대응 기능 하나씩</h2></div></header>
       <div class="content">
         <div class="matrix">
           <p class="matrix-caption">윗줄 제목</p>
@@ -638,7 +652,7 @@
          우선순위가 있는 목록에 쓴다. 균등 5열은 "다 똑같이 중요하다"고 말해버린다.
          예산: 주 카드 6줄, 위성 2줄. -->
     <section class="slide" data-title="이해관계자">
-      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>누구에게 무엇이 바뀌는지 보여줍니다</h2></div></header>
+      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>가장 먼저 바뀌는 대상</h2></div></header>
       <div class="content">
         <div class="impact-layout">
           <article class="impact-card primary">
@@ -659,7 +673,7 @@
 
     <!-- ═══ 패턴 F · 역할 분담 (2단 + 연결기호) ══════════════════ -->
     <section class="slide" data-title="역할">
-      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>누가 무엇을 맡는지 나눕니다</h2></div></header>
+      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>실행은 AI, 결정은 사람</h2></div></header>
       <div class="content">
         <div class="before-after">
           <article class="scene">
@@ -680,7 +694,7 @@
 
     <!-- ═══ 패턴 G · 3단계 로드맵 ═══════════════════════════════ -->
     <section class="slide" data-title="로드맵">
-      <header class="slide-head"><div><p class="kicker">ROADMAP</p><h2>어떤 순서로 만드는지 보여줍니다</h2></div></header>
+      <header class="slide-head"><div><p class="kicker">ROADMAP</p><h2>3단계 도입 순서</h2></div></header>
       <div class="content">
         <div class="roadmap">
           <article class="sprint"><div class="station">1</div>
@@ -699,7 +713,7 @@
          confirmed=회색(확인됨) / proposed=클레이(제안) / backlog=점선(예정)
          범례와 카드 색은 반드시 같은 의미여야 한다. -->
     <section class="slide" data-title="구성">
-      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>구성요소와 각각의 상태를 밝힙니다</h2></div></header>
+      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>구성요소별 구현 상태</h2></div></header>
       <div class="content">
         <div class="architecture">
           <div class="journey"><span>단계</span><span>단계</span><span>단계</span><span>단계</span><span>단계</span></div>
@@ -722,7 +736,7 @@
     <!-- ═══ 패턴 J · 2단 흐름 카드 ══════════════════════════════
          칩이 줄바꿈돼도 화살표가 줄 끝에 매달리지 않는다(::before 로 붙임). -->
     <section class="slide" data-title="흐름">
-      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>두 가지 동작 시점을 나눠 설명합니다</h2></div></header>
+      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>두 가지 동작 시점</h2></div></header>
       <div class="content">
         <div class="ai-flow-grid">
           <article class="flow-card">
@@ -746,7 +760,7 @@
          예산: 좌측 4단계, 우측 6행까지. 표를 다 읽지 말고 한 행만 짚는다.
          행동과 API 행이 짝이면 행 앞에 같은 번호(<span class="dg-num">)를 붙인다. 두 열의 행 높이는 엔진 없이 CSS로 맞춰진다. -->
     <section class="slide" data-title="계약">
-      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>행동이 상태 변화로 이어집니다</h2></div><span class="badge">현재 확인됨</span></header>
+      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>사용자 행동별 상태 변화</h2></div><span class="badge">현재 확인됨</span></header>
       <div class="content">
         <div class="api-layout">
           <div class="action-flow">
@@ -770,7 +784,7 @@
          .frame 은 실제 화면 캡처로 교체한다. 와이어프레임 상태로 발표하면
          "구현했다"가 아니라 "이렇게 만들고 있다"로 말해야 한다. -->
     <section class="slide" data-title="스토리보드">
-      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>사용자가 무엇을 경험하는지 보여줍니다</h2></div><span class="badge">현재 확인됨</span></header>
+      <header class="slide-head"><div><p class="kicker">KICKER</p><h2>사용자가 겪는 흐름</h2></div><span class="badge">현재 확인됨</span></header>
       <div class="content">
         <div class="screens">
           <figure class="screen"><div class="frame"><div class="browserbar"><i></i><i></i><i></i></div><div class="wire"><div class="line title"></div><div class="line accent"></div><div class="block"></div><div class="line"></div><div class="button"></div></div></div><figcaption><strong><span class="dg-num">1</span>단계</strong><span>바뀌는 것 한 줄</span></figcaption></figure>
@@ -791,7 +805,7 @@
                잘라 낸 이미지 안의 글자도 슬라이드 높이의 2% 하한을 지켜야 한다.
          핀 좌표(left/top %)는 잘라 낸 이미지에 맞춰 직접 맞춘다. -->
     <section class="slide" data-title="동작">
-      <header class="slide-head"><div><p class="kicker">EXPERIENCE</p><h2>화면에서 무엇을 받는지 보여줍니다</h2></div></header>
+      <header class="slide-head"><div><p class="kicker">EXPERIENCE</p><h2>화면에서 받는 결과</h2></div></header>
       <div class="content shot-split">
         <div>
           <figure class="shot">
@@ -822,7 +836,7 @@
          예산: 숫자 1개 + 무엇의 숫자인지 1줄, 오른쪽에 맥락 2줄 + 비교 기준 2~3행 + 출처 1줄.
          비교 기준 없이 숫자만 두지 않는다. 크기를 판단할 수 없다. -->
     <section class="slide" data-title="핵심 숫자">
-      <header class="slide-head"><div><p class="kicker">KEY NUMBER</p><h2>숫자 하나로 결과를 보여줍니다</h2></div></header>
+      <header class="slide-head"><div><p class="kicker">KEY NUMBER</p><h2>핵심 지표 하나의 변화</h2></div></header>
       <div class="content center">
         <div class="stat-hero">
           <div><span class="stat-num">00<small>%</small></span><p class="stat-label">무엇을 잰 숫자인지 한 줄</p></div>
@@ -844,7 +858,7 @@
          예산: 6행 × 5열, 칸은 숫자나 짧은 구절. 짚을 행 하나에 .hot, 숫자 열은 .num 오른쪽 정렬.
          표를 다 읽지 않는다. 결론 한 줄이 짚을 행을 말한다. -->
     <section class="slide" data-title="데이터 표">
-      <header class="slide-head"><div><p class="kicker">TABLE</p><h2>같은 기준으로 나란히 놓고 한 행을 짚습니다</h2></div></header>
+      <header class="slide-head"><div><p class="kicker">TABLE</p><h2>같은 기준으로 견준 결과, 짚는 한 행</h2></div></header>
       <div class="content">
         <div class="table-wrap">
           <table class="data-table">
@@ -869,7 +883,7 @@
          예시 원본 1350×450 → 본문 1172×391. 자르거나 흑백 처리하지 않는다.
          이미지 안 글자는 축소 후에도 14.4px 이상인지 직접 확인한다. -->
     <section class="slide" data-title="분석 그림">
-      <header class="slide-head"><div><p class="kicker">ANALYSIS</p><h2>분석 그림을 온전히 보여줍니다</h2></div></header>
+      <header class="slide-head"><div><p class="kicker">ANALYSIS</p><h2>분석 그림 한 장의 결론</h2></div></header>
       <div class="content figure-content">
         <figure class="analysis-figure">
           <img src="assets/ANALYSIS.svg" alt="예시 지표: 기준 40, 비교 55, 최종안 70. 최종안을 클레이 색으로 강조">
@@ -889,7 +903,7 @@
                 (그래서 예시의 아래 레인은 오른쪽에서 왼쪽으로 흐른다.)
                 선은 <i class="dg-edge" data-from data-to> 한 줄씩. 왕복선은 data-offset 으로 서로 비켜 놓는다. 색은 레인의 tone-a / tone-b 를 따른다. -->
     <section class="slide" data-title="레인 흐름">
-      <header class="slide-head"><div><p class="kicker">STRUCTURE</p><h2>두 흐름이 어디서 만나는지 보여줍니다</h2></div></header>
+      <header class="slide-head"><div><p class="kicker">STRUCTURE</p><h2>두 흐름이 만나는 지점</h2></div></header>
       <div class="content">
         <div class="dg">
           <div class="dg-lane tone-b">
@@ -933,7 +947,7 @@
          예산: 패널 2개, 패널당 노드 5개, 새로 생긴 노드(.new)는 오른쪽에만 1~2개, 결론 1줄.
          왼쪽 노드는 .soft 로 흐리게 둔다. 두 패널의 같은 노드는 같은 칸에 둔다. -->
     <section class="slide" data-title="전후 구조">
-      <header class="slide-head"><div><p class="kicker">BEFORE → AFTER</p><h2>같은 흐름에 무엇이 더해지는지 봅니다</h2></div></header>
+      <header class="slide-head"><div><p class="kicker">BEFORE → AFTER</p><h2>기존 흐름에 더해지는 것</h2></div></header>
       <div class="content" style="flex-direction:column;align-items:stretch">
         <div class="dg-compare">
           <div class="dg-panel tone-a">
@@ -974,7 +988,7 @@
          예산: 노드 6개, 번호 3~5개, 범례 항목당 제목 1줄 + 설명 2줄, 되돌아가는 점선 1개.
          번호는 노드 안 <span class="dg-num"> 과 범례 <span class="dg-num"> 이 같은 숫자여야 한다 (검사기가 본다). -->
     <section class="slide" data-title="번호 구조도">
-      <header class="slide-head"><div><p class="kicker">HOW IT WORKS</p><h2>구조를 순서대로 짚어 갑니다</h2></div></header>
+      <header class="slide-head"><div><p class="kicker">HOW IT WORKS</p><h2>순서대로 짚는 구조</h2></div></header>
       <div class="content">
         <div class="dg-legend-split">
           <div class="dg">
@@ -1004,7 +1018,7 @@
          예산: 6행, 칸마다 "이름 : 한 구절" 1줄. 왼쪽은 글자만, 오른쪽만 상자로 둔다.
          왼쪽 이름은 --tone-a, 오른쪽 상자는 --tone-b. 한 행만 다르게 칠할 때는 그 행에 style="--c:…". -->
     <section class="slide" data-title="행 매핑">
-      <header class="slide-head"><div><p class="kicker">PROBLEM → ANSWER</p><h2>문제마다 무엇으로 답하는지 잇습니다</h2></div></header>
+      <header class="slide-head"><div><p class="kicker">PROBLEM → ANSWER</p><h2>문제별 대응 짝</h2></div></header>
       <div class="content">
         <div class="rowmap">
           <p class="rowmap-head tone-a">“ 지금 ”</p><span></span><p class="rowmap-head tone-b">“ 바꾸면 ”</p>
@@ -1027,7 +1041,7 @@
                .k 키워드 · .s 문자열 · .c 주석. 강조 줄은 <span class="hl"> 로 감싸고 끝에 번호.
          결과: .code-out 대신 작은 구조도(.dg)를 둘 수 있다. 둘 다 두지 않는다. -->
     <section class="slide" data-title="코드 워크스루">
-      <header class="slide-head"><div><p class="kicker">CODE · 3 / 5</p><h2>이 단계의 코드가 무엇을 바꾸는지 짚습니다</h2></div></header>
+      <header class="slide-head"><div><p class="kicker">CODE · 3 / 5</p><h2>이 단계 코드가 바꾸는 값</h2></div></header>
       <div class="content">
         <div class="walk">
           <ol class="walk-rail">
@@ -1054,7 +1068,7 @@
 
     <!-- ═══ 패턴 I · 4열 지표 + 결정 요청 (마무리) ═══════════════ -->
     <section class="slide" data-title="검증">
-      <header class="slide-head"><div><p class="kicker">DECISION</p><h2>무엇으로 성공을 판단할지 정합니다</h2></div></header>
+      <header class="slide-head"><div><p class="kicker">DECISION</p><h2>성공 판단 지표</h2></div></header>
       <div class="content" style="flex-direction:column;align-items:stretch">
         <div class="decision"><small>요청하는 결정</small><ol><li>결정 하나</li><li>결정 둘</li><li>결정 셋</li></ol></div>
         <div class="metric-list">

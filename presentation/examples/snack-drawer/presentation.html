@@ -9,10 +9,10 @@
        클레이 강조색은 "이번 제안이 새로 만드는 것"에만 쓴다.
        중립 회색은 이미 있는 것, 연회색 점선은 아직 아닌 것. */
     :root{
-      --ink:#141413; --body:#2B2A27; --muted:#6B6A64; --paper:#FAF9F5; --line:#DEDCD3;
-      --card:#F0EEE6;
+      --ink:#141413; --body:#2B2A27; --muted:#57554F; --paper:#FFFFFF; --line:#D6D3CA;
+      --card:#F1F0EB;
       --gray:var(--muted); --gray-soft:var(--card); --pending:var(--line);
-      --accent:#D97757; --accent-dark:#B5532F; --accent-soft:#F5E3DA;
+      --accent:#D97757; --accent-dark:#9A4022; --accent-soft:#F5E3DA;
       --shadow:0 14px 34px rgba(20,20,19,.08);
 
       /* 타이포 스케일 — 1280x720 고정 캔버스 기준 절대값.
@@ -304,7 +304,7 @@
     </section>
 
     <section class="slide" data-title="방법">
-      <header class="slide-head"><div><p class="kicker">DATA</p><h2>가상 120영업일, 변수 다섯 개로 봤다</h2></div><span class="badge">현재 확인됨</span></header>
+      <header class="slide-head"><div><p class="kicker">DATA</p><h2>가상 120영업일, 변수 5개로 본 서랍</h2></div><span class="badge">현재 확인됨</span></header>
       <div class="content">
         <div class="ai-flow-grid" style="height:78%">
           <article class="flow-card" style="display:flex;flex-direction:column;justify-content:space-between">
@@ -325,7 +325,7 @@
     </section>
 
     <section class="slide" data-title="보충">
-      <header class="slide-head"><div><h2>보충한 날은 반 이하로 빈다</h2></div><span class="badge">현재 확인됨</span></header>
+      <header class="slide-head"><div><h2>보충한 날은 빈 비율 절반 이하</h2></div><span class="badge">현재 확인됨</span></header>
       <div class="content figure-content">
         <figure class="analysis-figure"><img src="assets/f1_weekday.png" alt="요일별 빈 비율. 보충일 월·목은 클레이 막대이며 낮다"></figure>
         <p class="final-line">보충한 날은 반 이하로 빈다</p>
@@ -335,7 +335,7 @@
     </section>
 
     <section class="slide" data-title="사람">
-      <header class="slide-head"><div><h2>회의가 5개 이상인 날은 열에 아홉 번 빈다</h2></div><span class="badge">현재 확인됨</span></header>
+      <header class="slide-head"><div><h2>회의 5개 이상인 날은 열에 아홉 번 바닥</h2></div><span class="badge">현재 확인됨</span></header>
       <div class="content figure-content">
         <figure class="analysis-figure"><img src="assets/f2_meetings.png" alt="오후 회의 수별 빈 비율과 일수. 5개 이상인 9일 중 빈 비율 0.89"></figure>
         <p class="final-line">회의 5개 이상인 날(9일)은 0.89가 빈다</p>
@@ -345,7 +345,7 @@
     </section>
 
     <section class="slide" data-title="예측">
-      <header class="slide-head"><div><h2>AUC 0.804, 보충일 규칙보다 0.1 높다</h2></div><span class="badge">현재 확인됨</span></header>
+      <header class="slide-head"><div><h2>AUC 0.804, 보충일 규칙보다 0.1 우위</h2></div><span class="badge">현재 확인됨</span></header>
       <div class="content figure-content">
         <figure class="analysis-figure"><img src="assets/f4_auc.png" alt="검증 30일 AUC. 로지스틱 회귀 0.804, 보충일 규칙 0.700, 요일 평균 0.687"></figure>
         <p class="final-line">다섯 변수 모델만 AUC 0.8을 넘는다</p>
@@ -355,7 +355,7 @@
     </section>
 
     <section class="slide" data-title="운영">
-      <header class="slide-head"><div><p class="kicker">IF WE USE IT</p><h2>빈 15일 중 10일을 미리 막을 수 있다 — 검증 셈</h2></div><span class="badge plan">제안</span></header>
+      <header class="slide-head"><div><p class="kicker">IF WE USE IT</p><h2>빈 15일 중 10일 사전 차단 가능 — 검증 셈</h2></div><span class="badge plan">제안</span></header>
       <div class="content">
         <div class="thesis-grid" style="height:80%">
           <article class="thesis-card keeping" style="display:flex;flex-direction:column;justify-content:space-between">
@@ -374,7 +374,7 @@
     </section>
 
     <section class="slide" data-title="결정">
-      <header class="slide-head"><div><p class="kicker">DECISION</p><h2>한계를 안고, 오후 보충 시범 한 달을 제안한다</h2></div><span class="badge plan">제안</span></header>
+      <header class="slide-head"><div><p class="kicker">DECISION</p><h2>한계를 감안한 오후 보충 시범 1개월 제안</h2></div><span class="badge plan">제안</span></header>
       <div class="content" style="flex-direction:column;align-items:stretch;justify-content:center">
         <p class="decision-note" style="margin:0 0 20px">요청하는 결정: 빌 확률이 높은 날 점심 무렵 한 번 더 채우는 시범 운영 한 달</p>
         <div class="metric-list" style="height:280px">

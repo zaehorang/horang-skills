@@ -202,6 +202,16 @@ CASES = [
          expect={"guide"},
          edits=[('<footer class="foot"><span>보조 메시지</span>', '<footer class="foot"><span class="guide">패턴 B · 요령</span>')]),
 
+    Case("title-style",
+         "장 제목이 서술형으로 끝나면 대본처럼 읽혀 두괄식 결론이 흐려진다",
+         expect={"title-style"},
+         edits=[('<h2>A는 감소, B는 유지</h2>', '<h2>A는 줄고 B는 남는다</h2>')]),
+
+    Case("accent-text",
+         "글자 강조를 한 장에 여러 곳 칠하면 어디를 봐야 할지 흐려진다",
+         expect={"accent-text"},
+         edits=[('<h2>A는 감소, B는 유지</h2>', '<h2><span class="accent">A</span>는 감소, <span class="accent">B</span>는 유지</h2>')]),
+
     Case("mode-dark",
          "다크 모드를 어느 테마에 겹쳐도 레이아웃 검사가 깨지지 않는다",
          edits=[('<html lang="ko">', '<html lang="ko" data-theme="ocean" data-mode="dark">')],
@@ -253,6 +263,8 @@ def run_case(case: Case, src: str, workdir: Path, use_render: bool) -> tuple[boo
     dv.check_palette(text, f)
     dv.check_diagram_edges(text, f)
     dv.check_guide_notes(text, deck, f)
+    dv.check_title_style(text, f)
+    dv.check_text_accent(text, f)
     if case.render and use_render:
         render_data = dv.run_dynamic(deck, f)
 
@@ -270,7 +282,8 @@ def run_case(case: Case, src: str, workdir: Path, use_render: bool) -> tuple[boo
 
     expected_levels = {"template-css": "info", "empty-content": "info", "foot-position": "warn", "dead-css": "warn",
                        "palette": "warn", "dg-edge": "error", "dg-overlap": "error", "dg-numbers": "error",
-                       "code-overflow": "error", "code-budget": "warn", "guide": "warn", "text-contrast": "error"}
+                       "code-overflow": "error", "code-budget": "warn", "guide": "warn", "text-contrast": "error",
+                       "title-style": "warn", "accent-text": "warn"}
     for item in f.items:
         if item["check"] in expected_levels and item["level"] != expected_levels[item["check"]]:
             return False, f"검사 심각도가 다르다: {item}"
