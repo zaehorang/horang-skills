@@ -56,7 +56,7 @@
 
 읽히는 문서가 필요하면 `report`, 따로 슬라이드를 띄워 말해야 하면 `presentation`을 쓴다.
 
-`presentation`에는 발표에 자주 나오는 장 22가지와 색 테마 5개를 한 주제로 채운 견본 갤러리가 있다 — [`presentation/examples/gallery/index.html`](./presentation/examples/gallery/index.html)을 브라우저로 열면 장 종류별로 미리 보고 테마를 바꿔 볼 수 있다.
+`presentation`에는 발표에 자주 나오는 장 22가지와 색 테마 5개를 한 주제로 채운 견본 갤러리가 있다 — [**갤러리 바로 보기**](https://zaehorang.github.io/horang-skills/presentation/examples/gallery/)에서 장 종류별로 미리 보고 테마·라이트/다크를 바꿔 볼 수 있다.
 
 ---
 
@@ -73,6 +73,20 @@
 | [`harness-backlog`](./harness-backlog) | 세션이 끝나면 다른 모델이 harness 빈틈을 backlog에 제안한다. 반영은 사람이 한다 | `.local/harness-backlog/*.md` + 설치 스크립트 |
 
 `herdr-dispatch`의 모델명·플래그 표는 낡는다. `scripts/doctor.py`가 설치된 CLI·모델 캐시·전역 설정과 표를 몇 초 안에 대조하고, "모델 업데이트 확인해"라고 하면 `references/verify.md` 절차대로 claude pane과 codex pane이 각자 자기 벤더 문서를 공식 출처와 교차 확인한다.
+
+---
+
+## 예시 바로 보기
+
+스킬이 만든 산출물을 브라우저에서 바로 연다(GitHub Pages). 파일은 각 스킬의 `examples/` 폴더에 있다.
+
+| 스킬 | 예시 | 무엇을 보나 |
+|---|---|---|
+| `presentation` | [장 갤러리](https://zaehorang.github.io/horang-skills/presentation/examples/gallery/) · [색 테마](https://zaehorang.github.io/horang-skills/presentation/examples/gallery/themes.html) | 장 22가지와 테마 5개 · 라이트/다크 |
+| `presentation` | [완성 발표 — 간식 서랍](https://zaehorang.github.io/horang-skills/presentation/examples/snack-drawer/presentation.html) | FLOW·SCRIPT를 거친 7장 덱 (← → 로 넘김) |
+| `report` | [완성 보고서 — 간식 서랍](https://zaehorang.github.io/horang-skills/report/examples/snack-drawer/report.html) | A4 쪽 고정형 보고서 |
+| `mechanism-explainer` | [컨테이너 오케스트레이션](https://zaehorang.github.io/horang-skills/mechanism-explainer/references/examples/container-orchestration.html) | 단계별 상태 다이어그램 |
+| `explorable-world` | [k8s harbor](https://zaehorang.github.io/horang-skills/explorable-world/examples/k8s-harbor/) | 세계관 지도와 사건 애니메이션 |
 
 ---
 
