@@ -146,7 +146,38 @@
     h1{font-size:var(--fs-h1);line-height:1.06;letter-spacing:-.06em;margin-bottom:.28em}
     h2{font-size:var(--fs-h2);line-height:1.15;letter-spacing:-.055em;margin-bottom:0;max-width:20em}
     h3{font-size:var(--fs-h3);line-height:1.22;letter-spacing:-.035em;margin-bottom:.32em}
-    p,li{font-size:var(--fs-body);line-height:1.5}
+    p,li{font-size:var(--fs-body);line-height:1.6}
+    /* 줄바꿈: 한글은 어절 단위로만 끊고(keep-all), 마지막 줄에 한두 글자만 남지 않게(pretty).
+       캔버스가 고정이라 줄이 어디서 나뉘는지는 어느 화면에서나 같다 — 끊을 자리를 정했으면 <br> 로 박아도 된다.
+       끊기면 안 되는 묶음(zero-shot, pi0.5 base, 6/10 → 9/10)은 <span class="nobr"> */
+    .slide{word-break:keep-all;overflow-wrap:break-word}
+    p,li,td,small,figcaption{text-wrap:pretty}
+    .nobr{white-space:nowrap}
+    /* 목록 항목 사이를 줄간격보다 넓게 — 두 줄짜리 항목과 다음 항목이 한 덩어리로 붙어 보이지 않게 */
+    .slide ul:not([class]) > li + li{margin-top:.45em}
+    /* 내용이 적은 장: 아래를 비우지 말고 글자·행을 키워 채운다 (본문 시작 위치는 그대로).
+       roomy-sm 은 중간 단계 — roomy 로 넘치는 장에 쓴다. 카드 틀만 늘려 채우지 않는다(빈 곳이 카드 안으로 옮겨갈 뿐이다) */
+    .content.roomy-sm{--fs-body:23px;--fs-label:18px;--fs-h3:28px;--fs-lead:27px}
+    .content.roomy-sm .data-table td{padding-block:15px}
+    .content.roomy-sm :is(.flow-card,.sprint-card,.service,.thesis-card,.callout){padding:1.3em 1.35em}
+    .content.roomy-sm .dg-grid{row-gap:42px}
+    .content.roomy-sm .dg-legend{gap:26px}
+    .content.roomy-sm .wire .block{height:100px}
+    .content.roomy{--fs-body:26px;--fs-label:20px;--fs-h3:32px;--fs-lead:30px}
+    .content.roomy .data-table td{padding-block:20px}
+    .content.roomy :is(.flow-card,.sprint-card,.service,.thesis-card,.callout){padding:1.5em 1.5em}
+    .content.roomy .flow-card p,.content.roomy .sprint-card li{font-size:var(--fs-lead)}
+    .content.roomy .dg-grid{row-gap:64px}
+    .content.roomy .dg-legend{gap:32px}
+    .content.roomy .wire{padding:22px}
+    .content.roomy .wire .line{height:12px;margin-bottom:14px}
+    .content.roomy .wire .block{margin:16px 0}
+    .content.roomy .wire .button{height:34px}
+    .content.roomy .wire .block{height:150px}
+    .content.roomy .screen figcaption{font-size:var(--fs-body)}
+    .content.roomy .dg-node{font-size:24px}
+    .content.roomy .flow-steps{margin-block:1em}
+    .content.roomy .architecture{gap:44px}
     .kicker{margin:0 0 .7em;color:var(--accent-dark);font-size:var(--fs-label);font-weight:900;letter-spacing:.15em;text-transform:uppercase}
     .dark .kicker{color:var(--accent-on-dark)}
     .lead{font-size:var(--fs-lead);line-height:1.45;color:var(--body);max-width:26em;word-break:keep-all}
@@ -570,7 +601,7 @@
     </section>
     <section class="slide" data-title="개념 설명">
       <header class="slide-head"><div><p class="kicker">CONCEPT</p><h2>RAG = 검색 · 증강 · 생성 세 단계</h2></div></header>
-      <div class="content">
+      <div class="content roomy">
         <div class="dg-legend-split">
           <div class="dg">
             <div class="dg-grid" style="--cols:3;row-gap:40px;column-gap:44px">
@@ -637,7 +668,7 @@
     </section>
     <section class="slide" data-title="두 시점 흐름">
       <header class="slide-head"><div><p class="kicker">TWO MODES</p><h2>새 문서는 즉시, 수정 문서는 매일 밤 재색인</h2></div></header>
-      <div class="content">
+      <div class="content roomy">
         <div class="ai-flow-grid">
           <article class="flow-card">
             <span class="mode">MODE A · 문서가 올라올 때</span>
@@ -710,7 +741,7 @@
     </section>
     <section class="slide" data-title="사용자 여정">
       <header class="slide-head"><div><p class="kicker">JOURNEY</p><h2>질문부터 문서 수정까지 한 흐름</h2></div><span class="badge plan">제안</span></header>
-      <div class="content">
+      <div class="content roomy">
         <div class="screens">
           <figure class="screen"><div class="frame"><div class="browserbar"><i></i><i></i><i></i></div><div class="wire"><div class="line title"></div><div class="line accent"></div><div class="block"></div><div class="line"></div><div class="button"></div></div></div><figcaption><strong><span class="dg-num">1</span>질문</strong><span>메신저에서 바로 묻는다</span></figcaption></figure>
           <figure class="screen"><div class="frame"><div class="browserbar"><i></i><i></i><i></i></div><div class="wire"><div class="line title"></div><div class="line"></div><div class="block accent"></div><div class="line"></div><div class="button"></div></div></div><figcaption><strong><span class="dg-num">2</span>답변</strong><span>근거 2건과 함께 받는다</span></figcaption></figure>
@@ -899,7 +930,7 @@
     </section>
     <section class="slide" data-title="구성과 상태">
       <header class="slide-head"><div><p class="kicker">COMPONENTS</p><h2>부품 5개 중 2개 동작, 3개 개발 예정</h2></div></header>
-      <div class="content">
+      <div class="content roomy">
         <div class="architecture">
           <div class="journey"><span>수집</span><span>색인</span><span>검색</span><span>질문 창구</span><span>피드백</span></div>
           <div class="service-grid">
@@ -957,7 +988,7 @@
     </section>
     <section class="slide" data-title="로드맵">
       <header class="slide-head"><div><p class="kicker">ROADMAP</p><h2>위키에서 시작해 한 분기 안에 전사 확대</h2></div></header>
-      <div class="content">
+      <div class="content roomy">
         <div class="roadmap">
           <article class="sprint"><div class="station">1</div>
             <div class="sprint-card done"><span class="phase">1단계 · 완료</span><h3>위키 색인과 채점</h3><ul><li>위키 3,000쪽 색인</li><li>질문 200건 채점</li></ul></div></article>

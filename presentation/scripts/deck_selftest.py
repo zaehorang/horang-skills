@@ -180,7 +180,7 @@ CASES = [
     Case("code-overflow",
          "pre 는 줄을 접지 않아 긴 줄이 상자 오른쪽에서 조용히 잘린다",
          expect={"code-overflow"},
-         edits=[('result = run(state[<span class="s">"input"</span>])',
+         edits=[('result = run(items)',
                  'result = run(state[<span class="s">"input"</span>], ' + "option_value, " * 12 + ')')],
          render=True),
 
@@ -211,6 +211,19 @@ CASES = [
          "글자 강조를 한 장에 여러 곳 칠하면 어디를 봐야 할지 흐려진다",
          expect={"accent-text"},
          edits=[('<h2>A는 감소, B는 유지</h2>', '<h2><span class="accent">A</span>는 감소, <span class="accent">B</span>는 유지</h2>')]),
+
+    Case("empty-below",
+         "본문이 위에 몰리고 아래가 비면 경고한다 — 키우거나 합치거나 그림을 더한다",
+         expect={"empty-below"},
+         edits=[("</style>", '.slide .content>*{display:none!important}.slide .content>p.test-visible{display:block!important}</style>'),
+                ('<div class="content">', '<div class="content"><p class="test-visible">짧은 본문</p>')],
+         render=True),
+
+    Case("orphan",
+         "여러 줄 글의 마지막 줄에 한두 글자만 남으면 경고한다",
+         expect={"orphan"},
+         edits=[('<div class="content">', '<div class="content"><p style="width:11.5em;text-wrap:wrap">가나다라마 바사아자차 카</p>')],
+         render=True),
 
     Case("mode-dark",
          "다크 모드를 어느 테마에 겹쳐도 레이아웃 검사가 깨지지 않는다",
@@ -283,7 +296,8 @@ def run_case(case: Case, src: str, workdir: Path, use_render: bool) -> tuple[boo
     expected_levels = {"template-css": "info", "empty-content": "info", "foot-position": "warn", "dead-css": "warn",
                        "palette": "warn", "dg-edge": "error", "dg-overlap": "error", "dg-numbers": "error",
                        "code-overflow": "error", "code-budget": "warn", "guide": "warn", "text-contrast": "error",
-                       "title-style": "warn", "accent-text": "warn"}
+                       "title-style": "warn", "accent-text": "warn",
+                       "empty-below": "warn", "orphan": "warn"}
     for item in f.items:
         if item["check"] in expected_levels and item["level"] != expected_levels[item["check"]]:
             return False, f"검사 심각도가 다르다: {item}"
