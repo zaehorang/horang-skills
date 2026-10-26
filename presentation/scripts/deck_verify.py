@@ -241,19 +241,19 @@ def check_text_accent(src: str, f: Findings) -> None:
 
 
 def check_title_style(src: str, f: Findings) -> None:
-    """장 제목(h2)은 결론을 명사형으로 끝낸다. "~다·~요·~까" 서술형은 대본처럼 읽힌다.
+    """장 제목(h2)은 결론을 명사형으로 끝낸다. "~다·~요" 서술형은 대본처럼 읽힌다.
 
-    표지 제목(h1)은 질문형·문장형을 허용한다.
+    질문으로 여는 장의 질문형("?"·"~까"·"~는가"·"~인가")과 표지 제목(h1)은 허용한다.
     """
     bad = []
     for raw in re.findall(r"<h2\b[^>]*>(.*?)</h2>", strip_comments(src), re.S):
         text = re.sub(r"<[^>]+>", "", raw).strip()
-        if re.search(r"(다|요|까)[.!?]?$", text):
+        if re.search(r"(다|요)[.!]?$", text):
             bad.append(text)
     if bad:
         f.add("warn", "title-style",
               f"서술형으로 끝나는 장 제목이 {len(bad)}개: {', '.join(bad[:3])}{' …' if len(bad) > 3 else ''}",
-              "결론은 두고 명사형으로 끝낼 것 (예: '정답률이 81%로 올랐다' → '정답률 54% → 81% 상승'). build.md '제목 쓰기'")
+              "결론은 두고 명사형으로 끝낼 것 (예: '정답률이 81%로 올랐다' → '정답률 54% → 81% 상승'). 질문으로 여는 장이면 질문형도 된다. build.md '제목 쓰기'")
 
 
 def check_guide_notes(src: str, path: Path, f: Findings) -> None:

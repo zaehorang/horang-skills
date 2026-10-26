@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<title>간식 서랍은 오후 3시 전에 비는가 — 예시 보고서</title>
+<title>간식 서랍 오후 3시 전 고갈 예측 — 예시 보고서</title>
 <style>
   :root {
     --paper: #FAF9F5;
@@ -100,7 +100,7 @@
 
 <section class="page cover">
   <div class="date">2026. 10. 14 · 예시 분석 보고서</div>
-  <h1>간식 서랍은<br>오후 3시 전에 비는가</h1>
+  <h1>간식 서랍<br>오후 3시 전 고갈 예측</h1>
   <svg class="arc" viewBox="0 0 1000 90" preserveAspectRatio="none" aria-hidden="true"><path d="M0,86 Q500,-36 1000,86" fill="none" stroke="#141413" stroke-width="1.1"/></svg>
   <div class="sub">가상의 사무실 120영업일 · report 스킬 예시</div>
   <div class="toc">
@@ -171,7 +171,7 @@
 
 <section class="page">
   <div class="kicker"><b>03</b> &nbsp;무엇이 서랍을 비우나</div>
-  <h2>보충은 막고, 사람은 비운다</h2>
+  <h2>보충은 막는 쪽, 사람은 비우는 쪽</h2>
   <p class="lede">계수의 부호가 직관과 맞습니다. 보충일은 빌 확률을 내리고, 회의 · 마감 주간 · 금요일은 올립니다.</p>
   <figure>
     <img src="figures/f3_coef.png" alt="표준화 계수">
@@ -194,7 +194,7 @@
 
 <section class="page">
   <div class="kicker"><b>04</b> &nbsp;검증과 결과</div>
-  <h2>단순 규칙보다 AUC가 0.1 높다</h2>
+  <h2>단순 규칙 대비 AUC 0.1 우위</h2>
   <p class="lede">시간 순서를 지켜 앞 90일로 학습하고 마지막 30일로만 채점했습니다. 표준화 기준도 학습 90일로만 계산했습니다.</p>
   <figure>
     <img src="figures/f4_auc.png" alt="AUC 비교">
@@ -227,7 +227,7 @@
 
 <section class="page">
   <div class="kicker"><b>05</b> &nbsp;한계와 재현</div>
-  <h2>30일 검증은 작고, 데이터는 가상이다</h2>
+  <h2>작은 30일 검증, 가상 데이터</h2>
   <h3 style="margin-top:3mm"><span class="n">A</span>한계</h3>
   <table>
     <tr><th style="width:26%">한계</th><th>내용</th></tr>
