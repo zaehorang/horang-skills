@@ -2,10 +2,10 @@
 """페이지 고정형 HTML 보고서를 검사하고 PDF로 렌더링한다.
 
 사용법:
-  python3 report_tool.py check  REPORT.html [--breaks]   # 넘침·짧은 꼬리 줄 검사, --breaks면 모든 줄바꿈 지점 출력
+  python3 report_tool.py check  REPORT.html [--breaks]   # 넘침·짧은 꼬리 줄·제목 끝맺음 검사, --breaks면 모든 줄바꿈 지점 출력
   python3 report_tool.py render REPORT.html [--pdf OUT.pdf] [--png DIR] [--dpi 60]
 
-check 종료 코드: 0 = 넘침·꼬리 줄 없음, 1 = 문제 있음, 2 = 실행 실패.
+check 종료 코드: 0 = 넘침·꼬리 줄·서술형 제목 없음, 1 = 문제 있음, 2 = 실행 실패.
 보고서는 각 쪽이 <section class="page"> 이고, 하단 바닥글이 .foot 인 구조를 전제한다.
 외부 패키지 없이 Chrome/Chromium 헤드리스와 (PNG 미리보기에만) poppler의 pdftoppm을 쓴다.
 """
@@ -123,8 +123,20 @@ def probe(report: str) -> dict:
     return json.loads(html.unescape(m.group(1)))
 
 
+def sentence_titles(report: str) -> list:
+    """표지·쪽 제목(h1, h2)은 명사형으로 끝낸다. 서술형·질문형으로 끝난 제목을 돌려준다."""
+    src = re.sub(r"<!--.*?-->", "", open(report, encoding="utf-8").read(), flags=re.S)
+    bad = []
+    for raw in re.findall(r"<h[12]\b[^>]*>(.*?)</h[12]>", src, re.S):
+        text = html.unescape(re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", raw))).strip()
+        if re.search(r"(다|요|까|는가|인가)[.!?]?$|\?$", text):
+            bad.append(text)
+    return bad
+
+
 def cmd_check(a) -> int:
     r = probe(a.report)
+    titles = sentence_titles(a.report)
     print(f"쪽 수: {r['pages']}")
     over = [o for o in r["overflow"] if o["over"]]
     print("\n[넘침] 바닥글 위 사용 높이 / 한도")
@@ -137,7 +149,10 @@ def cmd_check(a) -> int:
         print(f"\n[줄바꿈 지점] {len(r['breaks'])}곳. 단어 묶음이 갈라진 곳은 <span class=\"nw\">로 묶는다")
         for b in r["breaks"]:
             print(f"  {b['page']:>2}쪽  …{b['left']} ⏎ {b['right']}…")
-    ok = not over and not r["orphans"]
+    print(f"\n[제목 끝맺음] 서술형·질문형 {len(titles)}건. 결론은 두고 명사형으로 끝낸다(예: '점수가 올랐다' → '점수 상승')")
+    for t in titles:
+        print(f"  {t}")
+    ok = not over and not r["orphans"] and not titles
     print("\n결과:", "통과" if ok else "수정 필요")
     return 0 if ok else 1
 
